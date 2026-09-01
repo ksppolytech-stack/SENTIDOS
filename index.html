@@ -97,7 +97,47 @@ tr.low-stock-row td * {
 #mergedPartySuggest>div:hover{background:#f1f5f9!important}
 </style>
 </head>
-<body><div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V104</b> — Firebase Online Sync enabled.</div>
+<body>
+<div id="loginScreen" style="position:fixed;inset:0;background:#f3f5f7;z-index:99999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#fff;padding:30px;border-radius:12px;width:360px;max-width:90%;box-shadow:0 4px 20px rgba(0,0,0,.15);">
+    
+    <h2 style="text-align:center;margin:0 0 20px 0;">
+      Sentidos ERP
+    </h2>
+
+    <div style="margin-bottom:10px;">
+      <input
+        id="loginEmail"
+        type="email"
+        placeholder="User ID / Email"
+        autocomplete="username"
+        style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccc;border-radius:6px;">
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <input
+        id="loginPassword"
+        type="password"
+        placeholder="Password"
+        autocomplete="current-password"
+        style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccc;border-radius:6px;">
+    </div>
+
+    <button
+      id="loginBtn"
+      style="width:100%;padding:12px;border:0;border-radius:6px;background:#17324d;color:#fff;font-size:16px;cursor:pointer;">
+      Login
+    </button>
+
+    <div
+      id="loginError"
+      style="color:#c62828;text-align:center;margin-top:12px;min-height:20px;">
+    </div>
+
+  </div>
+</div>
+ 
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V104</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -2844,7 +2884,11 @@ document.addEventListener('DOMContentLoaded',function(){
 </script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-  import {
+import {
+  getAuth,
+  signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+ import {
     getFirestore,
     collection,
     addDoc,
@@ -2867,8 +2911,9 @@ document.addEventListener('DOMContentLoaded',function(){
   };
 
   const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const ERP_COLLECTION = "erpData";
+const auth = getAuth(app);
+const db = getFirestore(app);
+const ERP_COLLECTION = "erpData";
   const CLIENT_ID = "client-" + Math.random().toString(36).slice(2) + Date.now().toString(36);
   const ERP_PREFIX = "adr_";
   let cloudReady = false;
@@ -2983,8 +3028,36 @@ document.addEventListener('DOMContentLoaded',function(){
       setStatus("Firebase Error — Local / Offline mode",false);
     }
   }
+const loginBtn = document.getElementById("loginBtn");
+const loginEmail = document.getElementById("loginEmail");
+const loginPassword = document.getElementById("loginPassword");
+const loginError = document.getElementById("loginError");
 
+if (loginBtn) {
+  loginBtn.onclick = async function () {
+    loginError.textContent = "";
+
+    const email = loginEmail.value.trim();
+    const password = loginPassword.value;
+
+    if (!email || !password) {
+      loginError.textContent = "Email અને Password નાખો.";
+      return;
+    }
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+
+      document.getElementById("loginScreen").style.display = "none";
+
+    } catch (err) {
+      console.error(err);
+      loginError.textContent = "Login failed. Email અથવા Password ખોટો છે.";
+    }
+  };
+}
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",bootFirebaseSync);
   else bootFirebaseSync();
 </script>
+ 
 </body></html>
