@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V103 - Party Merged Suggestion Fixed</title>
+<title>Sentidos ERP V104 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -97,7 +97,7 @@ tr.low-stock-row td * {
 #mergedPartySuggest>div:hover{background:#f1f5f9!important}
 </style>
 </head>
-<body><div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V101</b> — Production Report only Finished Goods.</div>
+<body><div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V104</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -2853,7 +2853,8 @@ document.addEventListener('DOMContentLoaded',function(){
     setDoc,
     updateDoc,
     deleteDoc,
-    onSnapshot
+    onSnapshot,
+    serverTimestamp
   } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -2867,25 +2868,124 @@ document.addEventListener('DOMContentLoaded',function(){
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const ERP_COLLECTION = "erpData";
+  const CLIENT_ID = "client-" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const ERP_PREFIX = "adr_";
+  let cloudReady = false;
+  let applyingCloud = false;
+  let reloadTimer = null;
 
-  // ERP માટે Firebase ready
+  const statusEl = () => document.getElementById("sentidosOnlineStatusText");
+  function setStatus(text, ok=true){
+    const e=statusEl();
+    if(e){ e.textContent=text; e.style.color=ok?"#1b8a3a":"#c62828"; }
+  }
+
   window.sentidosFirebase = {
-    app,
-    db,
-    collection,
-    addDoc,
-    getDocs,
-    doc,
-    setDoc,
-    updateDoc,
-    deleteDoc,
-    onSnapshot
+    app, db, collection, addDoc, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp
   };
+  window.sentidosOnlineReady = function(){ return true; };
 
-  window.sentidosOnlineReady = function () {
-    return true;
-  };
+  function erpKeys(){
+    const out=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k && k.startsWith(ERP_PREFIX)) out.push(k);
+    }
+    return out.sort();
+  }
 
-  console.log("SENTIDOS ERP - Firebase Connected");
+  async function uploadAllLocal(){
+    const keys=erpKeys();
+    for(const key of keys){
+      await setDoc(doc(db,ERP_COLLECTION,key),{
+        key,
+        value:localStorage.getItem(key),
+        updatedBy:CLIENT_ID,
+        updatedAt:serverTimestamp()
+      },{merge:true});
+    }
+  }
+
+  async function readCloud(){
+    const snap=await getDocs(collection(db,ERP_COLLECTION));
+    const docs=snap.docs.filter(d=>d.id!=="_meta");
+    return docs;
+  }
+
+  function installLocalStorageCloudSync(){
+    if(window.__sentidosV104Patched)return;
+    window.__sentidosV104Patched=true;
+    const originalSet=Storage.prototype.setItem;
+    Storage.prototype.setItem=function(key,value){
+      originalSet.call(this,key,value);
+      if(this!==localStorage || !cloudReady || applyingCloud || !String(key).startsWith(ERP_PREFIX))return;
+      const payload={key:String(key),value:String(value),updatedBy:CLIENT_ID,updatedAt:serverTimestamp()};
+      setDoc(doc(db,ERP_COLLECTION,String(key)),payload,{merge:true})
+        .catch(err=>{ console.error("Firebase save failed",err); setStatus("Firebase Error — data local ma save thayu",false); });
+    };
+  }
+
+  function listenCloud(){
+    onSnapshot(collection(db,ERP_COLLECTION),snap=>{
+      if(!cloudReady)return;
+      let remoteChanged=false;
+      snap.docChanges().forEach(ch=>{
+        const d=ch.doc.data()||{};
+        if(!d.key || d.updatedBy===CLIENT_ID)return;
+        if(ch.type==="removed"){
+          if(localStorage.getItem(d.key)!==null){ applyingCloud=true; localStorage.removeItem(d.key); applyingCloud=false; remoteChanged=true; }
+        }else if(typeof d.value!=="undefined" && localStorage.getItem(d.key)!==String(d.value)){
+          applyingCloud=true;
+          localStorage.setItem(d.key,String(d.value));
+          applyingCloud=false;
+          remoteChanged=true;
+        }
+      });
+      if(remoteChanged){
+        setStatus("Firebase Synced — remote update received",true);
+        clearTimeout(reloadTimer);
+        reloadTimer=setTimeout(()=>location.reload(),350);
+      }
+    },err=>{
+      console.error("Firebase listener failed",err);
+      setStatus("Firebase Listener Error — local mode",false);
+    });
+  }
+
+  async function bootFirebaseSync(){
+    try{
+      setStatus("Firebase connecting…",true);
+      const docs=await readCloud();
+      if(docs.length===0){
+        await uploadAllLocal();
+        setStatus("Firebase Connected — local data uploaded",true);
+      }else{
+        applyingCloud=true;
+        docs.forEach(d=>{
+          const x=d.data()||{};
+          if(x.key && typeof x.value!=="undefined") localStorage.setItem(x.key,String(x.value));
+        });
+        applyingCloud=false;
+        setStatus("Firebase Connected — cloud data loaded",true);
+        cloudReady=true;
+        installLocalStorageCloudSync();
+        listenCloud();
+        location.reload();
+        return;
+      }
+      cloudReady=true;
+      installLocalStorageCloudSync();
+      listenCloud();
+      console.log("SENTIDOS ERP V104 - Firebase sync ready");
+    }catch(err){
+      console.error("SENTIDOS ERP V104 Firebase error:",err);
+      cloudReady=false;
+      setStatus("Firebase Error — Local / Offline mode",false);
+    }
+  }
+
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",bootFirebaseSync);
+  else bootFirebaseSync();
 </script>
 </body></html>
