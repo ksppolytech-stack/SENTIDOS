@@ -1,0 +1,2845 @@
+<!doctype html>
+<html lang="gu"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sentidos ERP V103 - Party Merged Suggestion Fixed</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
+main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
+.page{display:none}.page.active{display:block}.panel,.card{background:#fff;border-radius:10px;padding:15px;margin-bottom:12px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.card b{font-size:24px;display:block;margin-top:6px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.grid input,.grid select,input{padding:9px;border:1px solid #ccd3da;border-radius:6px;box-sizing:border-box}.primary{background:#17324d;color:#fff;border:0;padding:9px 13px;border-radius:6px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left;font-size:14px}button{cursor:pointer}.msg{margin:8px 0;font-weight:bold}
+@media(max-width:700px){.cards,.grid{grid-template-columns:1fr 1fr}th,td{font-size:12px}.panel{overflow:auto}}
+.suggestbox{position:absolute;z-index:999;background:#fff;border:1px solid #bbb;border-radius:6px;box-shadow:0 3px 10px rgba(0,0,0,.15);max-height:220px;overflow:auto;width:100%;display:none}
+.suggestbox div{padding:10px;border-bottom:1px solid #eee;cursor:pointer}.suggestbox div:hover{background:#eef5ff}
+.autowrap{position:relative}
+@media print{
+ body{background:#fff}.tabs,header,.noPrint{display:none!important}.page{display:none!important}
+ #reports{display:block!important}.reportArea{box-shadow:none!important;margin:0;padding:0}
+ table{font-size:11px}h2{margin-top:0}
+}
+</style>
+<style>
+.payment-due{color:#c62828;font-weight:700}
+.payment-received{color:#1b8a3a;font-weight:700}
+.payment-clear{color:#1b8a3a;font-weight:700}
+</style>
+
+<style id="partyMergedSuggestionV98Style">
+#mergedPartySuggest > div{
+  display:block !important;
+  width:100% !important;
+  min-height:40px;
+  box-sizing:border-box;
+  padding:10px 12px !important;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  color:#111 !important;
+  background:#fff !important;
+  font-size:15px !important;
+  line-height:20px !important;
+}
+#mergedPartySuggest > div:hover{
+  background:#f1f5f9 !important;
+}
+</style>
+
+<style id="lowStockHighlightV100">
+.low-stock-row td, .low-stock-row td * {
+  color: #c00 !important;
+  font-weight: 700 !important;
+}
+.low-stock-row {
+  background: #fff1f1 !important;
+}
+</style>
+
+<style id="lowStockHighlightV101">
+.low-stock-highlight,
+.low-stock-highlight td,
+.low-stock-highlight td *,
+tr.low-stock-row,
+tr.low-stock-row td,
+tr.low-stock-row td * {
+  color:#ff0000 !important;
+  font-weight:800 !important;
+  background:#fff0f0 !important;
+}
+</style>
+
+<!-- SENTIDOS ERP V103 - Firebase Online Ready -->
+<script type="module">
+  // Paste your Firebase Web App configuration here after creating the Firebase project.
+  window.SENTIDOS_FIREBASE_CONFIG = window.SENTIDOS_FIREBASE_CONFIG || {
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+    storageBucket: "",
+    messagingSenderId: "",
+    appId: ""
+  };
+
+  window.SENTIDOS_ONLINE_STATUS = "offline";
+  window.SENTIDOS_FIREBASE = null;
+
+  // V103 online architecture:
+  // Firebase Authentication -> user login
+  // Cloud Firestore -> shared ERP data
+  // Existing localStorage remains as a local fallback until Firebase is configured.
+  window.sentidosOnlineReady = function () {
+    const c = window.SENTIDOS_FIREBASE_CONFIG || {};
+    return !!(c.apiKey && c.projectId && c.appId);
+  };
+</script>
+
+<style id="sentidosMergedSuggestionFix">
+#mergedPartySuggest{z-index:99999!important;width:100%!important;box-sizing:border-box!important;max-height:260px!important;overflow-y:auto!important;overflow-x:hidden!important;background:#fff!important;color:#111!important}
+#mergedPartySuggest>div{display:block!important;width:100%!important;box-sizing:border-box!important;padding:10px 12px!important;min-height:40px!important;color:#111!important;background:#fff!important;font-size:15px!important;line-height:20px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+#mergedPartySuggest>div:hover{background:#f1f5f9!important}
+</style>
+</head>
+<body><div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V101</b> — Production Report only Finished Goods.</div>
+<header><b>Sentidos — Inventory</b></header>
+<main>
+<div class="tabs">
+<button class="active" data-page="dashboard">🏠 Dashboard</button>
+<button data-page="items">📦 Item Master</button><button data-page="rawmaterials">🧱 Raw Material Master</button><button data-page="bom">🔧 BOM Master</button>
+<button data-page="purchase">🛒 Purchase</button><button data-page="purchaseMaster">🏢 Supplier Master</button><button data-page="customerMaster">👤 Customer Master</button><button data-page="fgRateMaster">💰 Finished Goods Rate Master</button><button data-page="production">🏭 Production</button>
+<button data-page="dispatch">🚚 Dispatch</button><button data-page="accounting">💰 Accounting</button><button data-page="jobwork">🏭 Job Work</button><button data-page="jwrates">💰 Job Work Rate Master</button><button data-page="reports">📄 Reports</button><button data-page="stock">📊 Stock</button>
+</div>
+
+
+<section id="dashboard" class="page active">
+<div class="panel" id="sentidosOnlineStatus" style="margin-bottom:12px">
+<b>🌐 Sentidos ERP Online Status:</b>
+<span id="sentidosOnlineStatusText">Local / Offline</span>
+</div>
+<div class="cards">
+<div class="card dashCard" data-filter="all">Total Items<b id="dashItems">0</b></div>
+<div class="card dashCard" data-filter="sales">Total Sales<b id="dashSales">₹0.00</b></div>
+<div class="card dashCard" data-filter="purchase">Total Purchase<b id="dashPurchase">₹0.00</b></div>
+<div class="card dashCard" data-filter="raw">ADR Raw Material Stock<b id="dashRaw">0 KG</b></div><div class="card dashCard" data-filter="vendor">Vendor Raw Material Stock<b id="dashVendor">0 KG</b></div>
+<div class="card dashCard" data-filter="fg">Finished Goods<b id="dashFg">0 PCS</b></div>
+<div class="card dashCard" data-filter="low">Low Stock<b id="dashLow">0</b></div>
+</div><div class="panel">Dashboardનું Raw Material Stock માત્ર <b>Company Stock</b> બતાવે છે. Vendor પાસે issue થયેલો balance Dashboard Stockમાં ગણાશે નહીં.</div>
+<div class="panel" id="dashboardDetails" style="display:none">
+<h3 id="dashboardDetailsTitle">Stock Details</h3>
+<table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Unit</th><th>Weight g</th><th>Stock</th><th>Minimum</th></tr></thead>
+<tbody id="dashboardDetailsTable"></tbody></table>
+</div>
+</section>
+
+
+<section id="rawmaterials" class="page"><div class="panel"><h2>Raw Material Master</h2><p class="small"><b>આ જ Raw Material stockનું main source છે.</b> અહીં Add/Purchase કરેલા materialમાંથી Purchase, Vendor Job Work Issue અને Vendor Consumption બધું deduct/add થશે.</p>
+<div class="grid">
+<input id="rmCode" placeholder="Material Code"><input id="rmName" placeholder="Material Name">
+<select id="rmUnit"><option>KG</option><option>G</option></select>
+<input id="rmRate" type="number" step="0.001" placeholder="Rate / KG">
+<input id="rmOpening" type="number" step="0.001" placeholder="Opening Stock">
+<input id="rmMin" type="number" step="0.001" placeholder="Minimum Stock">
+</div><br><button class="primary" id="addRM">➕ Add Raw Material</button>
+<table><thead><tr><th>Material Name</th><th>Total Stock</th></tr></thead><tbody id="rmTable"></tbody></table><div id="rawLotDetails" class="small"></div>
+<hr>
+<h3>Company Raw Material Inward / Stock Add</h3><p class="small">ઉપરની listમાં માત્ર Material Name અને Total Stock દેખાશે. નીચેની Inward listમાં દરેક batchનો Rate અલગ દેખાશે.</p>
+<div class="grid">
+<div class="autowrap" style="position:relative"><input id="rmPurchaseSupplier" placeholder="Type Supplier Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearRMPurchaseSupplier" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer">×</button><div id="rmPurchaseSupplierSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<div class="autowrap" style="position:relative"><input id="rmPurchase" placeholder="Type Material Name"><div id="rmPurchaseSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<input id="rmPurchaseQty" type="number" step="0.001" placeholder="Quantity">
+<input id="rmPurchaseRate" type="number" step="0.001" placeholder="Rate / KG">
+<input id="rmPurchaseRef" placeholder="Invoice / Ref">
+</div><br>
+<button class="primary" id="rmPurchaseBtn">➕ Add Stock</button>
+<div class="msg" id="rmPurchaseMsg"></div>
+<hr><h3>Company Raw Material Inward Entries</h3>
+<table><thead><tr><th>Date</th><th>Inward No.</th><th>Supplier</th><th>Material</th><th>Qty</th><th>Rate</th><th>Unit</th><th>Action</th></tr></thead>
+<tbody id="rmPurchaseTable"></tbody></table>
+
+
+</div></section>
+<section id="items" class="page"><div class="panel"><h2>Item / Material Master</h2>
+<div class="grid">
+<input id="itemCode" placeholder="Item Code"><input id="itemName" placeholder="Item Name">
+<select id="itemCat"><option>Raw Material</option><option>Component</option><option>Finished Goods</option><option>Packing</option></select>
+<select id="itemUnit"><option>KG</option><option>PCS</option><option>BOX</option></select>
+<input id="itemWeight" type="number" step="0.001" placeholder="Weight / PCS (gram)">
+<input id="itemOpening" type="number" placeholder="Opening Stock"><input id="itemMin" type="number" placeholder="Minimum Stock">
+</div><br><button class="primary" id="addItemBtn">Add Item</button>
+<table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Unit</th><th>Weight g</th><th>Stock</th><th>Action</th></tr></thead><tbody id="itemTable"></tbody></table>
+<div class="panel" id="itemDependencyBox" style="display:none">
+<h3 id="itemDependencyTitle">Linked Entries</h3>
+<p>આ entries clear/delete કર્યા પછી જ Item delete કરી શકાશે.</p>
+<table><thead><tr><th>Type</th><th>Product/Date</th><th>Component/Ref</th><th>Qty</th><th>Next Action</th></tr></thead>
+<tbody id="itemDependencyBody"></tbody></table>
+</div>
+
+</div></section>
+
+<section id="bom" class="page"><div class="panel"><h2>Multi-Component BOM</h2><p class="small"><b>Unit મહત્વનું છે:</b> Item Masterમાં Raw Material KG હોય અને BOMમાં quantity gram હોય તો software gram→KG automatic convert કરશે.</p><p class="small">Product/Component/Materialનું નામ type કરતાં નીચે આખું Name + Code suggestion દેખાશે; suggestion પસંદ કરતાં આખું Product/Component Name fieldમાં રહેશે.</p>
+<div class="autowrap"><input id="bomProduct" placeholder="Type Product Name / Code"><div class="suggestbox" id="productSuggest"></div></div>
+<table><thead><tr><th>Component / Material Code</th><th>Qty</th><th>Unit</th><th>Action</th></tr></thead><tbody id="bomEntry"></tbody></table>
+<br><button id="addBomRow">➕ Add Component</button> <button class="primary" id="saveBom">💾 Save Complete BOM</button>
+<div class="msg" id="bomMsg"></div><hr>
+<table><thead><tr><th>Product</th><th>Component</th><th>Qty</th><th>Unit</th><th>Action</th></tr></thead><tbody id="bomTable"></tbody></table>
+<br><input id="deleteBomProduct" placeholder="Product Code"><button id="deleteBom">🗑 Delete BOM</button>
+</div></section>
+
+<section id="purchase" class="page"><div class="panel"><h2>🛒 Purchase</h2>
+<div class="grid">
+<div class="autowrap" style="position:relative"><input id="purchaseSupplier" placeholder="Supplier Name"><div id="purchaseSupplierSuggest" class="suggestbox" style="display:none"></div></div>
+<div class="autowrap" style="position:relative"><input id="purchaseCode" placeholder="Type Item Name / Code"><div id="itemSuggestPurchase" class="suggestbox" style="display:none"></div></div>
+<input id="purchaseQty" type="number" step="0.001" placeholder="Quantity"><select id="purchaseUnit"><option value="KG">KG</option><option value="PCS">PCS</option></select>
+<input id="purchaseRate" type="number" step="0.01" placeholder="Rate ₹0.00 (Editable)">
+<input id="purchaseRef" placeholder="Invoice / Ref">
+</div><br>
+<button type="button" id="openPurchaseMaster">🏢 Supplier Master</button>
+<button class="primary" id="purchaseBtn">Save Purchase</button>
+<div class="msg" id="purchaseMsg"></div>
+<hr>
+<h3>📋 Purchase Entries</h3>
+<div style="overflow:auto">
+<table id="purchaseEntryTable">
+<thead><tr><th>Date</th><th>Supplier</th><th>Item</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Amount</th><th>Invoice / Ref</th><th>Action</th></tr></thead>
+<tbody><tr><td colspan="9">No purchase entries</td></tr></tbody>
+</table>
+</div>
+<hr>
+<h3>📊 Purchase Report</h3>
+<div class="grid">
+<input id="purchaseInlineFrom" type="date">
+<input id="purchaseInlineTo" type="date">
+<div style="position:relative"><input id="purchaseInlineSupplier" placeholder="Type Supplier Name" autocomplete="off"><div id="purchaseInlineSupplierSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:200px;overflow:auto"></div></div>
+<button type="button" class="primary" id="purchaseInlineReportBtn">Generate Report</button>
+</div>
+<div class="msg" id="purchaseInlineReportMsg"></div>
+<div style="overflow:auto"><table id="purchaseInlineReportTable">
+<thead><tr><th>Date</th><th>Supplier</th><th>Item</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Amount</th><th>Invoice / Ref</th></tr></thead>
+<tbody><tr><td colspan="8">Click Generate Report</td></tr></tbody>
+<tfoot><tr><th colspan="3">Total</th><th id="purchaseInlineQty">0.000</th><th></th><th></th><th id="purchaseInlineAmount">₹0.00</th><th></th></tr></tfoot>
+</table></div></div></section>
+
+<section id="purchaseMaster" class="page"><div class="panel"><h2>🏢 Supplier Master</h2>
+<p style="margin:0 0 10px">Supplier પાસેથી આવતા <b>O Ring, Packaging Material, Plastic Bag</b> વગેરે માટે Supplier + Item + Rate set કરો.</p>
+<div class="grid">
+<div class="autowrap" style="position:relative"><input id="pmSupplier" placeholder="Type Supplier Name"><div id="pmSupplierSuggest" class="suggestbox" style="display:none"></div></div>
+<div class="autowrap" style="position:relative"><input id="pmItem" placeholder="Type Item Name" autocomplete="off"><div id="pmItemSuggest" style="display:none"></div></div>
+<input id="pmRate" type="number" step="0.01" placeholder="Rate ₹0.00 (Optional)">
+<button type="button" class="primary" id="pmAddBtn">➕ Add Supplier Master</button>
+</div>
+<div class="msg" id="pmMsg"></div>
+<div style="overflow:auto"><table><thead><tr><th>Supplier</th><th>Item</th><th>Rate</th><th>Action</th></tr></thead><tbody id="pmTable"></tbody>
+</table></div>
+<hr>
+<h3>📊 Dispatch Report</h3>
+<div class="grid">
+<input id="dispatchReportFrom" type="date">
+<input id="dispatchReportTo" type="date">
+<div style="position:relative">
+<input id="dispatchReportCustomer" placeholder="Type Customer Name" autocomplete="off">
+<div id="dispatchReportCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div>
+</div>
+<div style="position:relative">
+<input id="dispatchReportItem" placeholder="Type Finished Good" autocomplete="off">
+<div id="dispatchReportItemSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div>
+</div>
+<button type="button" class="primary" id="dispatchReportBtn">Generate Report</button>
+</div>
+<div class="msg" id="dispatchReportMsg"></div>
+<div style="overflow:auto">
+<table id="dispatchReportTable">
+<thead><tr><th>Bill No.</th><th>Date</th><th>Customer</th><th>Finished Good</th><th>Qty</th><th>Rate</th><th>Total Amount</th><th>Remark</th></tr></thead>
+<tbody><tr><td colspan="8">Click Generate Report</td></tr></tbody>
+<tfoot><tr><th colspan="4">Total</th><th id="dispatchReportQty">0.000</th><th></th><th id="dispatchReportAmount">₹0.00</th><th></th></tr></tfoot>
+</table>
+</div>
+</div></section>
+<section id="customerMaster" class="page">
+<div class="panel">
+<h2>👤 Customer Master</h2>
+<div class="grid">
+<input id="customerCode" placeholder="Customer Code (Optional)">
+<input id="customerName" placeholder="Customer Name">
+</div><br>
+<button class="primary" id="addCustomerBtn" type="button">➕ Add Customer</button>
+<div class="msg" id="customerMsg"></div>
+<hr>
+<table id="customerTable">
+<thead><tr><th>Code</th><th>Customer Name</th><th>Action</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+<section id="production" class="page"><div class="panel"><h2>Production</h2><p>Finish Productનું નામ type કરો. નીચે <b>BOM Masterમાં બનાવેલા Product names</b>માંથી suggestion આવશે.</p>
+<div class="grid"><div class="autowrap"><div class="autowrap" style="position:relative"><input id="productionCode" placeholder="Type Finish Product Name"><div id="productionProductSuggestions" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><input id="productionQty" type="number" placeholder="Quantity"></div>
+<p>Material/component quantities defined in BOM will be deducted automatically.</p><button class="primary" id="productionBtn">Save Production</button> <button id="openProductionReport">📄 Production Report</button><div class="msg" id="productionMsg"></div></div></section>
+
+
+<section id="fgRateMaster" class="page">
+<div class="panel">
+<h2>💰 Finished Goods Rate Master</h2>
+<p class="small">Finished Goods Item Masterમાંથી પસંદ કરો. અહીંનો Rate Dispatchમાં Finished Good select કરતાં automatic આવશે.</p>
+<div class="grid">
+<div style="position:relative">
+<input id="fgRateItem" placeholder="Type Finished Good Name / Code" autocomplete="off">
+<div id="fgRateItemSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div>
+</div>
+<input id="fgRateValue" type="number" step="0.01" placeholder="Sale Rate ₹0.00">
+</div><br>
+<button class="primary" id="addFgRateBtn" type="button">➕ Add / Update Rate</button>
+<div class="msg" id="fgRateMsg"></div>
+<hr>
+<table id="fgRateTable">
+<thead><tr><th>Finished Good</th><th>Code</th><th>Rate</th><th>Action</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+<section id="dispatch" class="page"><div class="panel"><h2>🚚 Dispatch</h2>
+<div class="grid">
+<div style="position:relative"><div style="position:relative"><input id="dispatchCustomer" placeholder="Type Customer Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearDispatchCustomer" aria-label="Clear Customer" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button></div><div id="dispatchCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:200px;overflow:auto"></div></div>
+<div class="autowrap"><div style="position:relative"><input id="dispatchCode" placeholder="Type Finish Product Name" style="padding-right:36px"><button type="button" id="clearDispatchItem" aria-label="Clear Finished Good" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button></div><div class="suggestbox" id="productSuggestDispatch"></div></div>
+<input id="dispatchQty" type="number" step="0.001" placeholder="Quantity">
+<input id="dispatchRate" type="number" step="0.01" placeholder="Rate ₹0.00">
+<input id="dispatchTaxRate" type="number" step="0.01" placeholder="GST %">
+<input id="dispatchTaxAmount" type="number" step="0.01" placeholder="Tax Amount" readonly>
+<input id="dispatchBillNo" type="text" placeholder="Bill No." readonly>
+<input id="dispatchAmount" type="number" step="0.01" placeholder="Taxable Amount" readonly>
+<input id="dispatchGrandTotal" type="number" step="0.01" placeholder="Grand Total" readonly>
+<input id="dispatchRemark" placeholder="Remark (Optional)">
+</div><br>
+<button class="primary" id="dispatchBtn">Save Dispatch</button><div class="msg" id="dispatchMsg"></div>
+<hr><h3>📋 Dispatch Entries</h3>
+<div style="overflow:auto"><table id="dispatchTable"><thead><tr><th>Date</th><th>Bill No.</th><th>Customer</th><th>Finished Good</th><th>Qty</th><th>Rate</th><th>Taxable Amount</th><th>GST %</th><th>Tax</th><th>Grand Total</th><th>Remark</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+</div></section>
+
+
+<section id="jobwork" class="page"><div class="panel"><h2>Vendor Job Work / Subcontracting</h2>
+<p>Vendor Master → Raw Material Issue → Component Receive. Componentનું weight Item Masterમાંથી automatic આવશે.</p>
+
+<h3>Vendor Master</h3>
+<div class="autowrap" style="position:relative;max-width:500px">
+<input id="jwVendor" placeholder="Type Vendor Name">
+<div id="vendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto"></div>
+</div>
+<br><button class="primary" id="addVendorBtn">➕ Add Vendor to Master</button>
+<table><thead><tr><th>Vendor</th><th>Action</th></tr></thead><tbody id="vendorTable"></tbody></table>
+
+<hr><h3>1. Raw Material Issue to Vendor</h3><p class="small">Challan No. software automatic generate કરશે.</p>
+<div class="grid">
+<div class="autowrap" style="position:relative"><input id="jwIssueVendor" placeholder="Type Vendor Name"><div id="issueVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<div class="autowrap" style="position:relative"><input id="jwRaw" placeholder="Type Raw Material"><div id="rawSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<input id="jwIssueQty" type="number" step="0.001" placeholder="Issue Qty">
+
+</div><br><button class="primary" id="jwIssueBtn">Issue Material</button><div class="msg" id="jwIssueMsg"></div>
+
+<hr><h3>2. Component Receive from Vendor</h3><p class="small">Receive Challan No. software automatic generate કરશે.</p>
+<div class="grid">
+<div class="autowrap" style="position:relative"><input id="jwReceiveVendor" placeholder="Type Vendor Name"><div id="receiveVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<div class="autowrap" style="position:relative"><input id="jwComponent" placeholder="Type Component Name"><div id="componentSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<input id="jwComponentWeight" readonly placeholder="Weight / PCS (gram)">
+<input id="jwReceiveQty" type="number" step="0.001" placeholder="Receive Qty"><input id="jwJobRate" type="text" readonly placeholder="Auto Rate / PCS">
+
+</div>
+<p class="small">Raw Material Consumption = Component Weight × Receive Qty. Vendor પાસે issue થયેલા Raw Materialમાંથી આ quantity automatic deduct થશે.</p>
+<div class="msg" id="jwConsumption"></div><div class="msg" id="jwJobAmount"></div>
+<button class="primary" id="jwReceiveBtn">Receive Component</button><div class="msg" id="jwReceiveMsg"></div>
+
+<hr><h3>Vendor Raw Material Balance</h3>
+<table><thead><tr><th>Vendor</th><th>Raw Material</th><th>Qty at Vendor</th><th>Unit</th></tr></thead><tbody id="jwTable"></tbody></table>
+</div></section>
+
+
+<section id="jwrates" class="page"><div class="panel"><h2>Job Work Rate Master</h2>
+<p>Vendor + Component પ્રમાણે rate એકવાર save કરો. પછી Job Work Receive વખતે rate automatic આવશે.</p>
+<div class="grid">
+<div class="autowrap" style="position:relative"><input id="rateVendor" placeholder="Type Vendor Name"><div id="rateVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<div class="autowrap" style="position:relative"><input id="rateComponent" placeholder="Type Component Name"><div id="rateComponentSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<input id="rateValue" type="number" step="0.001" placeholder="Rate / PCS">
+</div><br>
+<button class="primary" id="addRateBtn">➕ Save Rate</button>
+<div class="msg" id="rateMsg"></div>
+<table><thead><tr><th>Vendor</th><th>Component</th><th>Rate / PCS</th><th>Action</th></tr></thead><tbody id="rateTable"></tbody></table>
+</div></section>
+
+<section id="accounting" class="page">
+<div class="panel">
+<h2>💰 Accounting</h2>
+
+<hr>
+<h3>🧾 Receive Payment</h3>
+<div class="grid">
+<div style="position:relative"><input id="accPaymentCustomer" placeholder="Type Customer Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearAccPayment" aria-label="Clear Received Payment" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button><div id="accPaymentCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
+<input id="accPaymentDate" type="date" title="Payment Date (editable)">
+<input id="accPaymentAmount" type="number" step="0.01" placeholder="Payment Amount">
+<select id="accPaymentMode"><option>Cash</option><option>Bank</option><option>UPI</option><option>Cheque</option></select>
+<input id="accPaymentRef" placeholder="Reference / Remark">
+<button type="button" class="primary" id="accPaymentBtn">Save Payment</button>
+</div>
+<div class="msg" id="accMsg"></div>
+<hr>
+<h3>💸 Pay Supplier / Vendor</h3>
+<div class="grid">
+<div style="position:relative"><input id="accPaySupplier" placeholder="Type Supplier / Vendor Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearAccPaySupplier" aria-label="Clear Supplier Payment" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button><div id="accPaySupplierSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
+<input id="accPaySupplierDate" type="date" title="Payment Date (editable)">
+<input id="accPaySupplierAmount" type="number" step="0.01" placeholder="Payment Amount">
+<select id="accPaySupplierMode"><option>Cash</option><option>Bank</option><option>UPI</option><option>Cheque</option></select>
+<input id="accPaySupplierRef" placeholder="Reference / Remark">
+<button type="button" class="primary" id="accPaySupplierBtn">Save Payment</button>
+</div>
+<div class="msg" id="accPaySupplierMsg"></div>
+<hr>
+<h3>📊 Customer Account Summary</h3>
+<div class="grid">
+<div><b>Total Sales (Grand Total)</b><div id="accSales">₹0.00</div></div>
+<div><b>Total Tax</b><div id="accTax">₹0.00</div></div>
+<div><b>Payment Received</b><div id="accReceived">₹0.00</div></div>
+<div><b>Due / Outstanding</b><div id="accDue">₹0.00</div></div>
+</div>
+<hr>
+<table id="accTable">
+<thead><tr><th>Date</th><th>Type</th><th>Customer</th><th>Bill No. / Ref</th><th>Finished Good</th><th>Qty</th><th>Taxable Amount</th><th>Tax</th><th>Grand Total</th><th>Payment Mode</th><th>Remark</th></tr></thead>
+<tbody></tbody>
+</table>
+
+
+<section class="panel" id="mergedPartyLedger">
+<h3>🔗 Party Merged Ledger (Customer + Supplier + Vendor)</h3>
+<div class="grid">
+<div style="position:relative"><input id="mergedPartyFilter" placeholder="Type Party Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearMergedPartyFilter" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer">×</button><div id="mergedPartySuggest" style="position:absolute;left:0;right:0;top:100%;z-index:99999;background:#fff;color:#111;border:1px solid #999;display:none;max-height:240px;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;font-size:15px;line-height:1.4;box-shadow:0 3px 8px rgba(0,0,0,.15);"></div></div>
+</div>
+<div id="mergedPartySummaryWrap" style="overflow:auto">
+<table id="mergedPartySummaryTable"><thead><tr><th>Party</th><th>Sales Receivable</th><th>Purchase Payable</th><th>Job Work Payable</th><th>Payment Received</th><th>Payment Given</th><th>Net Balance</th></tr></thead><tbody></tbody></table>
+</div>
+<div id="mergedPartyLedgerWrap" style="display:none;overflow:auto;margin-top:12px">
+<h4 id="mergedPartyLedgerTitle"></h4>
+<table id="mergedPartyLedgerTable"><thead><tr><th>Date</th><th>Type</th><th>Reference</th><th>Debit</th><th>Credit</th><th>Balance</th><th>Remark</th></tr></thead><tbody></tbody></table>
+</div>
+</section>
+
+<section class="panel" id="customerDueSummary">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h3>🔗 Customer-wise Party Balance</h3><button type="button" class="primary" id="downloadCustomerLedgerPdf">📄 Download PDF</button></div>
+<div class="grid">
+<div style="position:relative"><input id="dueCustomerFilter" placeholder="Type Customer Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearDueCustomerFilter" aria-label="Clear Customer" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button><div id="dueCustomerFilterSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
+</div>
+<div style="overflow:auto">
+<table id="customerDueTable">
+<thead><tr><th>Date</th><th>Type</th><th>Customer</th><th>Bill / Ref</th><th>Finished Good</th><th>Taxable</th><th>Tax</th><th>Grand Total</th><th>Payment Received</th><th>Payment Mode</th><th>Remark</th></tr></thead>
+<tbody><tr><td colspan="11">No customer data</td></tr></tbody>
+<tfoot><tr><th colspan="5">Selected Customer Total</th><th id="dueLedgerTaxable">₹0.00</th><th id="dueLedgerTax">₹0.00</th><th id="dueLedgerGrand">₹0.00</th><th id="dueLedgerPayment">₹0.00</th><th></th><th id="dueLedgerDue">Due: ₹0.00</th></tr></tfoot>
+</table>
+</div>
+</section>
+</div>
+
+<section class="panel" id="partyLedgers">
+<h3>📚 Supplier / Job Work Vendor / Combined Due</h3>
+<div class="grid">
+<div><b>Customer Receivable</b><div id="combinedCustomerDue">₹0.00</div></div>
+<div><b>Supplier Payable</b><div id="combinedSupplierDue">₹0.00</div></div>
+<div><b>Job Work Vendor Payable</b><div id="combinedJobworkDue">₹0.00</div></div>
+<div><b>Net Balance</b><div id="combinedNetDue">₹0.00</div></div>
+</div>
+<hr>
+<h4>🏭 Supplier Ledger (Purchase + Raw Material)</h4>
+<div class="grid">
+<div style="position:relative"><input id="supplierLedgerFilter" placeholder="Type Supplier Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearSupplierLedgerFilter" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer">×</button><div id="supplierLedgerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
+</div>
+<table id="supplierLedgerTable">
+<thead><tr><th>Supplier</th><th>Purchase / Material Value</th><th>Payment Given</th><th>Due</th></tr></thead>
+<tbody><tr><td colspan="4">No supplier entries</td></tr></tbody>
+</table>
+<div id="supplierLedgerDetailWrap" style="display:none;margin-top:14px;overflow:auto">
+<h4 id="supplierLedgerDetailTitle">Supplier Transactions</h4>
+<table id="supplierLedgerDetailTable">
+<thead><tr><th>Date</th><th>Type</th><th>Item / Material</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Amount</th><th>Payment Mode</th><th>Remark</th></tr></thead>
+<tbody></tbody>
+<tfoot><tr><th colspan="6">Balance</th><th id="supplierLedgerDetailBalance">₹0.00</th><th colspan="2"></th></tr></tfoot>
+</table>
+</div>
+<hr>
+<h4>🔧 Job Work Vendor Ledger</h4>
+<div class="grid">
+<div style="position:relative"><input id="vendorLedgerFilter" placeholder="Type Job Work Vendor Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearVendorLedgerFilter" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer">×</button><div id="vendorLedgerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
+</div>
+<table id="jobworkVendorLedgerTable">
+<thead><tr><th>Vendor</th><th>Job Work Value</th><th>Payment Given</th><th>Due</th></tr></thead>
+<tbody><tr><td colspan="4">No job work vendor entries</td></tr></tbody>
+</table>
+</section>
+</section>
+
+<section id="reports" class="page">
+<section id="dispatchReportPanel" class="panel">
+<h2>🚚 Dispatch Report</h2>
+<div class="grid">
+<input id="dispatchReportFromMain" type="date">
+<input id="dispatchReportToMain" type="date">
+<div style="position:relative"><div style="position:relative"><input id="dispatchReportCustomerMain" placeholder="Type Customer Name" autocomplete="off" style="padding-right:34px"><button type="button" id="clearDispatchReportCustomer" aria-label="Clear Customer" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px">×</button></div><div id="dispatchReportCustomerMainSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
+<div style="position:relative"><div style="position:relative"><input id="dispatchReportItemMain" placeholder="Type Finished Good" autocomplete="off" style="padding-right:34px"><button type="button" id="clearDispatchReportItem" aria-label="Clear Finished Good" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px">×</button></div><div id="dispatchReportItemMainSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
+<button type="button" class="primary" id="dispatchReportMainBtn">Generate Dispatch Report</button>
+</div>
+<div class="msg" id="dispatchReportMainMsg"></div>
+<div style="overflow:auto">
+<table id="dispatchReportMainTable">
+<thead><tr><th>Bill No.</th><th>Date</th><th>Customer</th><th>Finished Good</th><th>Qty</th><th>Rate</th><th>Total Amount</th><th>Remark</th></tr></thead>
+<tbody><tr><td colspan="8">Click Generate Dispatch Report</td></tr></tbody>
+<tfoot><tr><th colspan="4">Total</th><th id="dispatchReportMainQty">0.000</th><th></th><th id="dispatchReportMainAmount">₹0.00</th><th></th></tr></tfoot>
+</table></div>
+</section>
+
+<section id="purchaseReportPanel" class="panel">
+<h2>🧾 Purchase Report</h2>
+<div class="grid">
+<div style="position:relative"><input id="purchaseReportFrom" type="date"><button type="button" id="clear_purchaseReportFrom" aria-label="Clear" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px">×</button></div>
+<div style="position:relative"><input id="purchaseReportTo" type="date"><button type="button" id="clear_purchaseReportTo" aria-label="Clear" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px">×</button></div>
+<div style="position:relative"><div style="position:relative"><input id="purchaseReportSupplier" placeholder="Type Supplier Name" autocomplete="off" style="padding-right:34px"><button type="button" id="clear_purchaseReportSupplier" aria-label="Clear" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px">×</button></div><div id="purchaseReportSupplierSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
+<button type="button" class="primary" id="generatePurchaseReport">Generate Purchase Report</button>
+<button type="button" id="printPurchaseReport">🖨 Print</button>
+</div>
+<div class="msg" id="purchaseReportMsg"></div>
+<div style="overflow:auto">
+<table id="purchaseReportTable">
+<thead><tr><th>Date</th><th>Supplier</th><th>Item</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Amount</th><th>Invoice / Ref</th></tr></thead>
+<tbody><tr><td colspan="8">Generate report</td></tr></tbody>
+<tfoot><tr><th colspan="3">Total</th><th id="purchaseReportQty">0.000</th><th></th><th></th><th id="purchaseReportAmount">₹0.00</th><th></th></tr></tfoot>
+</table>
+</div>
+</section>
+<div class="panel" id="productionReportPanel">
+  <h2>🏭 Production Report</h2>
+  <div class="grid">
+    <input id="prodReportFrom" type="date" placeholder="From Date">
+    <input id="prodReportTo" type="date" placeholder="To Date">
+    <div style="position:relative"><div style="position:relative"><input id="prodReportProduct" placeholder="Type Product Name" autocomplete="off" style="padding-right:34px"><button type="button" id="clear_prodReportProduct" aria-label="Clear" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px">×</button></div><div id="prodReportProductSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto;box-shadow:0 3px 8px rgba(0,0,0,.18)"></div></div>
+    <button class="primary" id="generateProductionReport">Generate Production Report</button>
+    <button id="printProductionReport">🖨 Print</button>
+  </div>
+  <div class="msg" id="productionReportMsg"></div>
+  <div style="overflow:auto">
+    <table id="productionReportTable">
+      <thead><tr>
+        <th>Date</th><th>Challan / Ref</th><th>Finished Product</th><th>Qty</th><th>Unit</th>
+      </tr></thead>
+      <tbody><tr><td colspan="5">Generate report</td></tr></tbody>
+    </table>
+  </div>
+  <div style="margin-top:10px"><b>Total Production: <span id="productionReportTotal">0.000</span> PCS</b></div>
+</div>
+
+<div class="panel reportArea">
+<h2>Job Work Monthly Report</h2>
+<div class="grid noPrint">
+<select id="reportMonth"></select>
+<select id="reportVendor"><option value="">All Vendors</option></select>
+<button class="primary" id="generateJWReport">Generate Report</button>
+<button id="printJWReport">🖨️ Save / Print PDF</button>
+</div>
+<div id="jwReportHeader"></div>
+<table><thead><tr><th>Vendor</th><th>Part / Component</th><th>Qty Received</th><th>Rate</th><th>Job Work Amount</th><th>Raw Material Consumed (KG)</th></tr></thead>
+<tbody id="jwReportTable"></tbody>
+<tfoot><tr><th colspan="2">Total</th><th id="jwReportQty">0</th><th></th><th id="jwReportAmount">₹0.00</th><th id="jwReportRM">0.000 KG</th></tr></tfoot>
+</table>
+</div>
+</section>
+<section id="stock" class="page"><div class="panel"><h2>Stock & Transaction History</h2>
+<table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Unit</th><th>Weight g</th><th>Stock</th><th>Action</th></tr></thead><tbody id="stockTable"></tbody></table>
+<hr><table><thead><tr><th>Date</th><th>Type</th><th>Ref</th><th>Item</th><th>Qty</th><th>Action</th></tr></thead><tbody id="transactionTable"></tbody></table>
+</div></section>
+</main>
+<script>function fmtRate2(v){const n=Number(v);return Number.isFinite(n)?n.toFixed(2):'0.00';}
+
+(function(){
+let items=JSON.parse(localStorage.getItem('adr_items_v2')||'[]');
+let boms=JSON.parse(localStorage.getItem('adr_boms_v2')||'[]');
+let transactions=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]');
+let jobwork=JSON.parse(localStorage.getItem('adr_jobwork_v2')||'[]');
+let vendors=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]');
+let rawMaterials=JSON.parse(localStorage.getItem('adr_rawmaterials_v2')||'[]');
+let rawMaterialLots=JSON.parse(localStorage.getItem('adr_rawmaterial_lots_v1')||'{}');
+let jwIssueNo=Number(localStorage.getItem('adr_jw_issue_no')||0);
+let jwReceiveNo=Number(localStorage.getItem('adr_jw_receive_no')||0);
+let jobworkRates=JSON.parse(localStorage.getItem('adr_jobwork_rates_v2')||'[]');
+let rmPurchaseNo=Number(localStorage.getItem('adr_rm_purchase_no')||0);
+
+const $=id=>document.getElementById(id);
+
+function ensureRawLots(code){
+ if(!rawMaterialLots[code]) rawMaterialLots[code]=[];
+ return rawMaterialLots[code];
+}
+function addRawMaterialLot(code,qty,rate){
+ qty=Number(qty)||0; rate=Number(rate)||0;
+ if(qty<=0)return;
+ const lots=ensureRawLots(code);
+ lots.push({qty:qty,rate:rate,date:new Date().toISOString()});
+}
+function getRawAverageRate(code){
+ const lots=ensureRawLots(code);
+ const qty=lots.reduce((a,l)=>a+Number(l.qty||0),0);
+ const value=lots.reduce((a,l)=>a+(Number(l.qty||0)*Number(l.rate||0)),0);
+ return qty?value/qty:0;
+}
+function consumeRawMaterialFIFO(code,qty){
+ let need=Number(qty)||0,totalCost=0,consumed=0;
+ const lots=ensureRawLots(code);
+ while(need>0.0000001 && lots.length){
+   const lot=lots[0], take=Math.min(need,Number(lot.qty)||0);
+   totalCost+=take*(Number(lot.rate)||0); consumed+=take; need-=take;
+   lot.qty-=take;
+   if(lot.qty<=0.0000001)lots.shift();
+ }
+ return {consumed,cost:totalCost,remaining:need};
+}
+function rebuildRawLotsFromTransactions(){
+ if(Object.keys(rawMaterialLots).length)return;
+ rawMaterials.forEach(r=>rawMaterialLots[r.code]=[]);
+ transactions.filter(t=>t.type==='RAW MATERIAL PURCHASE'||t.type==='RAW MATERIAL COMPANY INWARD').forEach(t=>{
+   const code=String(t.item||'').replace(/^RM:/,'');
+   addRawMaterialLot(code,Number(t.qty)||0,Number(t.purchaseRate??t.inwardRate??t.rate??0));
+ });
+}
+function save(){localStorage.setItem('adr_items_v2',JSON.stringify(items));localStorage.setItem('adr_boms_v2',JSON.stringify(boms));localStorage.setItem('adr_tx_v2',JSON.stringify(transactions));localStorage.setItem('adr_jobwork_v2',JSON.stringify(jobwork));localStorage.setItem('adr_vendors_v2',JSON.stringify(vendors));localStorage.setItem('adr_rawmaterials_v2',JSON.stringify(rawMaterials));localStorage.setItem('adr_rawmaterial_lots_v1',JSON.stringify(rawMaterialLots));localStorage.setItem('adr_jw_issue_no',String(jwIssueNo));localStorage.setItem('adr_jw_receive_no',String(jwReceiveNo));localStorage.setItem('adr_jobwork_rates_v2',JSON.stringify(jobworkRates));localStorage.setItem('adr_rm_purchase_no',String(rmPurchaseNo));refreshDropdowns();if($('openPurchaseMaster'))$('openPurchaseMaster').onclick=()=>document.querySelector('[data-page="purchaseMaster"]').click();pmInit();
+(function(){
+ const s=$('purchaseSupplier'),i=$('purchaseCode');
+ if(s){s.addEventListener('input',pmAutoRate);s.addEventListener('change',pmAutoRate);}
+ if(i){i.addEventListener('input',pmAutoRate);i.addEventListener('change',pmAutoRate);}
+})();
+pmRender();render();setupProductionSuggestions();}
+function msg(id,text){$(id).textContent=text;}
+
+document.querySelectorAll('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+ const target=$(btn.dataset.page);if(!target)return;
+ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+ target.classList.add('active');
+ document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+}));
+
+function addItem(){
+ const code=$('itemCode').value.trim(),name=$('itemName').value.trim();
+ if(!code||!name)return alert('Item Code અને Item Name નાખો.');
+ if(items.some(i=>i.code===code))return alert('આ Item Code પહેલેથી છે.');
+ items.push({code,name,cat:$('itemCat').value,unit:$('itemUnit').value,weight:+$('itemWeight').value||0,stock:+$('itemOpening').value||0,min:+$('itemMin').value||0});
+ ['itemCode','itemName','itemWeight','itemOpening','itemMin'].forEach(id=>$(id).value='');save();setupAllAutocomplete();
+}
+function editItem(code){
+ const i=items.find(x=>x.code===code);if(!i)return;
+ const n=prompt('Item Name',i.name);if(n===null)return;
+ const w=prompt('Weight in gram',i.weight);if(w===null)return;
+ const m=prompt('Minimum Stock',i.min);if(m===null)return;
+ i.name=n;i.weight=Number(w)||0;i.min=Number(m)||0;save();setupAllAutocomplete();
+}
+function deleteItem(code){
+ const i=items.find(x=>x.code===code);if(!i)return;
+ const deps=[];
+ const bomRows=boms.filter(b=>b.product===code||b.component===code);
+ if(bomRows.length)deps.push('BOM Master: '+bomRows.length+' row(s)');
+ const tx=transactions.filter(t=>t.item===code);
+ if(tx.length)deps.push('Transactions: '+tx.length+' entry/entries');
+ const name=i.name;
+ if(deps.length){
+   const detail=deps.join('\n');
+   const ok=confirm('આ Item delete કરી શકાતું નથી કારણ કે તેની entries છે.\\n\\n'+detail+'\\n\\nOK દબાવશો તો સંબંધિત entriesની detail દેખાશે.');
+   if(ok)showItemDependencies(code);
+   return;
+ }
+ if(confirm('Delete '+name+' ('+code+')?')){items=items.filter(x=>x.code!==code);save();}
+}
+function showItemDependencies(code){
+ const i=items.find(x=>x.code===code);if(!i)return;
+ const box=$('itemDependencyBox'),title=$('itemDependencyTitle'),body=$('itemDependencyBody');
+ title.textContent='Entries linked with: '+i.name+' ('+code+')';
+ let rows='';
+ boms.filter(b=>b.product===code||b.component===code).forEach(b=>{
+   rows+=`<tr><td>BOM</td><td>${b.product}</td><td>${b.component}</td><td>${b.qty} ${b.unit}</td><td>Delete/Edit BOM first</td></tr>`;
+ });
+ transactions.filter(t=>t.item===code).forEach(t=>{
+   rows+=`<tr><td>${t.type}</td><td>${t.date}</td><td>${t.ref}</td><td>${t.qty} ${t.unit}</td><td>Delete entry first</td></tr>`;
+ });
+ body.innerHTML=rows||'<tr><td colspan="5">No linked entries</td></tr>';
+ box.style.display='block';
+ box.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function addBomRow(){
+ const tr=document.createElement("tr");
+ tr.innerHTML='<td><div class="autowrap" style="position:relative"><input class="bomCode" placeholder="Type Component / Material"><div class="suggestbox bomSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div></td><td><input class="bomQty" type="number" step="0.001"></td><td><select class="bomUnit"><option>PCS</option><option>KG</option><option>G</option></select></td><td><button type="button" class="removeBom">Remove</button></td>';
+ tr.querySelector(".removeBom").onclick=()=>tr.remove();
+ document.getElementById("bomEntry").appendChild(tr);
+ setupAllAutocomplete();
+}
+function saveBom(){
+ let productInput=$('bomProduct').value.trim();
+const productObj=items.find(i=>i.code===productInput)||items.find(i=>i.name.toLowerCase()===productInput.toLowerCase())||items.find(i=>i.code===$('bomProduct').dataset.selectedCode);
+const product=productObj?productObj.code:productInput;
+if(productObj){$('bomProduct').value=productObj.name;$('bomProduct').dataset.selectedCode=productObj.code;}
+const rows=[...$('bomEntry').querySelectorAll('tr')].map(r=>({product,component:r.querySelector('.bomCode').value.trim(),qty:Number(r.querySelector('.bomQty').value)||0,unit:r.querySelector('.bomUnit').value}));
+ if(!product||!rows.length||rows.some(r=>!r.component||r.qty<=0))return alert('Product અને બધા BOM rows ભરો.');
+ if(!items.find(i=>i.code===product))return alert('Product Item Masterમાં નથી.');
+ rows.forEach(r=>{const ci=items.find(i=>i.code===r.component)||items.find(i=>i.name.toLowerCase()===r.component.toLowerCase());if(ci){r.component=ci.code;const row=[...document.querySelectorAll('#bomEntry tr')].find(x=>x.querySelector('.bomCode')?.value.trim()===r.component||x.querySelector('.bomCode')?.value.trim().toLowerCase()===ci.name.toLowerCase());if(row){row.querySelector('.bomCode').value=ci.name;row.querySelector('.bomCode').dataset.selectedCode=ci.code;}}});
+ if(rows.some(r=>!items.find(i=>i.code===r.component)))return alert('BOM component Item Masterમાં નથી. Suggestionમાંથી સાચું item select કરો.');
+ boms=boms.filter(b=>b.product!==product).concat(rows);$('bomEntry').innerHTML='';$('bomProduct').value='';msg('bomMsg','BOM saved successfully.');addBomRow();save();
+}
+function editBom(product){
+ const rows=boms.filter(b=>b.product===product);
+ if(!rows.length)return;
+ const prodItem=items.find(i=>i.code===product);$('bomProduct').value=prodItem?prodItem.name:product;$('bomProduct').dataset.selectedCode=product;
+ $('bomEntry').innerHTML='';
+ rows.forEach(x=>{
+   addBomRow();
+   const tr=$('bomEntry').lastElementChild;
+   const compItem=items.find(i=>i.code===x.component);tr.querySelector('.bomCode').value=compItem?compItem.name:x.component;tr.querySelector('.bomCode').dataset.selectedCode=x.component;
+   tr.querySelector('.bomQty').value=x.qty;
+   tr.querySelector('.bomUnit').value=x.unit;
+ });
+ document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+ const bomTab=document.querySelector('[data-page="bom"]');bomTab.classList.add('active');
+ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+ $('bom').classList.add('active');
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+function deleteBomProduct(product){
+ if(!confirm('Delete complete BOM for '+product+'?'))return;
+ boms=boms.filter(b=>b.product!==product);
+ save();
+}
+function deleteBom(){
+ const p=$('deleteBomProduct').value.trim();if(!p)return alert('Product Code નાખો.');
+ if(confirm('Delete BOM for '+p+'?')){boms=boms.filter(b=>b.product!==p);save();}
+}
+function addTxn(type,ref,item,qty,unit){transactions.push({id:Date.now()+Math.random(),date:new Date().toLocaleString(),type,ref,item,qty,unit});}
+function purchase(){
+ const supplier=$('purchaseSupplier').value.trim();
+ const input=$('purchaseCode').value.trim();
+ const code=$('purchaseCode').dataset.selectedCode||input;
+ const i=items.find(x=>x.code===code)||items.find(x=>String(x.name||'').toLowerCase()===input.toLowerCase());
+ const q=Number($('purchaseQty').value)||0;
+ const unit=$('purchaseUnit').value||'KG';
+ const r=Number($('purchaseRate').value)||0;
+ const ref=$('purchaseRef').value.trim();
+ if(!supplier||!i||q<=0||!ref)return alert('Supplier, Item, Quantity અને Ref નાખો.');
+ i.stock+=q;
+ addTxn('PURCHASE',ref,i.code,q,unit);
+ const t=transactions[transactions.length-1];
+ t.supplier=supplier;
+ t.purchaseRate=r;
+ t.purchaseUnit=unit;
+ save();
+ msg('purchaseMsg','Purchase saved.');renderPurchaseEntries();
+ $('purchaseQty').value='';
+ $('purchaseRate').value='';
+ $('purchaseRef').value='';
+}
+function setupProductionSuggestions(){
+ const input=document.getElementById("productionCode");
+ const box=document.getElementById("productionProductSuggestions");
+ if(!input||!box)return;
+ input.oninput=function(){
+   input.dataset.selectedCode="";
+   const q=input.value.trim().toLowerCase();
+   box.innerHTML="";
+   if(!q){box.style.display="none";return;}
+   const productCodes=[...new Set(boms.map(b=>b.product))];
+   const list=productCodes.map(code=>items.find(i=>i.code===code)).filter(Boolean)
+     .filter(i=>(i.name+" "+i.code).toLowerCase().includes(q)).slice(0,10);
+   list.forEach(i=>{
+     const d=document.createElement("div");
+     d.textContent=i.name+" — "+i.code;
+     d.style.padding="10px";
+     d.style.cursor="pointer";
+     d.onclick=function(){
+       input.value=i.name;
+       input.dataset.selectedCode=i.code;
+       box.style.display="none";
+     };
+     box.appendChild(d);
+   });
+   box.style.display=list.length?"block":"none";
+ };
+ input.onfocus=input.oninput;
+}
+
+function calculateProductionRawCost(bomRows,qty){
+ let total=0, details=[];
+ bomRows.forEach(b=>{
+   const item=rawMaterials.find(r=>r.code===b.component||r.code===b.raw);
+   if(!item)return;
+   const need=(Number(b.qty)||0)*(Number(qty)||0);
+   const unit=(b.unit||item.unit||'KG');
+   const kg=unit==='G'?need/1000:need;
+   const preview=ensureRawLots(item.code).slice();
+   let left=kg,cost=0;
+   for(const lot of preview){
+     if(left<=0)break;
+     const take=Math.min(left,Number(lot.qty)||0);
+     cost+=take*(Number(lot.rate)||0);left-=take;
+   }
+   total+=cost;details.push({code:item.code,qty:kg,cost});
+ });
+ return {total,details};
+}
+function production(){
+ const input=$('productionCode');
+ const productionInput=input.value.trim();
+ const p=items.find(x=>x.code===input.dataset.selectedCode)||items.find(x=>x.code===productionInput)||items.find(x=>x.name.toLowerCase()===productionInput.toLowerCase());
+ const q=Number($('productionQty').value)||0;
+ if(!p||q<=0)return alert('Finish Product અને Quantity નાખો.');
+
+ const rows=boms.filter(b=>b.product===p.code);
+ if(!rows.length)return alert('આ Finish Product માટે BOM બનાવેલ નથી.');
+
+ function requiredStock(b,item){
+   let n=Number(b.qty)*q;
+   const bu=(b.unit||item.unit||'PCS').toUpperCase();
+   const iu=(item.unit||'PCS').toUpperCase();
+   if(bu==='G' && iu==='KG') n=n/1000;
+   else if(bu==='KG' && iu==='G') n=n*1000;
+   else if(bu!==iu && !(bu==='PCS'&&iu==='PCS')){
+     return null;
+   }
+   return n;
+ }
+
+ const needs=rows.map(b=>({b,i:items.find(x=>x.code===b.component)}));
+ if(needs.some(x=>!x.i))return alert('BOM માંનું કોઈ item Item Masterમાં મળ્યું નથી.');
+
+ for(const x of needs){
+   const need=requiredStock(x.b,x.i);
+   if(need===null)return alert('Unit mismatch: '+x.i.name+' (Stock Unit: '+x.i.unit+', BOM Unit: '+x.b.unit+'). BOM unit અને Item Master unit match કરો.');
+   if(Number(x.i.stock)<need)return alert('Insufficient stock: '+x.i.name+' — Required '+need+' '+x.i.unit+', Available '+x.i.stock+' '+x.i.unit);
+ }
+
+ const ref='PROD-'+Date.now();
+ needs.forEach(x=>{
+   const n=requiredStock(x.b,x.i);
+   x.i.stock-=n;
+   addTxn('PRODUCTION',ref,x.i.code,-n,x.i.unit);
+ });
+ p.stock+=q;
+ addTxn('PRODUCTION',ref,p.code,q,p.unit);
+ input.value='';input.dataset.selectedCode='';$('productionQty').value='';
+ save();
+ msg('productionMsg','Production saved. BOM મુજબ stock deducted. Ref: '+ref);
+}
+function getNextDispatchBillNo(){
+ const nums=(transactions||[])
+   .filter(t=>String(t.type||'').toUpperCase()==='DISPATCH')
+   .map(t=>Number(t.billNo))
+   .filter(n=>Number.isFinite(n)&&n>0);
+ return (nums.length?Math.max(...nums):0)+1;
+}
+function showNextDispatchBillNo(){
+ const el=$('dispatchBillNo');if(el)el.value=getNextDispatchBillNo();
+}
+function dispatch(){
+ const customer=$('dispatchCustomer').value.trim();
+ const input=$('dispatchCode').value.trim();
+ const i=items.find(x=>x.code===($('dispatchCode').dataset.selectedCode||''))||items.find(x=>x.code===input)||items.find(x=>String(x.name||'').toLowerCase()===input.toLowerCase());
+ const q=Number($('dispatchQty').value)||0;
+ const r=Number($('dispatchRate').value)||0;
+ const taxRate=Number($('dispatchTaxRate').value)||0;
+ const amount=q*r;
+ const tax=amount*taxRate/100;
+ const grandTotal=amount+tax;
+ const remark=$('dispatchRemark').value.trim();
+ if(!customer||!i||q<=0||q>i.stock)return alert('Customer, Finished Good અને valid Quantity નાખો.');
+ const billNo=getNextDispatchBillNo();
+ i.stock-=q;
+ addTxn('DISPATCH','',i.code,-q,i.unit);
+ const t=transactions[transactions.length-1];
+ t.billNo=billNo;
+ t.customer=customer;
+ t.dispatchRate=r;
+ t.amount=amount;t.taxRate=taxRate;t.tax=tax;t.grandTotal=grandTotal;
+ t.remark=remark;
+ save();renderDispatchEntries();msg('dispatchMsg','Dispatch saved. Bill No. '+billNo);
+ $('dispatchQty').value='';
+ $('dispatchTaxRate').value='';$('dispatchTaxAmount').value='';$('dispatchAmount').value='';$('dispatchGrandTotal').value='';
+ $('dispatchRemark').value='';
+ showNextDispatchBillNo();
+}
+function deleteTransaction(ref){
+ const rows=transactions.filter(t=>t.ref===ref);
+ if(!rows.length)return;
+
+ const first=rows[0];
+ if(first.type==='JOB WORK ISSUE'||first.type==='JOB WORK RECEIVE'){
+   const msg=first.type==='JOB WORK ISSUE'
+     ? '⚠️ Job Work Issue delete કરશો તો તેની Vendor Stock entry પણ remove થશે અને ADR stock પાછો આવશે.\\n\\nOK કરો?'
+     : '⚠️ Job Work Receive delete કરશો તો Component Stock reverse થશે અને Vendor Stockમાં material પાછું જશે.\\n\\nOK કરો?';
+   if(!confirm(msg))return;
+ }else{
+   if(!confirm('આ transaction delete કરીને stock reverse કરવો છે?'))return;
+ }
+
+ for(const t of rows){
+   const qty=Number(t.qty)||0;
+
+   if(!String(t.item||'').startsWith('RM:') && t.type!=='JOB WORK RECEIVE'){
+     const i=items.find(x=>x.code===t.item);
+     if(i)i.stock-=qty;
+   }
+
+   if(String(t.item||'').startsWith('RM:')){
+     const code=String(t.item).replace(/^RM:/,'');
+     const r=rawMaterials.find(x=>x.code===code);
+
+     if(t.type==='JOB WORK ISSUE'){
+       const amount=Number(t.issueQty||Math.abs(qty));
+       const vendor=String(t.vendor||'').trim().toLowerCase();
+
+       // Reverse ADR stock.
+       if(r&&amount>0){
+         r.stock+=amount;
+         const lots=ensureRawLots(code);
+         const rate=Number(t.issueRate??r.rate??0);
+         lots.push({qty:amount,rate,date:new Date().toISOString()});
+         r.rate=getRawAverageRate(code);
+       }
+
+       // Remove the linked Vendor Stock balance created by this issue.
+       let remaining=amount;
+       for(const b of jobwork.slice()){
+         if(remaining<=0.000001)break;
+         if(String(b.vendor||'').trim().toLowerCase()!==vendor)continue;
+         if(String(b.raw||'').trim().toLowerCase()!==code.toLowerCase())continue;
+         const unit=String(b.unit||'KG').toUpperCase();
+         const qkg=unit==='G'?Number(b.qty||0)/1000:Number(b.qty||0);
+         const take=Math.min(qkg,remaining);
+         b.qty-=unit==='G'?take*1000:take;
+         remaining-=take;
+         if(Number(b.qty)<=0.000001)jobwork=jobwork.filter(x=>x!==b);
+       }
+     }else if(r){
+       // Normal Raw Material purchase/inward delete.
+       r.stock-=qty;
+       if(t.type==='RAW MATERIAL COMPANY INWARD'||t.type==='RAW MATERIAL PURCHASE'){
+         const lots=ensureRawLots(code);
+         const rate=Number(t.purchaseRate??t.inwardRate??t.rate??0);
+         let li=lots.findIndex(l=>Math.abs(Number(l.qty)-qty)<0.000001&&Math.abs(Number(l.rate)-rate)<0.000001);
+         if(li<0)li=lots.findIndex(l=>Math.abs(Number(l.rate)-rate)<0.000001&&Number(l.qty)>=qty);
+         if(li>=0){lots[li].qty-=qty;if(lots[li].qty<=0.000001)lots.splice(li,1);}
+       }
+       r.rate=getRawAverageRate(code);
+     }
+   }
+
+   if(t.type==='JOB WORK RECEIVE'){
+     const comp=items.find(x=>x.code===t.item);
+     if(comp)comp.stock-=qty;
+
+     // Reverse the Vendor Stock consumption from this Receive.
+     (t.rmConsumptionDetails||[]).forEach(d=>{
+       const key=String(t.vendor||'')+'|'+d.raw;
+       const b=jobwork.find(x=>x.key===key);
+       if(b)b.qty+=Number(d.qty)||0;
+       else jobwork.push({key,vendor:String(t.vendor||''),raw:d.raw,qty:Number(d.qty)||0,unit:d.unit||'KG'});
+     });
+   }
+ }
+
+ transactions=transactions.filter(t=>t.ref!==ref);
+ save();render();
+}
+function refreshDropdowns(){}
+
+document.addEventListener('click',function(e){document.querySelectorAll('.suggestbox').forEach(b=>{if(!b.parentElement.contains(e.target))b.style.display='none';});});
+
+function loadDispatchRateFromMaster(){
+ const el=$('dispatchCode'),rateEl=$('dispatchRate');if(!el||!rateEl)return;
+ const code=String(el.dataset.selectedCode||'').trim().toLowerCase();
+ const name=String(el.value||'').trim().toLowerCase();
+ const master=getFgRateMaster();
+ const x=master.find(r=>String(r.itemCode||'').trim().toLowerCase()===code)||
+         master.find(r=>String(r.itemName||'').trim().toLowerCase()===name);
+ rateEl.value=x?Number(x.rate||0).toFixed(2):'';
+ dispatchUpdateAmount();
+}
+function setupAutocomplete(input, box, filterFn){
+  if(!input || !box) return;
+  if(input.dataset.autoReady==="1") return;
+  input.dataset.autoReady="1";
+
+  function showSuggestions(){
+    const q=input.value.trim().toLowerCase();
+    box.innerHTML="";
+    if(!q){ box.style.display="none"; return; }
+
+    const matches=items.filter(filterFn).filter(i=>{
+      return (String(i.name)+" "+String(i.code)).toLowerCase().includes(q);
+    }).slice(0,10);
+
+    if(!matches.length){ box.style.display="none"; return; }
+
+    matches.forEach(i=>{
+      const row=document.createElement("div");
+      row.textContent=i.name+" — "+i.code;
+      row.style.padding="10px";
+      row.style.cursor="pointer";
+      row.onclick=function(){
+        input.value=i.name;
+        input.dataset.selectedCode=i.code;
+        box.style.display="none";
+        if(input.id==="dispatchCode") loadDispatchRateFromMaster();
+      };
+      box.appendChild(row);
+    });
+    box.style.display="block";
+  }
+
+  input.addEventListener("input",function(){
+    input.dataset.selectedCode="";
+    showSuggestions();
+  });
+  input.addEventListener("focus",showSuggestions);
+}
+
+function setupRawMaterialAutocomplete(input,box){
+ if(!input||!box||input.dataset.autoReady==="1")return;
+ input.dataset.autoReady="1";
+ function show(){
+   const q=input.value.trim().toLowerCase(); box.innerHTML="";
+   const matches=rawMaterials.filter(r=>!q || (String(r.name)+" "+String(r.code)).toLowerCase().includes(q)).slice(0,10);
+   if(!matches.length){box.style.display="none";return;}
+   matches.forEach(r=>{
+     const row=document.createElement("div"); row.textContent=r.name+" — "+r.code;
+     row.style.padding="10px";row.style.cursor="pointer";
+     row.onclick=()=>{input.value=r.name;input.dataset.selectedCode=r.code;box.style.display="none";
+       const rateEl=document.getElementById("rmPurchaseRate"); if(rateEl)rateEl.value=Number(r.rate||0).toFixed(2);};
+     box.appendChild(row);
+   }); box.style.display="block";
+ }
+ input.addEventListener("input",()=>{input.dataset.selectedCode="";show();});
+ input.addEventListener("focus",show);
+}
+function setupAllAutocomplete(){
+  setupAutocomplete(document.getElementById("bomProduct"),document.getElementById("productSuggest"),i=>i.cat==="Finished Goods");
+  const bp=document.getElementById("bomProduct"), bs=document.getElementById("productSuggest");
+  if(bp && bs && !bp.dataset.fgAddReady){
+    bp.dataset.fgAddReady="1";
+    bp.addEventListener("input",()=>{
+      setTimeout(()=>{
+        const q=bp.value.trim(); if(!q)return;
+        const exists=items.some(i=>String(i.name||"").trim().toLowerCase()===q.toLowerCase()&&i.cat==="Finished Goods");
+        if(exists)return;
+        let btn=document.getElementById("addBomProductFG");
+        if(!btn){btn=document.createElement("div");btn.id="addBomProductFG";btn.style.cssText="padding:9px;background:#eef6ff;border:1px solid #c8dcf5;cursor:pointer;font-weight:600";bs.appendChild(btn);}
+        btn.textContent='➕ Add "'+q+'" as Finished Goods';
+        btn.onclick=()=>{
+          const code="FG-"+Date.now().toString().slice(-6);
+          items.push({code,name:q,cat:"Finished Goods",unit:"PCS",weight:0,stock:0,min:0});
+          save();refreshDropdowns();bp.value=q;bp.dataset.selectedCode=code;bs.style.display="none";render();
+        };
+        bs.style.display="block";
+      },80);
+    });
+  }
+  setupAutocomplete(document.getElementById("purchaseCode"),document.getElementById("itemSuggestPurchase"),i=>true);
+  setupAutocomplete(document.getElementById("productionCode"),document.getElementById("productSuggestProduction"),i=>i.cat==="Finished Goods");
+  setupAutocomplete(document.getElementById("dispatchCode"),document.getElementById("productSuggestDispatch"),i=>i.cat==="Finished Goods");
+  const dc=document.getElementById("dispatchCode");
+  if(dc){dc.addEventListener("change",loadDispatchRateFromMaster);dc.addEventListener("blur",function(){setTimeout(loadDispatchRateFromMaster,100);});}
+
+  setupRawMaterialAutocomplete(document.getElementById("rmPurchase"),document.getElementById("rmPurchaseSuggest"));
+  setupAutocomplete(document.getElementById("jwComponent"),document.getElementById("componentSuggest"),i=>true);
+  document.querySelectorAll(".bomCode").forEach(input=>{
+    const box=input.parentElement.querySelector(".bomSuggest"); setupAutocomplete(input,box,i=>true);
+  });
+}
+
+
+function setupVendorSuggest(inputId,boxId){
+ const input=$(inputId),box=$(boxId);if(!input||!box)return;
+ input.addEventListener('input',function(){const q=input.value.trim().toLowerCase();box.innerHTML='';if(!q){box.style.display='none';return;}
+  const list=vendors.filter(v=>v.name.toLowerCase().includes(q)).slice(0,10);
+  list.forEach(v=>{const d=document.createElement('div');d.textContent=v.name;d.style.padding='10px';d.onclick=()=>{input.value=v.name;box.style.display='none';};box.appendChild(d);});
+  box.style.display=list.length?'block':'none';
+ });
+}
+function setupItemSuggest(inputId,boxId,filter){
+ const input=$(inputId),box=$(boxId);if(!input||!box)return;
+ input.addEventListener('input',function(){const q=input.value.trim().toLowerCase();box.innerHTML='';if(!q){box.style.display='none';return;}
+  const list=items.filter(filter).filter(i=>(i.name+' '+i.code).toLowerCase().includes(q)).slice(0,10);
+  list.forEach(i=>{const d=document.createElement('div');d.textContent=i.name+' — '+i.code;d.style.padding='10px';d.onclick=()=>{input.value=i.name;input.dataset.selectedCode=i.code;box.style.display='none';if(inputId==='jwComponent'){ $('jwComponentWeight').value=i.weight||0; updateJWConsumption(); }};box.appendChild(d);});
+  box.style.display=list.length?'block':'none';
+ });
+}
+function setupRawMaterialSuggest(inputId,boxId){
+ const input=$(inputId),box=$(boxId);if(!input||!box)return;
+ input.addEventListener('input',function(){const q=input.value.trim().toLowerCase();box.innerHTML='';if(!q){box.style.display='none';return;}
+  const list=rawMaterials.filter(i=>(i.name+' '+i.code).toLowerCase().includes(q)).slice(0,10);
+  list.forEach(i=>{const d=document.createElement('div');d.textContent=i.name+' — '+i.code;d.style.padding='10px';d.onclick=()=>{input.value=i.name;input.dataset.selectedCode=i.code;box.style.display='none';};box.appendChild(d);});
+  box.style.display=list.length?'block':'none';
+ });
+}
+function setupJobWorkSuggestions(){
+ setupVendorSuggest('jwVendor','vendorSuggest');setupVendorSuggest('jwIssueVendor','issueVendorSuggest');setupVendorSuggest('jwReceiveVendor','receiveVendorSuggest');
+ setupRawMaterialSuggest('jwRaw','rawSuggest');
+ setupItemSuggest('jwComponent','componentSuggest',i=>i.cat==='Component'||i.cat==='Finished Goods');
+}
+function addVendor(){
+ const name=$('jwVendor').value.trim();if(!name)return alert('Vendor Name નાખો.');
+ if(vendors.some(v=>v.name.toLowerCase()===name.toLowerCase()))return alert('Vendor already exists.');
+ vendors.push({id:Date.now(),name});save();$('jwVendor').value='';alert('Vendor Masterમાં add થયું.');
+}
+function updateJWConsumption(){
+ const comp=items.find(i=>i.code===$('jwComponent').dataset.selectedCode)||findItemByText($('jwComponent').value);
+ const qty=Number($('jwReceiveQty').value)||0;
+ const grams=(Number(comp?.weight)||0)*qty;
+ $('jwComponentWeight').value=comp?Number(comp.weight||0):'';
+ $('jwConsumption').textContent=comp&&qty>0?'Raw Material Consumption: '+grams.toFixed(3)+' gram ('+(grams/1000).toFixed(3)+' KG)':'';
+}
+function setupRawPurchaseSuggest(){
+ const input=$('rmPurchase'),box=$('rmPurchaseSuggest'); if(!input||!box)return;
+ input.addEventListener('input',function(){
+   input.dataset.selectedCode='';
+   const q=input.value.trim().toLowerCase(); box.innerHTML='';
+   if(!q){box.style.display='none';return;}
+   const list=rawMaterials.filter(r=>(r.name+' '+r.code).toLowerCase().includes(q)).slice(0,10);
+   list.forEach(r=>{
+     const d=document.createElement('div'); d.textContent=r.name+' — '+r.code; d.style.padding='10px';
+     d.onclick=()=>{input.value=r.name;input.dataset.selectedCode=r.code;$('rmPurchaseRate').value=getRawAverageRate(r.code)||r.rate||'';box.style.display='none';};
+     box.appendChild(d);
+   });
+   box.style.display=list.length?'block':'none';
+ });
+}
+function purchaseRawMaterial(){
+ const supplier=$('rmPurchaseSupplier').value.trim();
+ const input=$('rmPurchase');
+ const r=rawMaterials.find(x=>x.code===(input.dataset.selectedCode||input.value.trim()))||
+         rawMaterials.find(x=>x.name.toLowerCase()===input.value.trim().toLowerCase());
+ const qty=Number($('rmPurchaseQty').value)||0;
+ const rate=Number($('rmPurchaseRate').value)||0;
+ if(!supplier)return alert('Supplier select કરો.');
+ if(!r)return alert('Raw Material select કરો.');
+ if(qty<=0)return alert('Quantity નાખો.');
+ if(rate<0)return alert('Rate ખોટો છે.');
+ r.stock=Number(r.stock||0)+qty;
+ addRawMaterialLot(r.code,qty,rate);
+ r.rate=getRawAverageRate(r.code);
+ const ref='RMI-'+String(++rmPurchaseNo).padStart(5,'0');
+ addTxn('RAW MATERIAL COMPANY INWARD',ref,'RM:'+r.code,qty,r.unit);
+ const tr=transactions[transactions.length-1];
+ tr.supplier=supplier;
+ tr.inwardRate=rate;
+ tr.inwardRef=$('rmPurchaseRef').value.trim();
+ tr.amount=qty*rate;
+ save();
+ msg('rmPurchaseMsg','Raw Material Stock add થયું. No: '+ref+' | '+r.name+' | '+qty.toFixed(3)+' '+r.unit+' | Rate ₹'+rate.toFixed(3)+' | Total Stock '+Number(r.stock).toFixed(3));
+ $('rmPurchaseSupplier').value='';$('rmPurchaseSupplier').dataset.selectedSupplier='';$('rmPurchase').value='';$('rmPurchase').dataset.selectedCode='';$('rmPurchaseQty').value='';$('rmPurchaseRate').value='';$('rmPurchaseRef').value='';
+}
+function addRawMaterial(){
+ const code=$('rmCode').value.trim(),name=$('rmName').value.trim();
+ const rate=Number($('rmRate').value)||0,opening=Number($('rmOpening').value)||0;
+ if(!code||!name)return alert('Material Code અને Material Name નાખો.');
+ if(rawMaterials.some(x=>x.code===code))return alert('Material Code already exists.');
+ rawMaterials.push({code,name,unit:$('rmUnit').value,rate,stock:opening,min:Number($('rmMin').value)||0});
+ if(opening>0)addRawMaterialLot(code,opening,rate);
+ save();['rmCode','rmName','rmRate','rmOpening','rmMin'].forEach(id=>$(id).value='');
+ render();refreshDropdowns();
+}
+function editRawMaterial(code){
+ const r=rawMaterials.find(x=>x.code===code);if(!r)return;
+ const n=prompt('Material Name',r.name);if(n===null)return;
+ const rate=prompt('Rate / KG',r.rate);if(rate===null)return;
+ const min=prompt('Minimum Stock',r.min);if(min===null)return;
+ r.name=n;r.rate=Number(rate)||0;r.min=Number(min)||0;save();
+}
+function deleteRawMaterial(code){
+ if(jobwork.some(x=>x.raw===code)||transactions.some(t=>t.item===code))return alert('આ Raw Material transaction/job workમાં વપરાયેલ છે.');
+ if(confirm('Delete '+code+'?')){rawMaterials=rawMaterials.filter(x=>x.code!==code);save();}
+}
+function findItemByText(v){v=v.trim().toLowerCase();return items.find(i=>i.code.toLowerCase()===v)||items.find(i=>i.name.toLowerCase()===v);}
+function issueToVendor(){
+ const vendor=$('jwIssueVendor').value.trim();
+ const raw=rawMaterials.find(x=>x.code===$('jwRaw').dataset.selectedCode)||rawMaterials.find(x=>x.code===$('jwRaw').value.trim())||rawMaterials.find(x=>x.name.toLowerCase()===$('jwRaw').value.trim().toLowerCase());
+ const qty=Number($('jwIssueQty').value)||0;const ref='JW-'+String(++jwIssueNo).padStart(5,'0');
+ if(!vendor||!raw||qty<=0)return alert('Vendor, Raw Material અને Qty નાખો.');
+ if(raw.stock<qty)return alert('Company raw material stock ઓછો છે.');
+ raw.stock-=qty;
+ const key=vendor+'|'+raw.code,old=jobwork.find(x=>x.key===key);
+ if(old)old.qty+=qty;else jobwork.push({key,vendor,raw:raw.code,qty,unit:raw.unit});
+ addTxn('JOB WORK ISSUE',ref,'RM:'+raw.code,-qty,raw.unit);
+ const _issueTxn=transactions[transactions.length-1];
+ _issueTxn.vendor=vendor;
+ _issueTxn.issueRate=Number(raw.rate||0);
+ _issueTxn.issueQty=qty;
+ save();msg('jwIssueMsg','Raw Material vendorને issue થયું. Challan No: '+ref);
+ $('jwIssueVendor').value='';$('jwRaw').value='';$('jwIssueQty').value='';
+}
+function setupRateSuggestions(){
+ setupVendorSuggest('rateVendor','rateVendorSuggest');
+ setupItemSuggest('rateComponent','rateComponentSuggest',i=>i.cat==='Component'||i.cat==='Finished Goods');
+}
+function getJobWorkRate(vendor,code){
+ const v=String(vendor||'').trim().toLowerCase();
+ const c=String(code||'').trim().toLowerCase();
+ const item=items.find(i=>String(i.code).toLowerCase()===c)||items.find(i=>String(i.name).trim().toLowerCase()===c);
+ const itemCode=item?String(item.code).toLowerCase():c;
+ const r=jobworkRates.find(x=>
+   String(x.vendor||'').trim().toLowerCase()===v &&
+   String(x.component||'').trim().toLowerCase()===itemCode
+ );
+ return r?Number(r.rate):0;
+}
+function saveJobWorkRate(){
+ const vendorInput=$('rateVendor').value.trim();
+ const comp=findItemByText($('rateComponent').value);
+ const rate=Number($('rateValue').value)||0;
+ const vObj=vendors.find(v=>v.name.toLowerCase()===vendorInput.toLowerCase());
+ const vendor=vObj?vObj.name:vendorInput;
+ if(!vendor||!comp||rate<=0)return alert('Vendor, Component અને Rate નાખો.');
+ const old=jobworkRates.find(x=>x.vendor.toLowerCase()===vendor.toLowerCase()&&x.component===comp.code);
+ if(old)old.rate=rate;else jobworkRates.push({vendor,component:comp.code,rate});
+ save();renderJobWorkRates();
+ renderPurchaseEntries();msg('rateMsg','Job Work Rate Masterમાં save થયું: '+vendor+' → '+comp.name+' = ₹'+rate.toFixed(3));
+ $('rateVendor').value='';$('rateComponent').value='';$('rateValue').value='';
+}
+function renderJobWorkRates(){
+ if(!$('rateTable'))return;
+ $('rateTable').innerHTML=jobworkRates.map((r,idx)=>{
+  const c=items.find(i=>i.code===r.component);
+  return `<tr><td>${r.vendor}</td><td>${c?c.name:r.component}</td><td>₹${fmtRate2(r.rate)}</td><td><button data-rate-del="${idx}">🗑 Delete</button></td></tr>`;
+ }).join('');
+ document.querySelectorAll('[data-rate-del]').forEach(b=>b.onclick=()=>{if(confirm('Delete this rate?')){jobworkRates.splice(Number(b.dataset.rateDel),1);save();}});
+}
+function receiveFromVendor(){
+ const vendor=$('jwReceiveVendor').value.trim();
+ const comp=items.find(i=>i.code===$('jwComponent').dataset.selectedCode)||findItemByText($('jwComponent').value);
+ const qty=Number($('jwReceiveQty').value)||0;
+ const rate=getJobWorkRate(vendor,comp?comp.code:'');
+ $('jwJobRate').value=rate>0?rate.toFixed(2):'Rate not set';
+ if(!vendor||!comp||qty<=0)return alert('Vendor, Component અને Qty નાખો.');
+ if(rate<=0)return alert('આ Vendor + Component માટે Rate set નથી.');
+ if(!comp.weight)return alert('Componentનું Weight Item Masterમાં add કરો.');
+
+ const consumptionKG=(Number(comp.weight)*qty)/1000;
+ const balances=jobwork.filter(x=>x.vendor.toLowerCase()===vendor.toLowerCase()&&Number(x.qty)>0.000001);
+ let remaining=consumptionKG,rawCost=0,details=[];
+
+ // IMPORTANT:
+ // Raw material is deducted from ADR stock ONLY at Job Work Issue.
+ // At Component Receive, deduct ONLY Vendor Stock.
+ for(const b of balances){
+   if(remaining<=0)break;
+   const raw=rawMaterials.find(i=>i.code===b.raw);if(!raw)continue;
+   const unit=b.unit||raw.unit||'KG';
+   const availableKG=String(unit).toUpperCase()==='G'?Number(b.qty)/1000:Number(b.qty);
+   const takeKG=Math.min(availableKG,remaining);
+   if(takeKG<=0)continue;
+
+   // Calculate FIFO costing without changing ADR stock/lots.
+   let left=takeKG,cost=0;
+   for(const lot of ensureRawLots(raw.code)){
+     if(left<=0)break;
+     const take=Math.min(left,Number(lot.qty)||0);
+     cost+=take*(Number(lot.rate)||0);
+     left-=take;
+   }
+   rawCost+=cost;
+
+   if(String(unit).toUpperCase()==='G')b.qty-=takeKG*1000;else b.qty-=takeKG;
+   remaining-=takeKG;
+   details.push({raw:raw.code,qty:takeKG,unit:'KG',rate:takeKG?cost/takeKG:0});
+ }
+ if(remaining>0.000001)return alert('Vendor પાસે Raw Material ઓછું છે. Required '+consumptionKG.toFixed(3)+' KG.');
+
+ const ref='JWR-'+String(++jwReceiveNo).padStart(5,'0');
+ comp.stock+=qty;
+ const amount=qty*rate;
+ addTxn('JOB WORK RECEIVE',ref,comp.code,qty,comp.unit);
+ const tr=transactions[transactions.length-1];
+ tr.jobRate=rate;tr.jobAmount=amount;tr.vendor=vendor;tr.rmConsumed=consumptionKG;
+ tr.rawMaterialCost=rawCost;tr.componentCost=(rawCost/qty)||0;tr.rmConsumptionDetails=details;
+ save();
+ msg('jwReceiveMsg','Component received. Challan No: '+ref+' | Rate ₹'+rate.toFixed(2)+' | Job Work ₹'+amount.toFixed(2)+' | Material Cost ₹'+rawCost.toFixed(2)+' | ADR stock unchanged.');
+ $('jwReceiveVendor').value='';$('jwComponent').value='';$('jwComponentWeight').value='';$('jwReceiveQty').value='';$('jwJobRate').value='';$('jwConsumption').textContent='';$('jwJobAmount').textContent='';
+}
+function showDashboardFilter(type){
+ const box=$('dashboardDetails'),title=$('dashboardDetailsTitle'),table=$('dashboardDetailsTable');
+ let list=[],label='';
+ if(type==='raw'){list=rawMaterials.map(r=>({code:r.code,name:r.name,cat:'Raw Material',unit:r.unit,weight:'-',stock:r.stock,min:r.min}));label='Raw Material Stock';} else if(type==='vendor'){
+ const by={};
+ jobwork.filter(x=>Number(x.qty)>0.000001).forEach(x=>{
+   const kg=String(x.unit).toUpperCase()==='G'?Number(x.qty)/1000:Number(x.qty);
+   const key=x.vendor+'|'+x.raw; by[key]=(by[key]||0)+kg;
+ });
+ list=Object.entries(by).map(([key,stock])=>{
+   const [vendor,raw]=key.split('|'); const r=rawMaterials.find(i=>i.code===raw);
+   return {code:vendor,name:r?r.name:raw,cat:'Vendor Raw Material',unit:'KG',weight:'-',stock:stock,min:'-'};
+ });
+ label='Vendor Raw Material Stock';
+}
+ else if(type==='fg'){list=items.filter(i=>i.cat==='Finished Goods').map(i=>({code:i.code,name:i.name,cat:i.cat,unit:i.unit,weight:i.weight,stock:i.stock,min:i.min}));label='Finished Goods Stock';}
+ else if(type==='low'){
+   const rm=rawMaterials.filter(r=>Number(r.stock)<=Number(r.min)).map(r=>({code:r.code,name:r.name,cat:'Raw Material',unit:r.unit,weight:'-',stock:r.stock,min:r.min}));
+   const it=items.filter(i=>Number(i.stock)<=Number(i.min)).map(i=>({code:i.code,name:i.name,cat:i.cat,unit:i.unit,weight:i.weight,stock:i.stock,min:i.min}));
+   list=rm.concat(it);label='Low Stock Items';
+ } else {
+   list=items.map(i=>({code:i.code,name:i.name,cat:i.cat,unit:i.unit,weight:i.weight,stock:i.stock,min:i.min}));label='All Items';
+ }
+ title.textContent=label;table.innerHTML=list.length?list.map(i=>`<tr><td>${i.code}</td><td>${i.name}</td><td>${i.cat}</td><td>${i.unit}</td><td>${i.weight}</td><td>${i.stock}</td><td>${i.min}</td></tr>`).join(''):'<tr><td colspan="7">No data</td></tr>';
+ box.style.display='block';
+}
+function setupDashboardCards(){
+ document.querySelectorAll('.dashCard').forEach(c=>c.onclick=()=>showDashboardFilter(c.dataset.filter));
+}
+function deletePurchase(id){
+ const t=transactions.find(x=>String(x.id)===String(id));
+ if(!t)return;
+ const code=String(t.item||'').replace(/^RM:/,'');
+ const r=rawMaterials.find(x=>x.code===code);
+ if(!r)return;
+ if(Number(r.stock)<Number(t.qty))return alert('આ inward delete કરવાથી stock negative થશે.');
+ if(!confirm('આ inward entry delete કરીને stock reverse કરવો છે?'))return;
+ r.stock-=Number(t.qty)||0;
+ const lots=ensureRawLots(code);
+ const rate=Number(t.purchaseRate??t.inwardRate??t.rate??0);
+ let idx=lots.findIndex(l=>Math.abs(Number(l.qty)-Number(t.qty))<0.000001&&Math.abs(Number(l.rate)-rate)<0.000001);
+ if(idx<0)idx=lots.findIndex(l=>Math.abs(Number(l.rate)-rate)<0.000001&&Number(l.qty)>=Number(t.qty));
+ if(idx>=0){
+   lots[idx].qty-=Number(t.qty);
+   if(lots[idx].qty<=0.000001)lots.splice(idx,1);
+ }
+ r.rate=getRawAverageRate(code);
+ transactions=transactions.filter(x=>String(x.id)!==String(id));
+ save();render();
+}
+
+
+function updateAutoJobRate(){
+ const v=$('jwReceiveVendor').value.trim();
+ const c=findItemByText($('jwComponent').value);
+ const rate=c?getJobWorkRate(v,c.code):0;
+ $('jwJobRate').value=rate>0?rate.toFixed(3):'Rate not set';
+}
+function setupReportSelectors(){
+ const now=new Date(), y=now.getFullYear(), m=now.getMonth();
+ const sel=$('reportMonth'); if(!sel)return;
+ sel.innerHTML='';
+ for(let k=0;k<24;k++){
+   const d=new Date(y,m-k,1), val=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+   const opt=document.createElement('option');opt.value=val;opt.textContent=d.toLocaleString('en-IN',{month:'long',year:'numeric'});sel.appendChild(opt);
+ }
+ $('reportVendor').innerHTML='<option value="">All Vendors</option>'+vendors.map(v=>`<option value="${v.name}">${v.name}</option>`).join('');
+}
+
+function updateAutoJobRate(){
+ const v=$('jwReceiveVendor').value.trim(), c=findItemByText($('jwComponent').value);
+ const rate=c?getJobWorkRate(v,c.code):0;
+ $('jwJobRate').value=rate?rate.toFixed(3):'Rate not set';
+}
+function setupReportSelectors(){
+ const now=new Date(), y=now.getFullYear(), m=now.getMonth();
+ const sel=$('reportMonth'); if(!sel)return;
+ sel.innerHTML='';
+ for(let k=0;k<24;k++){
+   const d=new Date(y,m-k,1);
+   const val=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+   const opt=document.createElement('option');
+   opt.value=val; opt.textContent=d.toLocaleString('en-IN',{month:'long',year:'numeric'});
+   sel.appendChild(opt);
+ }
+ $('reportVendor').innerHTML='<option value="">All Vendors</option>'+vendors.map(v=>`<option value="${v.name}">${v.name}</option>`).join('');
+}
+function generateJWReport(){
+ const month=$('reportMonth').value;
+ const vendor=$('reportVendor').value;
+ if(!month){alert('Month select કરો.');return;}
+ const rows=transactions.filter(t=>{
+   if(t.type!=='JOB WORK RECEIVE')return false;
+   const d=new Date(t.date);
+   if(isNaN(d.getTime()))return false;
+   const ym=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+   return ym===month && (!vendor||t.vendor===vendor);
+ });
+ const grouped={};
+ rows.forEach(t=>{
+   const key=(t.vendor||'Unknown')+'|'+t.item;
+   if(!grouped[key])grouped[key]={vendor:t.vendor||'Unknown',item:t.item,qty:0,amount:0,rm:0};
+   grouped[key].qty+=Number(t.qty)||0;
+   grouped[key].amount+=Number(t.jobAmount)||0;
+   grouped[key].rm+=Number(t.rmConsumed)||0;
+ });
+ const data=Object.values(grouped);
+ $('jwReportTable').innerHTML=data.length?data.map(x=>{
+   const it=items.find(i=>i.code===x.item);
+   const rate=x.qty?x.amount/x.qty:0;
+   return `<tr><td>${x.vendor}</td><td>${it?it.name:x.item}</td><td>${x.qty.toFixed(3)}</td><td>₹${rate.toFixed(3)}</td><td>₹${x.amount.toFixed(2)}</td><td>${x.rm.toFixed(3)}</td></tr>`;
+ }).join(''):'<tr><td colspan="6">No Job Work Receive entries for selected month.</td></tr>';
+ const tq=data.reduce((a,x)=>a+x.qty,0);
+ const ta=data.reduce((a,x)=>a+x.amount,0);
+ const trm=data.reduce((a,x)=>a+x.rm,0);
+ $('jwReportQty').textContent=tq.toFixed(3);
+ $('jwReportAmount').textContent='₹'+ta.toFixed(2);
+ $('jwReportRM').textContent=trm.toFixed(3)+' KG';
+ const d=new Date(month+'-01T00:00:00');
+ $('jwReportHeader').innerHTML='<p><b>Month:</b> '+d.toLocaleString('en-IN',{month:'long',year:'numeric'})+' &nbsp; <b>Vendor:</b> '+(vendor||'All Vendors')+' &nbsp; <b>Entries:</b> '+rows.length+'</p>';
+ $('reports').style.display='block';
+}
+
+
+function productionReportItemAutocomplete(){
+ const input=$('prodReportProduct'),box=$('prodReportProductSuggest');
+ if(!input||!box)return;
+ function show(){
+   const q=input.value.trim().toLowerCase();
+   box.innerHTML='';
+   if(!q){box.style.display='none';return;}
+   const list=(items||[]).filter(i=>{
+     if(String(i.cat||'')!=='Finished Goods')return false;
+     return String(i.name||'').toLowerCase().includes(q)||String(i.code||'').toLowerCase().includes(q);
+   }).slice(0,12);
+   list.forEach(i=>{
+     const d=document.createElement('div');
+     d.textContent=String(i.name||'')+' — '+String(i.code||'');
+     d.style.cssText='padding:10px 12px;background:#fff;color:#111;border-bottom:1px solid #ddd;cursor:pointer;';
+     d.onmousedown=e=>{e.preventDefault();input.value=String(i.name||'');input.dataset.selectedCode=String(i.code||'');box.style.display='none';};
+     box.appendChild(d);
+   });
+   box.style.display=list.length?'block':'none';
+ }
+ input.addEventListener('input',show);
+ input.addEventListener('focus',show);
+ input.addEventListener('keyup',show);
+ document.addEventListener('click',e=>{if(e.target!==input&&!box.contains(e.target))box.style.display='none';});
+}
+function generateProductionReport(){
+ const from=$('prodReportFrom').value;
+ const to=$('prodReportTo').value;
+ const productQ=$('prodReportProduct').value.trim().toLowerCase();
+
+ const rows=transactions.filter(t=>{
+   if(t.type!=='PRODUCTION')return false;
+   const prodItem=items.find(i=>i.code===t.item);
+   if(!prodItem || prodItem.cat!=='Finished Goods')return false;
+   const d=new Date(t.date);
+   if(isNaN(d.getTime()))return false;
+   const ds=d.toISOString().slice(0,10);
+   if(from&&ds<from)return false;
+   if(to&&ds>to)return false;
+   if(productQ){
+     const it=items.find(i=>i.code===t.item);
+     const name=(it?it.name:t.item).toLowerCase();
+     if(!name.includes(productQ))return false;
+   }
+   return true;
+ });
+
+ let total=0;
+ const body=rows.slice().reverse().map(t=>{
+   const it=items.find(i=>i.code===t.item);
+   const qty=Math.abs(Number(t.qty)||0); total+=qty;
+   let cons='';
+   if(Array.isArray(t.materialConsumption)){
+     cons=t.materialConsumption.map(x=>{
+       const mi=items.find(i=>i.code===x.code)||rawMaterials.find(i=>i.code===x.code);
+       return (mi?mi.name:x.code)+' × '+Number(x.qty||0).toFixed(3);
+     }).join('<br>');
+   }else if(Array.isArray(t.bomConsumption)){
+     cons=t.bomConsumption.map(x=>{
+       const mi=items.find(i=>i.code===x.code)||rawMaterials.find(i=>i.code===x.code);
+       return (mi?mi.name:x.code)+' × '+Number(x.qty||0).toFixed(3);
+     }).join('<br>');
+   }else cons='-';
+   return `<tr><td>${t.date||''}</td><td>${t.ref||''}</td><td>${it?it.name:t.item}</td><td>${qty.toFixed(3)}</td><td>${t.unit||'PCS'}</td></tr>`;
+ }).join('');
+
+ $('productionReportTable').querySelector('tbody').innerHTML=body||'<tr><td colspan="5">No Finished Goods production entries found.</td></tr>';
+ $('productionReportTotal').textContent=total.toFixed(3);
+ $('productionReportMsg').textContent=rows.length+' production entries found.';
+}
+
+
+
+function getPurchaseEntries(){
+ return (transactions||[]).filter(t=>{
+   const type=String(t.type||t.transactionType||'').toUpperCase();
+   return type==='PURCHASE' || type==='PURCHASE ENTRY' || type==='PURCHASE_ENTRY';
+ });
+}
+function renderPurchaseEntries(){
+ const body=$('purchaseEntryTable')?.querySelector('tbody');if(!body)return;
+ const rows=transactions.filter(t=>t.type==='PURCHASE').slice().reverse();
+ body.innerHTML=rows.map((t,idx)=>{
+   const it=items.find(i=>i.code===t.item);
+   const qty=Math.abs(Number(t.qty)||0),rate=Number(t.purchaseRate||0),amount=qty*rate;
+   const id=String(t.id||t.ref||('PURCHASE-'+idx));
+   return `<tr>
+   <td>${t.date||''}</td><td>${t.supplier||''}</td><td>${it?it.name:(t.item||'')}</td>
+   <td>${qty.toFixed(3)}</td><td>${t.purchaseUnit||t.unit||''}</td>
+   <td>₹${fmtRate2(rate)}</td><td>₹${amount.toFixed(2)}</td><td>${t.ref||''}</td>
+   <td><button type="button" data-purchase-edit="${id}">✏️ Edit</button>
+   <button type="button" data-purchase-delete="${id}">🗑 Delete</button></td></tr>`;
+ }).join('')||'<tr><td colspan="10">No purchase entries</td></tr>';
+
+ document.querySelectorAll('[data-purchase-edit]').forEach(btn=>btn.onclick=()=>{
+   const id=btn.dataset.purchaseEdit;
+   const t=transactions.find(x=>String(x.id||x.ref)===id);
+   if(!t)return;
+   const supplier=prompt('Supplier Name:',t.supplier||'');if(supplier===null)return;
+   const qty=prompt('Quantity:',Math.abs(Number(t.qty)||0));if(qty===null)return;
+   const unit=prompt('Unit (KG / PCS):',t.purchaseUnit||t.unit||'KG');if(unit===null)return;
+   const rate=prompt('Rate:',Number(t.purchaseRate||0).toFixed(2));if(rate===null)return;
+   const ref=prompt('Invoice / Ref:',t.ref||'');if(ref===null)return;
+
+   const oldQty=Math.abs(Number(t.qty)||0);
+   const it=items.find(i=>i.code===t.item);
+   if(it)it.stock-=oldQty;
+   t.supplier=supplier.trim();
+   t.qty=Number(qty)||0;
+   t.purchaseUnit=String(unit).toUpperCase()==='PCS'?'PCS':'KG';
+   t.unit=t.purchaseUnit;
+   t.purchaseRate=Number(rate)||0;
+   t.ref=ref.trim();
+   if(it)it.stock+=t.qty;
+   save();
+   renderPurchaseEntries();
+ });
+
+ document.querySelectorAll('[data-purchase-delete]').forEach(btn=>btn.onclick=()=>{
+   const id=btn.dataset.purchaseDelete;
+   const t=transactions.find(x=>String(x.id||x.ref)===id);
+   if(!t)return;
+   if(!confirm('આ Purchase entry delete કરીને stock reverse કરવો છે?'))return;
+   const it=items.find(i=>i.code===t.item);
+   if(it)it.stock-=Math.abs(Number(t.qty)||0);
+   const ix=transactions.indexOf(t);
+   if(ix>=0)transactions.splice(ix,1);
+   save();
+   renderPurchaseEntries();
+ });
+}
+
+function purchaseReportSupplierAutocomplete(){
+ const input=$('purchaseReportSupplier'),box=$('purchaseReportSupplierSuggest');
+ if(!input||!box)return;
+ function suppliers(){
+   let a=[];
+   ['adr_supplier_master_v1','adr_purchase_master_v4','adr_purchase_master_v3','adr_purchase_master_v2','adr_suppliers_v1'].forEach(k=>{
+     try{const x=JSON.parse(localStorage.getItem(k)||'[]');if(Array.isArray(x))a=a.concat(x);}catch(e){}
+   });
+   const seen=new Set();
+   return a.map(x=>String(x.name||x.supplier||'').trim()).filter(n=>n&&!seen.has(n.toLowerCase())&&seen.add(n.toLowerCase()));
+ }
+ function show(){
+   const q=input.value.trim().toLowerCase();box.innerHTML='';
+   if(!q){box.style.display='none';return;}
+   const list=suppliers().filter(n=>n.toLowerCase().includes(q)).slice(0,12);
+   list.forEach(n=>{
+     const d=document.createElement('div');
+     d.textContent=n;
+     d.style.cssText='padding:10px 12px;background:#fff;color:#111;border-bottom:1px solid #ddd;cursor:pointer;';
+     d.onmousedown=e=>{e.preventDefault();input.value=n;box.style.display='none';};
+     box.appendChild(d);
+   });
+   box.style.display=list.length?'block':'none';
+ }
+ input.addEventListener('input',show);
+ input.addEventListener('focus',show);
+ input.addEventListener('keyup',show);
+ document.addEventListener('click',e=>{if(e.target!==input&&!box.contains(e.target))box.style.display='none';});
+}
+function generatePurchaseReport(){
+ try{
+  const from=$('purchaseReportFrom')?.value||'',to=$('purchaseReportTo')?.value||'';
+  const sq=String($('purchaseReportSupplier')?.value||'').trim().toLowerCase();
+  const toISO=v=>{
+   const s=String(v||'').trim();
+   let m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+   if(m){
+    const a=Number(m[1]),b=Number(m[2]),y=m[3];
+    const mm=a>12?b:a,dd=a>12?a:b;
+    return y+'-'+String(mm).padStart(2,'0')+'-'+String(dd).padStart(2,'0');
+   }
+   m=s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+   return m?m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0'):'';
+  };
+  const rows=(transactions||[]).filter(t=>{
+   const typ=String(t.type||t.transactionType||'').toUpperCase();
+   const ok=typ==='PURCHASE'||typ==='PURCHASE ENTRY'||typ==='PURCHASE_ENTRY'||t.supplier!=null;
+   if(!ok)return false;
+   const d=toISO(t.date||t.createdAt||t.timestamp),s=String(t.supplier||t.supplierName||'').toLowerCase();
+   return (!from||!d||d>=from)&&(!to||!d||d<=to)&&(!sq||s.includes(sq));
+  });
+  let q=0,a=0,s='';
+  rows.slice().reverse().forEach(t=>{
+   const it=(items||[]).find(x=>String(x.code||'')===String(t.item||t.itemCode||''));
+   const n=Math.abs(Number(t.qty??t.quantity)||0),r=Number(t.purchaseRate??t.rate??0),amt=n*r;q+=n;a+=amt;
+   s+=`<tr><td>${t.date||''}</td><td>${t.supplier||t.supplierName||''}</td><td>${it?.name||t.itemName||t.item||''}</td><td>${n.toFixed(3)}</td><td>${t.purchaseUnit||t.unit||''}</td><td>₹${r.toFixed(2)}</td><td>₹${amt.toFixed(2)}</td><td>${t.ref||t.invoice||''}</td></tr>`;
+  });
+  $('purchaseReportTable').querySelector('tbody').innerHTML=s||'<tr><td colspan="8">No purchase entries found</td></tr>';
+  $('purchaseReportQty').textContent=q.toFixed(3);$('purchaseReportAmount').textContent='₹'+a.toFixed(2);
+  $('purchaseReportMsg').textContent=rows.length+' purchase entries found.';
+ }catch(e){if($('purchaseReportMsg'))$('purchaseReportMsg').textContent='Report error: '+e.message;}
+}
+
+function generatePurchaseInlineReport(){
+ const from=$('purchaseInlineFrom')?.value||'',to=$('purchaseInlineTo')?.value||'';
+ const supplier=($('purchaseInlineSupplier')?.value||'').trim().toLowerCase();
+ const list=(transactions||[]).filter(t=>{
+  if(String(t.type||'').toUpperCase()!=='PURCHASE')return false;
+  const raw=String(t.date||'');let ds='';let x=raw.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if(x)ds=x[3]+'-'+String(x[2]).padStart(2,'0')+'-'+String(x[1]).padStart(2,'0');
+  else{const d=new Date(raw);if(!isNaN(d))ds=d.toISOString().slice(0,10)}
+  const s=String(t.supplier||'').toLowerCase();
+  return (!from||ds>=from)&&(!to||ds<=to)&&(!supplier||s.includes(supplier));
+ });
+ let q=0,a=0,rows='';
+ list.slice().reverse().forEach(t=>{
+  const it=(items||[]).find(i=>String(i.code||'')===String(t.item||''));const n=Math.abs(Number(t.qty)||0),r=Number(t.purchaseRate||0),amt=n*r;q+=n;a+=amt;
+  rows+=`<tr><td>${t.date||''}</td><td>${t.supplier||''}</td><td>${it?it.name:(t.itemName||t.item||'')}</td><td>${n.toFixed(3)}</td><td>${t.purchaseUnit||t.unit||''}</td><td>₹${r.toFixed(2)}</td><td>₹${amt.toFixed(2)}</td><td>${t.ref||''}</td></tr>`;
+ });
+ $('purchaseInlineReportTable').querySelector('tbody').innerHTML=rows||'<tr><td colspan="8">No purchase entries found</td></tr>';
+ $('purchaseInlineQty').textContent=q.toFixed(3);$('purchaseInlineAmount').textContent='₹'+a.toFixed(2);$('purchaseInlineReportMsg').textContent=list.length+' purchase entries found.';
+}
+function setupPurchaseInlineSupplierSuggest(){
+ const i=$('purchaseInlineSupplier'),b=$('purchaseInlineSupplierSuggest');if(!i||!b)return;
+ const names=()=>{let a=[];['adr_supplier_master_v1','adr_purchase_master_v4','adr_suppliers_v1'].forEach(k=>{try{let x=JSON.parse(localStorage.getItem(k)||'[]');if(Array.isArray(x))a=a.concat(x)}catch(e){}});return [...new Set(a.map(x=>String(x.name||x.supplier||'').trim()).filter(Boolean))]};
+ i.addEventListener('input',()=>{const q=i.value.toLowerCase().trim();b.innerHTML='';if(!q){b.style.display='none';return}names().filter(n=>n.toLowerCase().includes(q)).slice(0,10).forEach(n=>{let d=document.createElement('div');d.textContent=n;d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onclick=()=>{i.value=n;b.style.display='none'};b.appendChild(d)});b.style.display=b.children.length?'block':'none'});
+}
+
+function getCustomerMaster(){
+ try{
+  const a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]');
+  return Array.isArray(a)?a:[];
+ }catch(e){return []}
+}
+function saveCustomerMaster(a){localStorage.setItem('adr_customer_master_v1',JSON.stringify(a));}
+function renderCustomerMaster(){
+ const body=$('customerTable')?.querySelector('tbody');if(!body)return;
+ const a=getCustomerMaster();
+ body.innerHTML=a.map((x,n)=>`<tr><td>${x.code||''}</td><td>${x.name||''}</td><td><button type="button" data-customer-edit="${n}">✏️ Edit</button> <button type="button" data-customer-del="${n}">🗑 Delete</button></td></tr>`).join('')||'<tr><td colspan="3">No customers added</td></tr>';
+ document.querySelectorAll('[data-customer-edit]').forEach(b=>b.onclick=()=>{
+  const a=getCustomerMaster(),x=a[Number(b.dataset.customerEdit)];if(!x)return;
+  const name=prompt('Customer Name:',x.name||'');if(name===null)return;
+  const code=prompt('Customer Code:',x.code||'');if(code===null)return;
+  if(!name.trim())return;
+  x.name=name.trim();x.code=code.trim();saveCustomerMaster(a);renderCustomerMaster();
+ });
+ document.querySelectorAll('[data-customer-del]').forEach(b=>b.onclick=()=>{
+  const a=getCustomerMaster();a.splice(Number(b.dataset.customerDel),1);saveCustomerMaster(a);renderCustomerMaster();
+ });
+}
+function addCustomerMaster(){
+ const name=String($('customerName')?.value||'').trim(),code=String($('customerCode')?.value||'').trim();
+ if(!name){alert('Customer Name નાખો.');return}
+ const a=getCustomerMaster();
+ if(a.some(x=>String(x.name||'').toLowerCase()===name.toLowerCase())){alert('Customer already exists.');return}
+ a.push({name,code});saveCustomerMaster(a);renderCustomerMaster();
+ $('customerName').value='';$('customerCode').value='';
+ if($('customerMsg'))$('customerMsg').textContent='Customer saved.';
+}
+
+function getFgRateMaster(){
+ try{
+  const a=JSON.parse(localStorage.getItem('adr_finished_goods_rates_v1')||'[]');
+  return Array.isArray(a)?a:[];
+ }catch(e){return []}
+}
+function saveFgRateMaster(a){localStorage.setItem('adr_finished_goods_rates_v1',JSON.stringify(a));}
+function getFinishedGoodsForRate(){
+ return (Array.isArray(items)?items:[]).filter(i=>String(i.cat||'').toLowerCase()==='finished goods');
+}
+function renderFgRateMaster(){
+ const body=$('fgRateTable')?.querySelector('tbody');if(!body)return;
+ const a=getFgRateMaster();
+ body.innerHTML=a.map((x,n)=>`<tr><td>${x.itemName||''}</td><td>${x.itemCode||''}</td><td>₹${Number(x.rate||0).toFixed(2)}</td><td><button type="button" data-fgr-edit="${n}">✏️ Edit</button> <button type="button" data-fgr-del="${n}">🗑 Delete</button></td></tr>`).join('')||'<tr><td colspan="4">No Finished Goods rates added</td></tr>';
+ document.querySelectorAll('[data-fgr-edit]').forEach(b=>b.onclick=()=>{
+  const a=getFgRateMaster(),x=a[Number(b.dataset.fgrEdit)];if(!x)return;
+  const r=prompt('Sale Rate:',Number(x.rate||0).toFixed(2));if(r===null)return;
+  if(Number(r)<0)return;
+  x.rate=Number(r);saveFgRateMaster(a);renderFgRateMaster();
+ });
+ document.querySelectorAll('[data-fgr-del]').forEach(b=>b.onclick=()=>{
+  const a=getFgRateMaster();a.splice(Number(b.dataset.fgrDel),1);saveFgRateMaster(a);renderFgRateMaster();
+ });
+}
+function setupFgRateItemSuggest(){
+ const input=$('fgRateItem'),box=$('fgRateItemSuggest');if(!input||!box)return;
+ const show=()=>{
+  const q=input.value.trim().toLowerCase();box.innerHTML='';
+  if(!q){box.style.display='none';return}
+  getFinishedGoodsForRate().filter(i=>String(i.name||'').toLowerCase().includes(q)||String(i.code||'').toLowerCase().includes(q)).slice(0,12).forEach(i=>{
+   const d=document.createElement('div');
+   d.textContent=String(i.name||'')+' — '+String(i.code||'');
+   d.style.cssText='padding:10px 12px;background:#fff;color:#111;border-bottom:1px solid #ddd;cursor:pointer';
+   d.onmousedown=e=>{e.preventDefault();input.value=String(i.name||'');input.dataset.selectedCode=String(i.code||'');box.style.display='none'};
+   box.appendChild(d);
+  });
+  box.style.display=box.children.length?'block':'none';
+ };
+ input.addEventListener('input',show);input.addEventListener('focus',show);input.addEventListener('keyup',show);
+ document.addEventListener('click',e=>{if(e.target!==input&&!box.contains(e.target))box.style.display='none'});
+}
+function addFgRateMaster(){
+ const input=String($('fgRateItem')?.value||'').trim();
+ const code=String($('fgRateItem')?.dataset.selectedCode||'').trim();
+ const rate=Number($('fgRateValue')?.value);
+ const item=getFinishedGoodsForRate().find(i=>String(i.code||'')===code)||getFinishedGoodsForRate().find(i=>String(i.name||'').toLowerCase()===input.toLowerCase());
+ if(!item){alert('Finished Good Item Masterમાંથી select કરો.');return}
+ if(!Number.isFinite(rate)||rate<0){alert('Valid Rate નાખો.');return}
+ const a=getFgRateMaster();
+ const old=a.find(x=>String(x.itemCode||'')===String(item.code||''));
+ if(old){old.itemName=item.name;old.rate=rate}
+ else a.push({itemCode:item.code,itemName:item.name,rate});
+ saveFgRateMaster(a);renderFgRateMaster();
+ $('fgRateItem').value='';$('fgRateItem').dataset.selectedCode='';$('fgRateValue').value='';
+ if($('fgRateMsg'))$('fgRateMsg').textContent='Finished Goods rate saved.';
+}
+
+function renderDispatchEntries(){
+ const body=$('dispatchTable')?.querySelector('tbody');if(!body)return;
+ const rows=(transactions||[]).filter(t=>String(t.type||'').toUpperCase()==='DISPATCH').slice().reverse();
+ body.innerHTML=rows.map((t,n)=>{
+  const it=items.find(i=>String(i.code||'')===String(t.item||'')),q=Math.abs(Number(t.qty)||0),r=Number(t.dispatchRate||0),tr=Number(t.taxRate||0),tax=Number(t.tax??q*r*tr/100),a=Number(t.amount??q*r),g=Number(t.grandTotal??a+tax);
+  return `<tr><td>${t.date||''}</td><td>${t.billNo||''}</td><td>${t.customer||''}</td><td>${it?it.name:(t.itemName||t.item||'')}</td><td>${q.toFixed(3)}</td><td>₹${r.toFixed(2)}</td><td>₹${a.toFixed(2)}</td><td>${tr.toFixed(2)}%</td><td>₹${tax.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td>${t.remark||''}</td><td><button type="button" data-dispatch-del="${t.id||n}">🗑 Delete</button></td></tr>`;
+ }).join('')||'<tr><td colspan="12">No dispatch entries</td></tr>';
+ document.querySelectorAll('[data-dispatch-del]').forEach(b=>b.onclick=()=>{
+  const t=(transactions||[]).find((x,n)=>String(x.id||n)===String(b.dataset.dispatchDel));if(!t)return;
+  if(!confirm('Delete Dispatch and reverse stock?'))return;
+  const it=items.find(i=>String(i.code||'')===String(t.item||''));if(it)it.stock+=Math.abs(Number(t.qty)||0);
+  const ix=transactions.indexOf(t);if(ix>=0)transactions.splice(ix,1);save();renderDispatchEntries();showNextDispatchBillNo();
+ });
+}
+function setupDispatchCustomerSuggest(){
+ const i=$('dispatchCustomer'),b=$('dispatchCustomerSuggest');if(!i||!b)return;
+ function names(){
+  try{const a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]');return Array.isArray(a)?a.map(x=>String(x.name||'').trim()).filter(Boolean):[]}catch(e){return[]}
+ }
+ const show=()=>{const q=i.value.trim().toLowerCase();b.innerHTML='';if(!q){b.style.display='none';return}names().filter(n=>n.toLowerCase().includes(q)).slice(0,10).forEach(n=>{const d=document.createElement('div');d.textContent=n;d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();i.value=n;b.style.display='none'};b.appendChild(d)});b.style.display=b.children.length?'block':'none'};
+ i.addEventListener('input',show);i.addEventListener('focus',show);
+}
+function dispatchUpdateAmount(){const q=Number($('dispatchQty')?.value)||0,r=Number($('dispatchRate')?.value)||0,t=Number($('dispatchTaxRate')?.value)||0;const a=q*r,tax=a*t/100;if($('dispatchAmount'))$('dispatchAmount').value=a.toFixed(2);if($('dispatchTaxAmount'))$('dispatchTaxAmount').value=tax.toFixed(2);if($('dispatchGrandTotal'))$('dispatchGrandTotal').value=(a+tax).toFixed(2);}
+
+function generateDispatchReport(){
+ try{
+  const from=$('dispatchReportFrom')?.value||'',to=$('dispatchReportTo')?.value||'';
+  const customer=($('dispatchReportCustomer')?.value||'').trim().toLowerCase();
+  const itemQ=($('dispatchReportItem')?.value||'').trim().toLowerCase();
+  const rows=(transactions||[]).filter(t=>{
+   if(String(t.type||'').toUpperCase()!=='DISPATCH')return false;
+   const raw=String(t.date||'');let d='';
+   let m=raw.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+   if(m)d=m[3]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');
+   else{const dt=new Date(raw);if(!isNaN(dt))d=dt.toISOString().slice(0,10)}
+   const c=String(t.customer||'').toLowerCase();
+   const it=items.find(i=>String(i.code||'')===String(t.item||''));
+   const n=String(it?.name||t.itemName||t.item||'').toLowerCase();
+   return (!from||d>=from)&&(!to||d<=to)&&(!customer||c.includes(customer))&&(!itemQ||n.includes(itemQ));
+  });
+  let qty=0,amount=0,rowsHtml='';
+  rows.slice().reverse().forEach(t=>{
+   const it=items.find(i=>String(i.code||'')===String(t.item||''));
+   const q=Math.abs(Number(t.qty)||0),r=Number(t.dispatchRate||0),a=Number(t.amount??q*r);
+   qty+=q;amount+=a;
+   rowsHtml+=`<tr><td>${t.billNo||''}</td><td>${t.date||''}</td><td>${t.customer||''}</td><td>${it?.name||t.itemName||t.item||''}</td><td>${q.toFixed(3)}</td><td>₹${r.toFixed(2)}</td><td>₹${a.toFixed(2)}</td><td>${t.remark||''}</td></tr>`;
+  });
+  $('dispatchReportTable').querySelector('tbody').innerHTML=rowsHtml||'<tr><td colspan="8">No dispatch entries found</td></tr>';
+  $('dispatchReportQty').textContent=qty.toFixed(3);
+  $('dispatchReportAmount').textContent='₹'+amount.toFixed(2);
+  $('dispatchReportMsg').textContent=rows.length+' dispatch entries found.';
+ }catch(e){if($('dispatchReportMsg'))$('dispatchReportMsg').textContent='Report error: '+e.message;}
+}
+function setupDispatchReportSuggestions(){
+ const ci=$('dispatchReportCustomer'),cb=$('dispatchReportCustomerSuggest');
+ if(ci&&cb)ci.addEventListener('input',()=>{
+  const q=ci.value.toLowerCase().trim();cb.innerHTML='';
+  if(!q){cb.style.display='none';return}
+  let a=[];try{a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]')}catch(e){}
+  [...new Set(a.map(x=>String(x.name||'').trim()).filter(Boolean))].filter(n=>n.toLowerCase().includes(q)).slice(0,10).forEach(n=>{
+   const d=document.createElement('div');d.textContent=n;d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();ci.value=n;cb.style.display='none'};cb.appendChild(d);
+  });cb.style.display=cb.children.length?'block':'none';
+ });
+ const ii=$('dispatchReportItem'),ib=$('dispatchReportItemSuggest');
+ if(ii&&ib)ii.addEventListener('input',()=>{
+  const q=ii.value.toLowerCase().trim();ib.innerHTML='';
+  if(!q){ib.style.display='none';return}
+  (items||[]).filter(x=>String(x.cat||'')==='Finished Goods'&&(String(x.name||'').toLowerCase().includes(q)||String(x.code||'').toLowerCase().includes(q))).slice(0,10).forEach(x=>{
+   const d=document.createElement('div');d.textContent=x.name+' — '+x.code;d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();ii.value=x.name;ib.style.display='none'};ib.appendChild(d);
+  });ib.style.display=ib.children.length?'block':'none';
+ });
+}
+
+function generateDispatchMainReport(){
+ try{
+  const from=$('dispatchReportFromMain')?.value||'',to=$('dispatchReportToMain')?.value||'';
+  const cq=($('dispatchReportCustomerMain')?.value||'').trim().toLowerCase();
+  const iq=($('dispatchReportItemMain')?.value||'').trim().toLowerCase();
+  const toISO=v=>{
+   const s=String(v||'').trim();let m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+   if(m){const a=+m[1],b=+m[2],y=m[3],mm=a>12?b:a,dd=a>12?a:b;return y+'-'+String(mm).padStart(2,'0')+'-'+String(dd).padStart(2,'0')}
+   m=s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);return m?m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0'):'';
+  };
+  const rows=(transactions||[]).filter(t=>{
+   if(String(t.type||'').toUpperCase()!=='DISPATCH')return false;
+   const d=toISO(t.date||t.createdAt||t.timestamp),c=String(t.customer||'').toLowerCase();
+   const it=(items||[]).find(x=>String(x.code||'')===String(t.item||'')),n=String(it?.name||t.itemName||t.item||'').toLowerCase();
+   return (!from||!d||d>=from)&&(!to||!d||d<=to)&&(!cq||c.includes(cq))&&(!iq||n.includes(iq));
+  });
+  let q=0,a=0,s='';
+  rows.slice().reverse().forEach(t=>{
+   const it=(items||[]).find(x=>String(x.code||'')===String(t.item||'')),n=Math.abs(Number(t.qty)||0),r=Number(t.dispatchRate||0),amt=Number(t.amount??n*r);q+=n;a+=amt;
+   s+=`<tr><td>${t.billNo||''}</td><td>${t.date||''}</td><td>${t.customer||''}</td><td>${it?.name||t.itemName||t.item||''}</td><td>${n.toFixed(3)}</td><td>₹${r.toFixed(2)}</td><td>₹${amt.toFixed(2)}</td><td>${t.remark||''}</td></tr>`;
+  });
+  $('dispatchReportMainTable').querySelector('tbody').innerHTML=s||'<tr><td colspan="8">No dispatch entries found</td></tr>';
+  $('dispatchReportMainQty').textContent=q.toFixed(3);$('dispatchReportMainAmount').textContent='₹'+a.toFixed(2);
+  $('dispatchReportMainMsg').textContent=rows.length+' dispatch entries found.';
+ }catch(e){if($('dispatchReportMainMsg'))$('dispatchReportMainMsg').textContent='Report error: '+e.message;}
+}
+
+function setupDispatchMainReportSuggestions(){
+ const ci=$('dispatchReportCustomerMain'),cb=$('dispatchReportCustomerMainSuggest');
+ if(ci&&cb){
+  ci.addEventListener('input',()=>{
+   const q=ci.value.trim().toLowerCase();cb.innerHTML='';
+   if(!q){cb.style.display='none';return}
+   let a=[];try{a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]')}catch(e){}
+   [...new Set(a.map(x=>String(x.name||'').trim()).filter(Boolean))]
+    .filter(n=>n.toLowerCase().includes(q)).slice(0,12).forEach(n=>{
+      const d=document.createElement('div');d.textContent=n;
+      d.style.cssText='padding:10px 12px;background:#fff;color:#111;border-bottom:1px solid #ddd;cursor:pointer';
+      d.onmousedown=e=>{e.preventDefault();ci.value=n;cb.style.display='none'};
+      cb.appendChild(d);
+    });
+   cb.style.display=cb.children.length?'block':'none';
+  });
+ }
+ const ii=$('dispatchReportItemMain'),ib=$('dispatchReportItemMainSuggest');
+ if(ii&&ib){
+  const show=()=>{
+   const q=ii.value.trim().toLowerCase();ib.innerHTML='';
+   if(!q){ib.style.display='none';return}
+   (items||[]).filter(x=>{
+    const cat=String(x.cat||'').toLowerCase();
+    return cat==='finished goods' &&
+      (String(x.name||'').toLowerCase().includes(q)||String(x.code||'').toLowerCase().includes(q));
+   }).slice(0,12).forEach(x=>{
+    const d=document.createElement('div');d.textContent=String(x.name||'')+' — '+String(x.code||'');
+    d.style.cssText='padding:10px 12px;background:#fff;color:#111;border-bottom:1px solid #ddd;cursor:pointer';
+    d.onmousedown=e=>{e.preventDefault();ii.value=String(x.name||'');ii.dataset.selectedCode=String(x.code||'');ib.style.display='none'};
+    ib.appendChild(d);
+   });
+   ib.style.display=ib.children.length?'block':'none';
+  };
+  ii.addEventListener('input',show);ii.addEventListener('focus',show);
+ }
+}
+
+function setupDispatchReportClearButtons(){
+ const c=$('clearDispatchReportCustomer'),ci=$('dispatchReportCustomerMain');
+ const i=$('clearDispatchReportItem'),ii=$('dispatchReportItemMain');
+ if(c&&ci)c.onclick=()=>{ci.value='';ci.dataset.selectedCode='';ci.focus();};
+ if(i&&ii)i.onclick=()=>{ii.value='';ii.dataset.selectedCode='';ii.focus();};
+}
+
+function setupAllReportClearButtons(){
+ const fields=[
+  'purchaseReportSupplier','prodReportProduct','productionReportProduct',
+  'purchaseReportFrom','purchaseReportTo','productionReportFrom','productionReportTo'
+ ];
+ fields.forEach(id=>{
+  const b=$('clear_'+id),el=$(id);
+  if(b&&el)b.onclick=()=>{el.value='';if(el.dataset)el.dataset.selectedCode='';el.focus();};
+ });
+}
+
+function getAccountingPayments(){
+ try{const a=JSON.parse(localStorage.getItem('adr_accounting_payments_v1')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}
+}
+function saveAccountingPayments(a){localStorage.setItem('adr_accounting_payments_v1',JSON.stringify(a));}
+function renderAccounting(){
+ const customer='',itemQ='';
+ const sales=(transactions||[]).filter(t=>{if(String(t.type||'').toUpperCase()!=='DISPATCH')return false;const it=(items||[]).find(i=>String(i.code||'')===String(t.item||''));return (!customer||String(t.customer||'').toLowerCase().includes(customer))&&(!itemQ||String(it?.name||t.itemName||t.item||'').toLowerCase().includes(itemQ));});
+ const payments=getAccountingPayments().filter(p=>!customer||String(p.customer||'').toLowerCase().includes(customer));
+ let tax=0,grand=0,received=0,rows='';
+ sales.forEach(t=>{const it=(items||[]).find(i=>String(i.code||'')===String(t.item||'')),q=Math.abs(Number(t.qty)||0),a=Number(t.amount??q*Number(t.dispatchRate||0))||0,x=Number(t.tax||0)||0,g=Number(t.grandTotal??a+x)||0;tax+=x;grand+=g;rows+=`<tr><td>${t.date||''}</td><td>Sales</td><td>${t.customer||''}</td><td>${t.billNo||t.ref||''}</td><td>${it?.name||t.itemName||t.item||''}</td><td>${q.toFixed(3)}</td><td>₹${a.toFixed(2)}</td><td>₹${x.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td></td><td>${t.remark||''}</td></tr>`});
+ payments.forEach(p=>{const a=Number(p.amount)||0;received+=a;rows+=`<tr><td>${p.date||''}</td><td>Payment</td><td>${p.customer||''}</td><td>${p.ref||''}</td><td></td><td></td><td></td><td></td><td>₹${a.toFixed(2)}</td><td>${p.mode||''}</td><td>${p.remark||''}</td></tr>`});
+ $('accSales').textContent='₹'+grand.toFixed(2);$('accTax').textContent='₹'+tax.toFixed(2);$('accReceived').textContent='₹'+received.toFixed(2);$('accDue').textContent='₹'+(grand-received).toFixed(2);$('accTable').querySelector('tbody').innerHTML=rows||'<tr><td colspan="11">No accounting entries</td></tr>';;renderCustomerDueSummary();renderPartyLedgers();renderMergedPartyLedger()
+}
+function saveAccountingPayment(){
+ const customer=String($('accPaymentCustomer')?.value||'').trim(),amount=Number($('accPaymentAmount')?.value)||0;
+ if(!customer||amount<=0){alert('Payment Customer અને valid Payment Amount નાખો.');return}
+ const a=getAccountingPayments();
+ a.push({date:$('accPaymentDate').value||new Date().toLocaleDateString('en-GB'),customer,amount,mode:$('accPaymentMode').value,ref:$('accPaymentRef').value.trim(),remark:$('accPaymentRef').value.trim()});
+ saveAccountingPayments(a);
+ $('accPaymentAmount').value='';$('accPaymentRef').value='';
+ renderAccounting();
+ if($('accMsg'))$('accMsg').textContent='Payment saved.';
+}
+function setupAccountingCustomerSuggest(){
+ const i=$('accCustomer'),b=$('accCustomerSuggest');if(!i||!b)return;
+ const show=()=>{const q=i.value.toLowerCase().trim();b.innerHTML='';if(!q){b.style.display='none';renderAccounting();return}let a=[];try{a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]')}catch(e){}[...new Set(a.map(x=>String(x.name||'').trim()).filter(Boolean))].filter(n=>n.toLowerCase().includes(q)).slice(0,12).forEach(n=>{const d=document.createElement('div');d.textContent=n;d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();i.value=n;b.style.display='none';renderAccounting()};b.appendChild(d)});b.style.display=b.children.length?'block':'none'};
+ i.addEventListener('input',show);i.addEventListener('focus',show);
+}
+
+function setupDispatchClearButtonsV83(){
+ const c=$('clearDispatchCustomer'),ci=$('dispatchCustomer');
+ const i=$('clearDispatchItem'),ii=$('dispatchCode');
+ if(c&&ci)c.onclick=()=>{ci.value='';ci.dataset.selectedCode='';ci.focus();};
+ if(i&&ii)i.onclick=()=>{ii.value='';ii.dataset.selectedCode='';ii.focus();if($('dispatchRate'))$('dispatchRate').value='';dispatchUpdateAmount();};
+}
+function setupAccountingItemSuggest(){const i=$('accItem'),b=$('accItemSuggest');if(!i||!b)return;const show=()=>{const q=i.value.trim().toLowerCase();b.innerHTML='';if(!q){b.style.display='none';renderAccounting();return}(items||[]).filter(x=>String(x.cat||'').toLowerCase()==='finished goods'&&(String(x.name||'').toLowerCase().includes(q)||String(x.code||'').toLowerCase().includes(q))).slice(0,15).forEach(x=>{const d=document.createElement('div');d.textContent=x.name+' — '+x.code;d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();i.value=x.name;b.style.display='none';renderAccounting()};b.appendChild(d)});b.style.display=b.children.length?'block':'none'};i.addEventListener('input',show);i.addEventListener('focus',show)}
+function setupAccountingClearFilters(){const b=$('accClearFilters');if(b)b.onclick=()=>{$('accCustomer').value='';$('accItem').value='';renderAccounting()}}
+
+function setupAccountingPaymentCustomerSuggest(){
+ const i=$('accPaymentCustomer'),b=$('accPaymentCustomerSuggest');if(!i||!b)return;
+ const show=()=>{
+  const q=i.value.trim().toLowerCase();b.innerHTML='';
+  let a=[];try{a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]')}catch(e){}
+  const names=[...new Set(a.map(x=>String(x.name||'').trim()).filter(Boolean))].filter(n=>!q||n.toLowerCase().includes(q)).slice(0,15);
+  names.forEach(n=>{const d=document.createElement('div');d.textContent=n;d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();i.value=n;b.style.display='none'};b.appendChild(d)});
+  b.style.display=names.length?'block':'none';
+ };
+ i.addEventListener('input',show);i.addEventListener('focus',show);i.addEventListener('click',show);
+}
+
+function renderCustomerDueSummary(){
+ const map={};
+ const ensure=c=>{if(c&&!map[c])map[c]={sales:0,tax:0,grand:0,received:0}};
+ const isReturn=t=>{
+  const type=String(t.type||'').toUpperCase();
+  return type==='SALES RETURN'||type==='RETURN'||type==='CUSTOMER RETURN'||type==='DISPATCH RETURN' ||
+         t.isReturn===true || String(t.entryType||'').toUpperCase()==='RETURN';
+ };
+ (transactions||[]).forEach(t=>{
+  const type=String(t.type||'').toUpperCase();
+  if(type!=='DISPATCH'&&!isReturn(t))return;
+  const c=String(t.customer||'').trim();if(!c)return;
+  ensure(c);
+  const q=Math.abs(Number(t.qty)||0),r=Number(t.dispatchRate||t.rate||0);
+  const rawA=Number(t.amount),rawTax=Number(t.tax),rawG=Number(t.grandTotal);
+  const a=Number.isFinite(rawA)?rawA:q*r;
+  const tax=Number.isFinite(rawTax)?rawTax:a*(Number(t.taxRate)||0)/100;
+  const grand=Number.isFinite(rawG)?rawG:a+tax;
+  const sign=isReturn(t)?-1:1;
+  map[c].sales+=sign*a;map[c].tax+=sign*tax;map[c].grand+=sign*grand;
+ });
+ getAccountingPayments().forEach(p=>{
+  const c=String(p.customer||'').trim();if(!c)return;
+  ensure(c);map[c].received+=Number(p.amount)||0;
+ });
+ const rows=Object.entries(map).sort((a,b)=>a[0].localeCompare(b[0])).map(([c,v])=>{
+  const due=v.grand-v.received;
+  return `<tr><td><b>${c}</b></td><td>₹${v.sales.toFixed(2)}</td><td>₹${v.tax.toFixed(2)}</td><td>₹${v.grand.toFixed(2)}</td><td><b class="payment-received">₹${v.received.toFixed(2)}</b></td><td><b class="${due>0?'payment-due':'payment-clear'}">₹${Math.abs(due).toFixed(2)} ${due>0?'Dr':due<0?'Cr':'-'}</b></td></tr>`;
+ }).join('');
+ $('customerDueTable').querySelector('tbody').innerHTML=rows||'<tr><td colspan="6">No customer data</td></tr>';
+}
+
+function setupAccountingPaymentClear(){
+ const b=$('clearAccPayment');if(!b)return;
+ b.onclick=()=>{
+  $('accPaymentCustomer').value='';
+  $('accPaymentAmount').value='';
+  $('accPaymentDate').value='';setupAccountingCustomerAndDateV94();setPaymentDateToday();renderPartyLedgers();setupPartyLedgerFiltersV86();setupSupplierPaymentV87();setupMergedPartyLedgerV87();renderMergedPartyLedger();
+  $('accPaymentMode').selectedIndex=0;
+  $('accPaymentRef').value='';
+  if($('accPaymentCustomerSuggest'))$('accPaymentCustomerSuggest').style.display='none';
+  if($('accMsg'))$('accMsg').textContent='';
+ };
+}
+
+function renderCustomerDueSummary(){
+ const selected=String($('dueCustomerFilter')?.value||'').trim().toLowerCase();
+ const sales=(transactions||[]).filter(t=>String(t.type||'').toUpperCase()==='DISPATCH' && (!selected||String(t.customer||'').toLowerCase().includes(selected)));
+ const payments=getAccountingPayments().filter(p=>!selected||String(p.customer||'').toLowerCase().includes(selected));
+ let taxable=0,tax=0,grand=0,received=0,rows='';
+ sales.forEach(t=>{
+  const it=(items||[]).find(i=>String(i.code||'')===String(t.item||'')),a=Number(t.amount??(Math.abs(Number(t.qty)||0)*Number(t.dispatchRate||0)))||0,x=Number(t.tax||0)||0,g=Number(t.grandTotal??a+x)||0;
+  taxable+=a;tax+=x;grand+=g;
+  rows+=`<tr><td>${t.date||''}</td><td>Sales</td><td>${t.customer||''}</td><td>${t.billNo||''}</td><td>${it?.name||t.itemName||t.item||''}</td><td>₹${a.toFixed(2)}</td><td>₹${x.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td></td><td></td><td>${t.remark||''}</td></tr>`;
+ });
+ payments.forEach(p=>{
+  const a=Number(p.amount)||0;received+=a;
+  rows+=`<tr><td>${p.date||''}</td><td>Payment</td><td>${p.customer||''}</td><td>${p.ref||''}</td><td></td><td></td><td></td><td></td><td>₹${a.toFixed(2)}</td><td>${p.mode||''}</td><td>${p.remark||''}</td></tr>`;
+ });
+ $('customerDueTable').querySelector('tbody').innerHTML=rows||'<tr><td colspan="11">No ledger entries found</td></tr>';
+ $('dueLedgerTaxable').textContent='₹'+taxable.toFixed(2);$('dueLedgerTax').textContent='₹'+tax.toFixed(2);$('dueLedgerGrand').textContent='₹'+grand.toFixed(2);$('dueLedgerPayment').innerHTML='<span class="payment-received">₹'+received.toFixed(2)+'</span>';const dueBal=grand-received;$('dueLedgerDue').innerHTML='<span class="'+(dueBal>0?'payment-due':'payment-clear')+'">Due: ₹'+dueBal.toFixed(2)+'</span>';
+}
+function setupDueCustomerFilter(){
+ const i=$('dueCustomerFilter'),b=$('dueCustomerFilterSuggest');if(!i||!b)return;
+ const show=()=>{
+  const q=i.value.trim().toLowerCase();b.innerHTML='';
+  let a=[];try{a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]')}catch(e){}
+  const names=[...new Set(a.map(x=>String(x.name||'').trim()).filter(Boolean))].filter(n=>!q||n.toLowerCase().includes(q)).slice(0,15);
+  names.forEach(n=>{const d=document.createElement('div');d.textContent=n;d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();i.value=n;b.style.display='none';renderCustomerDueSummary()};b.appendChild(d)});
+  b.style.display=names.length?'block':'none';
+ };
+ i.addEventListener('input',show);i.addEventListener('focus',show);i.addEventListener('click',show);
+ const c=$('clearDueCustomerFilter');if(c)c.onclick=()=>{i.value='';b.style.display='none';renderCustomerDueSummary();};
+}
+
+function downloadCustomerLedgerPDF(){
+ const selected=String($('dueCustomerFilter')?.value||'').trim();
+ if(!selected)return alert('પહેલા Customer select કરો.');
+ const table=$('customerDueTable');
+ if(!table)return;
+ const win=window.open('','_blank');
+ if(!win)return alert('PDF માટે popup allow કરો.');
+ const rows=table.querySelector('tbody')?.innerHTML||'';
+ const foot=table.querySelector('tfoot')?.innerHTML||'';
+ win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Customer Ledger - ${selected}</title>
+ <style>
+ body{font-family:Arial,sans-serif;padding:24px;color:#222}
+ h2{margin:0 0 6px}p{margin:4px 0 16px}
+ table{width:100%;border-collapse:collapse;font-size:11px}
+ th,td{border:1px solid #999;padding:6px;text-align:left}
+ th{font-weight:700}
+ .payment-due{color:#c62828;font-weight:700}.payment-received{color:#1b8a3a;font-weight:700}
+ @media print{@page{size:A4 landscape;margin:10mm}}
+ </style></head><body>
+ <h2>Customer Ledger</h2><p><b>Customer:</b> ${selected}</p>
+ <table><thead>${table.querySelector('thead')?.innerHTML||''}</thead><tbody>${rows}</tbody><tfoot>${foot}</tfoot></table>
+ <script>window.onload=function(){window.print();};<\/script></body></html>`);
+ win.document.close();
+}
+
+function setPaymentDateToday(){
+ const el=$('accPaymentDate');if(!el)return;
+ const d=new Date();
+ const yyyy=d.getFullYear(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+ if(!el.value)el.value=`${yyyy}-${mm}-${dd}`;
+}
+
+function renderPartyLedgers(){
+ const sf=String($('supplierLedgerFilter')?.value||'').trim().toLowerCase(),vf=String($('vendorLedgerFilter')?.value||'').trim().toLowerCase();
+ const suppliers={},vendors={};
+ const supplierPayments=typeof getSupplierPayments==='function'?getSupplierPayments():[];
+ (transactions||[]).forEach(t=>{
+  const type=String(t.type||'').toUpperCase();
+  if(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD'){
+   const s=String(t.supplier||'').trim();if(!s)return;
+   const v=Number(t.amount??(Number(t.qty)||0)*Number(t.purchaseRate||t.inwardRate||0))||0;
+   suppliers[s]=(suppliers[s]||0)+v;
+  }
+  if(type==='JOB WORK RECEIVE'){
+   const vname=String(t.vendor||'').trim();if(!vname)return;
+   const v=Number(t.jobAmount||0)||0;vendors[vname]=(vendors[vname]||0)+v;
+  }
+ });
+ // Supplier payments reduce the supplier due.
+ supplierPayments.forEach(p=>{
+  const s=String(p.party||'').trim();if(!s)return;
+  if(!suppliers[s])suppliers[s]=0;
+  suppliers[s]-=Number(p.amount)||0;
+ });
+
+ const supplierNames=Object.keys(suppliers).filter(n=>!sf||n.toLowerCase().includes(sf)).sort();
+ const srows=supplierNames.map(n=>{
+  const gross=(transactions||[]).filter(t=>['PURCHASE','RAW MATERIAL COMPANY INWARD'].includes(String(t.type||'').toUpperCase())&&String(t.supplier||'').trim()===n)
+    .reduce((a,t)=>a+(Number(t.amount??(Number(t.qty)||0)*Number(t.purchaseRate||t.inwardRate||0))||0),0);
+  const paid=supplierPayments.filter(p=>String(p.party||'').trim()===n).reduce((a,p)=>a+(Number(p.amount)||0),0);
+  const due=gross-paid;
+  return `<tr class="supplier-ledger-row" data-supplier="${n.replace(/"/g,'&quot;')}" style="cursor:pointer"><td><b>${n}</b></td><td>₹${gross.toFixed(2)}</td><td class="payment-received">₹${paid.toFixed(2)}</td><td class="${due>0?'payment-due':'payment-clear'}"><b>₹${Math.abs(due).toFixed(2)}${due<0?' Cr':''}</b></td></tr>`;
+ }).join('');
+ const vrows=Object.entries(vendors).filter(([n])=>!vf||n.toLowerCase().includes(vf)).sort().map(([n,v])=>`<tr><td><b>${n}</b></td><td>₹${v.toFixed(2)}</td><td>₹0.00</td><td class="payment-due">₹${v.toFixed(2)}</td></tr>`).join('');
+ $('supplierLedgerTable').querySelector('tbody').innerHTML=srows||'<tr><td colspan="4">No supplier entries</td></tr>';
+ $('jobworkVendorLedgerTable').querySelector('tbody').innerHTML=vrows||'<tr><td colspan="4">No job work vendor entries</td></tr>';
+
+ // Click supplier row -> full transaction detail.
+ document.querySelectorAll('.supplier-ledger-row').forEach(row=>{
+  row.onclick=()=>renderSupplierLedgerDetail(row.dataset.supplier);
+ });
+
+ let sd=0,vd=0;
+ Object.values(suppliers).forEach(v=>sd+=v);Object.values(vendors).forEach(v=>vd+=v);
+ const cdSales=(transactions||[]).filter(t=>String(t.type||'').toUpperCase()==='DISPATCH').reduce((a,t)=>a+Number(t.grandTotal??t.amount??0),0);
+ const cp=getAccountingPayments().reduce((a,p)=>a+Number(p.amount||0),0),cd=cdSales-cp;
+ $('combinedCustomerDue').textContent='₹'+cd.toFixed(2);
+ $('combinedSupplierDue').textContent='₹'+sd.toFixed(2);
+ $('combinedJobworkDue').textContent='₹'+vd.toFixed(2);
+ $('combinedNetDue').textContent='₹'+(cd-sd-vd).toFixed(2);
+}
+function renderSupplierLedgerDetail(supplier){
+ const s=String(supplier||'').trim();
+ const rows=[];
+ (transactions||[]).forEach(t=>{
+  const type=String(t.type||'').toUpperCase();
+  if((type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD')&&String(t.supplier||'').trim()===s){
+   rows.push({
+    date:t.date||'',type:type==='PURCHASE'?'Purchase':'Raw Material Inward',
+    item:t.itemName||t.item||t.materialName||'',
+    qty:Number(t.qty)||0,unit:t.unit||'',rate:Number(t.purchaseRate??t.inwardRate??t.rate)||0,
+    amount:Number(t.amount??((Number(t.qty)||0)*Number(t.purchaseRate??t.inwardRate??0)))||0,mode:'',remark:t.remark||''
+   });
+  }
+ });
+ (typeof getSupplierPayments==='function'?getSupplierPayments():[]).filter(p=>String(p.party||'').trim()===s).forEach(p=>{
+  rows.push({date:p.date||'',type:'Payment Given',item:'',qty:'',unit:'',rate:'',amount:-(Number(p.amount)||0),mode:p.mode||'',remark:p.remark||p.ref||''});
+ });
+ rows.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+ let balance=0;
+ $('supplierLedgerDetailTable').querySelector('tbody').innerHTML=rows.map(r=>{
+  balance+=Number(r.amount)||0;
+  const amt=Number(r.amount)||0;
+  return `<tr><td>${r.date}</td><td>${r.type}</td><td>${r.item}</td><td>${r.qty}</td><td>${r.unit}</td><td>${r.rate===''?'':('₹'+Number(r.rate).toFixed(2))}</td><td class="${amt<0?'payment-received':'payment-due'}">₹${Math.abs(amt).toFixed(2)}${amt<0?' Payment':''}</td><td>${r.mode}</td><td>${r.remark}</td></tr>`;
+ }).join('')||'<tr><td colspan="9">No transactions found</td></tr>';
+ $('supplierLedgerDetailTitle').textContent='📒 '+s+' — Transaction Details';
+ $('supplierLedgerDetailBalance').innerHTML='<b class="'+(balance>0?'payment-due':'payment-received')+'">₹'+Math.abs(balance).toFixed(2)+(balance<0?' Cr':' Due')+'</b>';
+ $('supplierLedgerDetailWrap').style.display='block';
+}
+
+
+
+function setupPartyLedgerFiltersV86(){
+ function masterNames(key,fields){
+  let a=[];try{a=JSON.parse(localStorage.getItem(key)||'[]')}catch(e){}
+  const out=[];
+  a.forEach(x=>{
+   const n=String(fields.map(k=>x?.[k]).find(v=>String(v||'').trim())||'').trim();
+   if(n&&!out.some(v=>v.toLowerCase()===n.toLowerCase()))out.push(n);
+  });
+  return out;
+ }
+ function bind(inputId,boxId,clearId,kind){
+  const i=$(inputId),b=$(boxId),c=$(clearId);if(!i||!b)return;
+  const getNames=()=>kind==='supplier'
+   ? masterNames('adr_supplier_master_v1',['supplier','name'])
+   : masterNames('adr_vendors_v2',['name','vendor']);
+  const show=()=>{
+   const q=i.value.trim().toLowerCase();b.innerHTML='';
+   const names=getNames().filter(n=>!q||n.toLowerCase().includes(q)).slice(0,15);
+   names.forEach(n=>{
+    const d=document.createElement('div');d.textContent=n;
+    d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';
+    d.onmousedown=e=>{e.preventDefault();i.value=n;b.style.display='none';renderPartyLedgers()};
+    b.appendChild(d);
+   });
+   b.style.display=names.length?'block':'none';
+  };
+  i.addEventListener('input',show);i.addEventListener('focus',show);i.addEventListener('click',show);
+  if(c)c.onclick=()=>{i.value='';b.style.display='none';renderPartyLedgers()};
+ }
+ bind('supplierLedgerFilter','supplierLedgerSuggest','clearSupplierLedgerFilter','supplier');
+ bind('vendorLedgerFilter','vendorLedgerSuggest','clearVendorLedgerFilter','vendor');
+}
+
+function setupRawMaterialSupplierSuggestV84(){
+ const i=$('rmPurchaseSupplier'),b=$('rmPurchaseSupplierSuggest'),c=$('clearRMPurchaseSupplier');if(!i||!b)return;
+ const names=()=>{
+  let a=[];try{a=JSON.parse(localStorage.getItem('adr_supplier_master_v1')||'[]')}catch(e){}
+  const out=[];a.forEach(x=>{const n=String(x.supplier||x.name||'').trim();if(n&&!out.some(v=>v.toLowerCase()===n.toLowerCase()))out.push(n)});return out;
+ };
+ const show=()=>{
+  const q=i.value.trim().toLowerCase();b.innerHTML='';
+  const list=names().filter(n=>!q||n.toLowerCase().includes(q)).slice(0,15);
+  list.forEach(n=>{const d=document.createElement('div');d.textContent=n;d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();i.value=n;i.dataset.selectedSupplier=n;b.style.display='none'};b.appendChild(d)});
+  b.style.display=list.length?'block':'none';
+ };
+ i.addEventListener('input',show);i.addEventListener('focus',show);i.addEventListener('click',show);
+ if(c)c.onclick=()=>{i.value='';i.dataset.selectedSupplier='';b.style.display='none';i.focus()};
+}
+
+function getSupplierPayments(){
+ try{const a=JSON.parse(localStorage.getItem('adr_supplier_payments_v1')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}
+}
+function saveSupplierPayments(a){localStorage.setItem('adr_supplier_payments_v1',JSON.stringify(a));}
+function setDateTodayV87(id){
+ const e=$(id);if(!e||e.value)return;
+ const d=new Date();e.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function setupSupplierPaymentV87(){
+ setDateTodayV87('accPaySupplierDate');
+ const i=$('accPaySupplier'),b=$('accPaySupplierSuggest'),c=$('clearAccPaySupplier');
+ if(!i||!b)return;
+
+ // IMPORTANT: Pay Supplier/Vendor must show ONLY Supplier Master + Vendor Master.
+ // Do not read transactions/customers for this suggestion list.
+ const readMaster=(keys,fields)=>{
+  const out=[];
+  keys.forEach(k=>{
+   try{
+    const a=JSON.parse(localStorage.getItem(k)||'[]');
+    if(Array.isArray(a))a.forEach(x=>{
+     const v=fields.map(f=>x?.[f]).find(v=>String(v??'').trim()!=='');
+     if(v){
+      const n=String(v).trim();
+      if(n&&!out.some(z=>z.toLowerCase()===n.toLowerCase()))out.push(n);
+     }
+    });
+   }catch(e){}
+  });
+  return out;
+ };
+
+ const names=()=>[...new Set([
+  ...readMaster(['adr_supplier_master_v1'],['supplier','supplierName','name']),
+  ...readMaster(['adr_vendors_v2'],['vendor','vendorName','name'])
+ ])];
+
+ const hide=()=>{b.innerHTML='';b.style.display='none';};
+
+ const show=()=>{
+  const q=i.value.trim().toLowerCase();
+  b.innerHTML='';
+  const list=names().filter(n=>!q||n.toLowerCase().includes(q)).slice(0,20);
+  list.forEach(n=>{
+   const d=document.createElement('div');
+   d.textContent=n;
+   d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';
+   d.onmousedown=e=>{
+    e.preventDefault();
+    i.value=n;
+    i.dataset.selectedParty=n;
+    hide();
+   };
+   b.appendChild(d);
+  });
+  b.style.display=list.length?'block':'none';
+ };
+
+ i.addEventListener('focus',show);
+ i.addEventListener('input',show);
+ i.addEventListener('click',show);
+
+ if(c)c.onclick=()=>{
+  i.value='';
+  i.dataset.selectedParty='';
+  $('accPaySupplierAmount').value='';
+  $('accPaySupplierRef').value='';
+  setDateTodayV87('accPaySupplierDate');
+  hide();
+  i.focus();
+ };
+
+ document.addEventListener('click',e=>{
+  if(e.target!==i&&!b.contains(e.target))hide();
+ });
+
+ const btn=$('accPaySupplierBtn');
+ if(btn)btn.onclick=()=>{
+  const party=i.value.trim(),amount=Number($('accPaySupplierAmount').value)||0;
+  if(!party||amount<=0)return alert('Supplier/Vendor select કરો અને valid Payment Amount નાખો.');
+  const a=getSupplierPayments();
+  a.push({
+   date:$('accPaySupplierDate').value,
+   party,amount,
+   mode:$('accPaySupplierMode').value,
+   ref:$('accPaySupplierRef').value.trim(),
+   remark:$('accPaySupplierRef').value.trim()
+  });
+  saveSupplierPayments(a);
+  $('accPaySupplierAmount').value='';
+  $('accPaySupplierRef').value='';
+  renderMergedPartyLedger();
+  renderPartyLedgers();
+  if($('accPaySupplierMsg'))$('accPaySupplierMsg').textContent='Payment saved.';
+ };
+}
+function renderMergedPartyLedger(){
+ const filter=String($('mergedPartyFilter')?.value||'').trim().toLowerCase();
+ const map={};
+ const ensure=c=>{if(c&&!map[c])map[c]={sales:0,purchase:0,job:0,received:0,given:0}};
+ const isReturn=t=>t.isReturn===true||String(t.entryType||'').toUpperCase()==='RETURN'||['RETURN','SALES RETURN','CUSTOMER RETURN','DISPATCH RETURN'].includes(String(t.type||'').toUpperCase());
+ (transactions||[]).forEach(t=>{
+  const type=String(t.type||'').toUpperCase(),c=String(t.customer||t.supplier||t.vendor||'').trim();if(!c)return;ensure(c);
+  const sign=isReturn(t)?-1:1;
+  if(type==='DISPATCH')map[c].sales+=sign*(Number(t.grandTotal??t.amount??0)||0);
+  if(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD')map[c].purchase+=Number(t.amount??(Number(t.qty)||0)*Number(t.purchaseRate??t.inwardRate??0))||0;
+  if(type==='JOB WORK RECEIVE')map[c].job+=Number(t.jobAmount)||0;
+ });
+ getAccountingPayments().forEach(p=>{const c=String(p.customer||'').trim();if(c){ensure(c);map[c].received+=Number(p.amount)||0}});
+ (typeof getSupplierPayments==='function'?getSupplierPayments():[]).forEach(p=>{const c=String(p.party||'').trim();if(c){ensure(c);map[c].given+=Number(p.amount)||0}});
+ const names=Object.keys(map).filter(c=>!filter||c.toLowerCase().includes(filter)).sort();
+ $('mergedPartySummaryTable').querySelector('tbody').innerHTML=names.map(c=>{
+  const v=map[c],net=v.sales+v.given-v.purchase-v.job-v.received;
+  return `<tr class="old-merged-party-row" data-party="${c.replace(/"/g,'&quot;')}" style="cursor:pointer"><td><b>${c}</b></td><td>₹${v.sales.toFixed(2)}</td><td>₹${v.purchase.toFixed(2)}</td><td>₹${v.job.toFixed(2)}</td><td class="payment-received">₹${v.received.toFixed(2)}</td><td>₹${v.given.toFixed(2)}</td><td class="${net>=0?'payment-due':'payment-received'}"><b>₹${Math.abs(net).toFixed(2)} ${net>0?'Dr':net<0?'Cr':'-'}</b></td></tr>`;
+ }).join('')||'<tr><td colspan="7">No party found</td></tr>';
+ $('mergedPartySummaryWrap').style.display=filter?'block':'none';
+ $('mergedPartyLedgerWrap').style.display='none';
+ document.querySelectorAll('.old-merged-party-row').forEach(r=>r.onclick=()=>renderMergedPartyDetailV96(r.dataset.party));
+}
+function renderMergedPartyDetailV96(party){
+ const target=String(party||'').trim().toLowerCase(),events=[];
+ (transactions||[]).forEach(t=>{
+  const c=String(t.customer||t.supplier||t.vendor||'').trim();if(c.toLowerCase()!==target)return;
+  const type=String(t.type||'').toUpperCase(),ret=isReturnMergedV96(t);let debit=0,credit=0,label=type;
+  if(type==='DISPATCH'){debit=(ret?-1:1)*(Number(t.grandTotal??t.amount??0)||0);label=ret?'Sales Return':'Sales'}
+  else if(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD'){credit=Number(t.amount??(Number(t.qty)||0)*Number(t.purchaseRate??t.inwardRate??0))||0;label=type==='PURCHASE'?'Purchase':'Raw Material Inward'}
+  else if(type==='JOB WORK RECEIVE'){credit=Number(t.jobAmount)||0;label='Job Work'} else return;
+  events.push({date:t.date||'',label,ref:t.billNo||t.ref||'',debit,credit,remark:t.remark||''});
+ });
+ getAccountingPayments().filter(p=>String(p.customer||'').trim().toLowerCase()===target).forEach(p=>events.push({date:p.date||'',label:'Payment Received',ref:p.ref||'',debit:0,credit:Number(p.amount)||0,remark:p.remark||''}));
+ (typeof getSupplierPayments==='function'?getSupplierPayments():[]).filter(p=>String(p.party||'').trim().toLowerCase()===target).forEach(p=>events.push({date:p.date||'',label:'Payment Given',ref:p.ref||'',debit:Number(p.amount)||0,credit:0,remark:p.remark||''}));
+ events.sort((a,b)=>String(a.date).localeCompare(String(b.date)));let bal=0;
+ $('mergedPartyLedgerTable').querySelector('tbody').innerHTML=events.map(e=>{bal+=e.debit-e.credit;return `<tr><td>${e.date}</td><td>${e.label}</td><td>${e.ref}</td><td>₹${Math.abs(e.debit).toFixed(2)}</td><td>₹${Math.abs(e.credit).toFixed(2)}</td><td class="${bal>=0?'payment-due':'payment-received'}">₹${Math.abs(bal).toFixed(2)} ${bal>0?'Dr':bal<0?'Cr':'-'}</td><td>${e.remark}</td></tr>`}).join('')||'<tr><td colspan="7">No transactions found</td></tr>';
+ $('mergedPartyLedgerTitle').textContent='📒 '+party+' — Transaction Details';
+ $('mergedPartyLedgerWrap').style.display='block';
+}
+function isReturnMergedV96(t){return t.isReturn===true||String(t.entryType||'').toUpperCase()==='RETURN'||['RETURN','SALES RETURN','CUSTOMER RETURN','DISPATCH RETURN'].includes(String(t.type||'').toUpperCase())}
+
+function setupMergedPartyLedgerV87(){
+ const i=$('mergedPartyFilter'),b=$('mergedPartySuggest'),c=$('clearMergedPartyFilter');
+ if(!i||!b)return;
+ const partyNames=()=>{
+  const out=[];
+  const add=n=>{n=String(n||'').trim();if(n&&!out.some(x=>x.toLowerCase()===n.toLowerCase()))out.push(n)};
+  (transactions||[]).forEach(t=>add(t.customer||t.supplier||t.vendor));
+  if(typeof getAccountingPayments==='function')getAccountingPayments().forEach(p=>add(p.customer));
+  if(typeof getSupplierPayments==='function')getSupplierPayments().forEach(p=>add(p.party));
+  // Also include current masters when available.
+  try{const a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]');a.forEach(x=>add(x.customer||x.customerName||x.name))}catch(e){}
+  try{const a=JSON.parse(localStorage.getItem('adr_supplier_master_v1')||'[]');a.forEach(x=>add(x.supplier||x.supplierName||x.name))}catch(e){}
+  try{const a=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]');a.forEach(x=>add(x.vendor||x.vendorName||x.name))}catch(e){}
+  return out;
+ };
+ const hide=()=>{b.innerHTML='';b.style.display='none'};
+ const show=()=>{
+  const q=i.value.trim().toLowerCase();b.innerHTML='';
+  if(!q){hide();return}
+  const list=partyNames().filter(n=>n.toLowerCase().includes(q)).slice(0,25);
+  list.forEach(n=>{
+   const d=document.createElement('div');
+   d.textContent=n;
+   d.style.cssText='display:block;width:100%;box-sizing:border-box;padding:10px 12px;min-height:40px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#111;background:#fff;border-bottom:1px solid #ddd;cursor:pointer;font-size:15px;line-height:20px';
+   d.onmousedown=e=>{e.preventDefault();i.value=n;hide();if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger()};
+   b.appendChild(d);
+  });
+  b.style.display=list.length?'block':'none';
+ };
+ i.addEventListener('input',show);
+ i.addEventListener('focus',show);
+ i.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();hide();if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger()}});
+ if(c)c.onclick=()=>{i.value='';hide();if($('mergedPartySummaryWrap'))$('mergedPartySummaryWrap').style.display='none';if($('mergedPartyLedgerWrap'))$('mergedPartyLedgerWrap').style.display='none'};
+ document.addEventListener('click',e=>{if(e.target!==i&&!b.contains(e.target))hide()});
+}
+
+function setupAllMasterSuggestionsV92(){
+ const unique=a=>[...new Set(a.map(x=>String(x||'').trim()).filter(Boolean))];
+ const masterNames=(keys,fields)=>{
+  const out=[];
+  keys.forEach(k=>{try{const a=JSON.parse(localStorage.getItem(k)||'[]');if(Array.isArray(a))a.forEach(x=>{const v=fields.map(f=>x?.[f]).find(v=>String(v??'').trim()!=='');if(v)out.push(String(v).trim())})}catch(e){}});
+  return unique(out);
+ };
+ const names={
+  supplier:()=>masterNames(['adr_supplier_master_v1'],['supplier','supplierName','name']),
+  vendor:()=>masterNames(['adr_vendors_v2'],['vendor','vendorName','name']),
+  customer:()=>masterNames(['adr_customer_master_v1','customer_master','customerMaster'],['customer','customerName','name']),
+  item:()=>unique((items||[]).map(x=>x.name)),
+  raw:()=>unique((rawMaterials||[]).map(x=>x.name))
+ };
+ const bind=(inputId,boxId,getNames)=>{
+  const input=$(inputId),box=$(boxId);if(!input||!box||input.dataset.masterSuggestV92==='1')return;
+  input.dataset.masterSuggestV92='1';
+  const render=()=>{
+   const q=input.value.trim().toLowerCase();box.innerHTML='';
+   if(!q){box.style.display='none';return;}
+   const list=getNames().filter(n=>n.toLowerCase().includes(q)).slice(0,15);
+   list.forEach(n=>{
+    const d=document.createElement('div');d.textContent=n;
+    d.style.cssText='padding:10px;cursor:pointer;background:#fff;border-bottom:1px solid #ddd';
+    d.onmousedown=e=>{e.preventDefault();input.value=n;input.dataset.selectedName=n;box.style.display='none';input.dispatchEvent(new Event('change',{bubbles:true}))};
+    box.appendChild(d);
+   });
+   box.style.display=list.length?'block':'none';
+  };
+  input.addEventListener('input',render);input.addEventListener('focus',render);
+  document.addEventListener('click',e=>{if(e.target!==input&&!box.contains(e.target))box.style.display='none'});
+ };
+ [
+  ['pmSupplier','pmSupplierSuggest'],['purchaseSupplier','purchaseSupplierSuggest'],
+  ['purchaseInlineSupplier','purchaseInlineSupplierSuggest'],['purchaseReportSupplier','purchaseReportSupplierSuggest'],
+  ['supplierLedgerFilter','supplierLedgerSuggest'],['rmPurchaseSupplier','rmPurchaseSupplierSuggest'],
+  ['accPaySupplier','accPaySupplierSuggest']
+ ].forEach(x=>bind(x[0],x[1],names.supplier));
+ [
+  ['jwVendor','vendorSuggest'],['jwIssueVendor','issueVendorSuggest'],['jwReceiveVendor','receiveVendorSuggest'],
+  ['rateVendor','rateVendorSuggest'],['vendorLedgerFilter','vendorLedgerSuggest']
+ ].forEach(x=>bind(x[0],x[1],names.vendor));
+ [
+  ['dispatchCustomer','dispatchCustomerSuggest'],['dispatchReportCustomer','dispatchReportCustomerSuggest'],
+  ['dispatchReportCustomerMain','dispatchReportCustomerMainSuggest'],['accPaymentCustomer','accPaymentCustomerSuggest'],
+  ['dueCustomerFilter','dueCustomerFilterSuggest']
+ ].forEach(x=>bind(x[0],x[1],names.customer));
+ [
+  ['pmItem','pmItemSuggest'],['purchaseCode','itemSuggestPurchase'],['productionCode','productSuggestProduction'],
+  ['dispatchCode','productSuggestDispatch'],['fgRateItem','fgRateItemSuggest']
+ ].forEach(x=>bind(x[0],x[1],names.item));
+ bind('rmPurchase','rmPurchaseSuggest',names.raw);
+}
+
+function setupAccountingCustomerAndDateV94(){
+ const date=$('accPaymentDate');
+ if(date && !date.value){
+  const d=new Date();
+  date.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+ }
+ const input=$('accPaymentCustomer'),box=$('accPaymentCustomerSuggest');
+ if(!input||!box)return;
+ const customerNames=()=>{
+  const out=[];
+  const add=n=>{n=String(n||'').trim();if(n&&!out.some(x=>x.toLowerCase()===n.toLowerCase()))out.push(n)};
+  try{const a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]');if(Array.isArray(a))a.forEach(x=>add(x.customer||x.customerName||x.name))}catch(e){}
+  // Fallback only for legacy records if Customer Master is empty.
+  if(!out.length)(transactions||[]).forEach(t=>add(t.customer));
+  return out;
+ };
+ const hide=()=>{box.innerHTML='';box.style.display='none'};
+ const show=()=>{
+  const q=input.value.trim().toLowerCase();box.innerHTML='';
+  if(!q){box.style.display='none';return}
+  const list=customerNames().filter(n=>n.toLowerCase().includes(q)).slice(0,20);
+  list.forEach(n=>{
+   const d=document.createElement('div');d.textContent=n;
+   d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';
+   d.onmousedown=e=>{e.preventDefault();input.value=n;input.dataset.selectedCustomer=n;hide()};
+   box.appendChild(d);
+  });
+  box.style.display=list.length?'block':'none';
+ };
+ input.addEventListener('input',show);input.addEventListener('focus',show);
+ document.addEventListener('click',e=>{if(e.target!==input&&!box.contains(e.target))hide()});
+}
+
+function getSupplierPaymentsV95(){
+ try{const a=JSON.parse(localStorage.getItem('adr_supplier_payments_v1')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}
+}
+function renderPartyMergedLedgerV95(){
+ const q=String($('partyMergedFilter')?.value||'').trim().toLowerCase();
+ const map={};
+ const ensure=n=>{if(n&&!map[n])map[n]={sales:0,purchase:0,job:0,received:0,given:0}};
+ const isReturn=t=>t.isReturn===true||String(t.entryType||'').toUpperCase()==='RETURN'||['RETURN','SALES RETURN','CUSTOMER RETURN','DISPATCH RETURN'].includes(String(t.type||'').toUpperCase());
+ (transactions||[]).forEach(t=>{
+  const type=String(t.type||'').toUpperCase(), party=String(t.customer||t.supplier||t.vendor||'').trim();
+  if(!party)return;ensure(party);
+  const sign=isReturn(t)?-1:1;
+  if(type==='DISPATCH')map[party].sales+=sign*(Number(t.grandTotal??t.amount??0)||0);
+  if(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD')map[party].purchase+=(Number(t.amount??(Number(t.qty)||0)*Number(t.purchaseRate??t.inwardRate??0))||0);
+  if(type==='JOB WORK RECEIVE')map[party].job+=(Number(t.jobAmount)||0);
+ });
+ getAccountingPayments().forEach(p=>{const n=String(p.customer||'').trim();if(n){ensure(n);map[n].received+=Number(p.amount)||0}});
+ getSupplierPaymentsV95().forEach(p=>{const n=String(p.party||'').trim();if(n){ensure(n);map[n].given+=Number(p.amount)||0}});
+ const names=Object.keys(map).filter(n=>!q||n.toLowerCase().includes(q)).sort();
+ const rows=names.map(n=>{
+  const v=map[n],net=v.sales+v.given-v.purchase-v.job-v.received;
+  return `<tr class="party-merged-row" data-party="${n.replace(/"/g,'&quot;')}" style="cursor:pointer"><td><b>${n}</b></td><td>₹${v.sales.toFixed(2)}</td><td>₹${v.purchase.toFixed(2)}</td><td>₹${v.job.toFixed(2)}</td><td class="payment-received">₹${v.received.toFixed(2)}</td><td>₹${v.given.toFixed(2)}</td><td class="${net>=0?'payment-due':'payment-received'}"><b>₹${Math.abs(net).toFixed(2)} ${net>0?'Dr':net<0?'Cr':'-'}</b></td></tr>`;
+ }).join('');
+ $('partyMergedOverviewTable').querySelector('tbody').innerHTML=rows||'<tr><td colspan="7">No party found</td></tr>';
+ $('partyMergedOverviewWrap').style.display=q?'block':'none';
+ $('partyMergedDetailWrap').style.display='none';
+ document.querySelectorAll('.party-merged-row').forEach(r=>r.onclick=()=>renderPartyMergedDetailV95(r.dataset.party));
+}
+function renderPartyMergedDetailV95(party){
+ const target=String(party||'').trim().toLowerCase(),events=[];
+ (transactions||[]).forEach(t=>{
+  const n=String(t.customer||t.supplier||t.vendor||'').trim();
+  if(n.toLowerCase()!==target)return;
+  const type=String(t.type||'').toUpperCase(),ret=t.isReturn===true||String(t.entryType||'').toUpperCase()==='RETURN';
+  let debit=0,credit=0,label=type;
+  if(type==='DISPATCH'){debit=(ret?-1:1)*(Number(t.grandTotal??t.amount??0)||0);label=ret?'Sales Return':'Sales'}
+  else if(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD'){credit=Number(t.amount??(Number(t.qty)||0)*Number(t.purchaseRate??t.inwardRate??0))||0;label=type==='PURCHASE'?'Purchase':'Raw Material Inward'}
+  else if(type==='JOB WORK RECEIVE'){credit=Number(t.jobAmount)||0;label='Job Work'}
+  else return;
+  events.push({date:t.date||'',label,ref:t.billNo||t.ref||'',debit,credit,remark:t.remark||''});
+ });
+ getAccountingPayments().filter(p=>String(p.customer||'').trim().toLowerCase()===target).forEach(p=>events.push({date:p.date||'',label:'Payment Received',ref:p.ref||'',debit:0,credit:Number(p.amount)||0,remark:p.remark||''}));
+ getSupplierPaymentsV95().filter(p=>String(p.party||'').trim().toLowerCase()===target).forEach(p=>events.push({date:p.date||'',label:'Payment Given',ref:p.ref||'',debit:Number(p.amount)||0,credit:0,remark:p.remark||''}));
+ events.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+ let bal=0;
+ $('partyMergedDetailTable').querySelector('tbody').innerHTML=events.map(e=>{bal+=e.debit-e.credit;return `<tr><td>${e.date}</td><td>${e.label}</td><td>${e.ref}</td><td>₹${Math.abs(e.debit).toFixed(2)}</td><td>₹${Math.abs(e.credit).toFixed(2)}</td><td class="${bal>=0?'payment-due':'payment-received'}">₹${Math.abs(bal).toFixed(2)} ${bal>0?'Dr':bal<0?'Cr':'-'}</td><td>${e.remark}</td></tr>`}).join('')||'<tr><td colspan="7">No transactions found</td></tr>';
+ $('partyMergedDetailTitle').textContent='📒 '+party+' — Transaction Details';
+ $('partyMergedDetailWrap').style.display='block';
+}
+function setupPartyMergedLedgerV95(){
+ const i=$('partyMergedFilter'),b=$('partyMergedSuggest'),c=$('clearPartyMergedFilter');if(!i||!b)return;
+ const names=()=>{
+  const out=[];const add=n=>{n=String(n||'').trim();if(n&&!out.some(x=>x.toLowerCase()===n.toLowerCase()))out.push(n)};
+  (transactions||[]).forEach(t=>add(t.customer||t.supplier||t.vendor));
+  getAccountingPayments().forEach(p=>add(p.customer));getSupplierPaymentsV95().forEach(p=>add(p.party));
+  return out;
+ };
+ const show=()=>{const q=i.value.trim().toLowerCase();b.innerHTML='';if(!q){b.style.display='none';return}
+  const list=names().filter(n=>n.toLowerCase().includes(q)).slice(0,20);
+  list.forEach(n=>{const d=document.createElement('div');d.textContent=n;d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();i.value=n;b.style.display='none';renderPartyMergedLedgerV95()};b.appendChild(d)});
+  b.style.display=list.length?'block':'none';
+ };
+ i.addEventListener('input',show);i.addEventListener('focus',show);
+ if(c)c.onclick=()=>{i.value='';b.style.display='none';$('partyMergedOverviewWrap').style.display='none';$('partyMergedDetailWrap').style.display='none'};
+}
+
+function applyLowStockHighlightV101(){
+ document.querySelectorAll('tr').forEach(tr=>{
+  if(tr.closest('#dashboardDetailsTable')===null && tr.closest('#stockTable')===null && tr.closest('#itemsTable')===null)return;
+  const txt=tr.textContent||'';
+  const cells=[...tr.querySelectorAll('td')].map(td=>td.textContent.trim());
+  if(cells.length<2)return;
+  // Prefer explicit data attributes when available.
+  let stock=Number(tr.dataset.stock), min=Number(tr.dataset.min);
+  if(!Number.isFinite(stock)||!Number.isFinite(min)){
+   // Find cells whose headers are Stock / Min Stock.
+   const table=tr.closest('table');let stockIdx=-1,minIdx=-1;
+   if(table){
+    const heads=[...table.querySelectorAll('thead th')].map(x=>x.textContent.trim().toLowerCase());
+    stockIdx=heads.findIndex(x=>x==='stock'||x.includes('current stock'));
+    minIdx=heads.findIndex(x=>x.includes('min stock')||x.includes('minimum stock')||x==='min');
+   }
+   if(stockIdx>=0)stock=parseFloat(cells[stockIdx].replace(/[^0-9.-]/g,'')); 
+   if(minIdx>=0)min=parseFloat(cells[minIdx].replace(/[^0-9.-]/g,''));
+  }
+  if(Number.isFinite(stock)&&Number.isFinite(min)&&stock<=min)tr.classList.add('low-stock-row');
+ });
+}
+function pmGet(){
+ try{
+   const keys=['adr_supplier_master_v1','adr_purchase_master_v4','adr_purchase_master_v3','adr_purchase_master_v2'];
+   let out=[];
+   keys.forEach(k=>{try{const a=JSON.parse(localStorage.getItem(k)||'[]');if(Array.isArray(a))out=out.concat(a)}catch(e){}});
+   const seen=new Set();
+   return out.filter(x=>{
+     const key=String(x.id||'')+'|'+String(x.supplier||'').toLowerCase()+'|'+String(x.itemCode||x.itemName||'').toLowerCase();
+     if(seen.has(key))return false;seen.add(key);return x&&x.supplier;
+   });
+ }catch(e){return[]}
+}
+function pmPut(a){
+ localStorage.setItem('adr_purchase_master_v4',JSON.stringify(a));
+ localStorage.setItem('adr_supplier_master_v1',JSON.stringify(a));
+}
+function pmShowSuggestions(input,box,list,label,pick){
+ input.addEventListener('input',()=>{
+   const q=input.value.trim().toLowerCase();box.innerHTML='';
+   if(!q){box.style.display='none';return}
+   const arr=list().filter(x=>label(x).toLowerCase().includes(q)).slice(0,10);
+   arr.forEach(x=>{const d=document.createElement('div');d.textContent=label(x);d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #eee;cursor:pointer';d.onclick=()=>{pick(x);box.style.display='none'};box.appendChild(d)});
+   box.style.display=arr.length?'block':'none';
+ });
+}
+
+function supplierMasterItemAutocomplete(){
+ const input=$('pmItem');
+ if(!input || input.dataset.smAutocompleteBound==='1') return;
+ input.dataset.smAutocompleteBound='1';
+ let box=document.getElementById('supplierMasterItemDropdown');
+ if(!box){
+   box=document.createElement('div');
+   box.id='supplierMasterItemDropdown';
+   box.style.cssText='position:fixed;z-index:2147483647;background:#fff;border:2px solid #174a6b;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.25);display:none;max-height:240px;overflow-y:auto;font-size:15px;';
+   document.body.appendChild(box);
+ }
+ function getMasterItems(){
+   let live=Array.isArray(items)?items:[];
+   try{
+     const stored=JSON.parse(localStorage.getItem('adr_items_v2')||'[]');
+     if(Array.isArray(stored)&&stored.length)live=stored;
+   }catch(e){}
+   return live;
+ }
+ function place(){
+   const r=input.getBoundingClientRect();
+   box.style.left=Math.max(4,r.left)+'px';
+   box.style.top=(r.bottom+2)+'px';
+   box.style.width=Math.max(260,r.width)+'px';
+ }
+ function hide(){box.style.display='none';}
+ function show(){
+   const q=input.value.trim().toLowerCase();
+   box.innerHTML='';
+   input.dataset.selectedCode='';
+   if(!q){hide();return;}
+   const matches=getMasterItems().filter(i=>
+     String(i.name||'').toLowerCase().includes(q) ||
+     String(i.code||'').toLowerCase().includes(q)
+   ).slice(0,12);
+   if(!matches.length){hide();return;}
+   matches.forEach(i=>{
+     const row=document.createElement('div');
+     row.textContent=String(i.name||'')+' — '+String(i.code||'');
+     row.style.cssText='padding:12px 14px;background:#fff;color:#111;border-bottom:1px solid #ddd;cursor:pointer;';
+     row.onclick=()=>{
+       input.value=String(i.name||'');
+       input.dataset.selectedCode=String(i.code||'');
+       hide();
+     };
+     box.appendChild(row);
+   });
+   place();box.style.display='block';
+ }
+ input.addEventListener('input',show);
+ input.addEventListener('focus',show);
+ input.addEventListener('keyup',show);
+ window.addEventListener('resize',()=>{if(box.style.display==='block')place();});
+ document.addEventListener('click',e=>{if(e.target!==input&&!box.contains(e.target))hide();});
+}
+
+function pmInit(){
+ supplierMasterItemAutocomplete();
+ const pi=$('pmItem'),pb=$('pmItemSuggest');
+ if(pi&&pb){
+   const getItemMaster=()=>{
+     try{
+       const a=JSON.parse(localStorage.getItem('adr_items_v2')||'[]');
+       return Array.isArray(a)?a:[];
+     }catch(e){return[]}
+   };
+   const show=()=>{
+     const q=pi.value.trim().toLowerCase();
+     pb.innerHTML='';
+     pi.dataset.selectedCode='';
+     if(!q){pb.style.display='none';return;}
+     const list=getItemMaster().filter(i=>
+       String(i.name||'').toLowerCase().includes(q) ||
+       String(i.code||'').toLowerCase().includes(q)
+     ).slice(0,10);
+     list.forEach(i=>{
+       const d=document.createElement('div');
+       d.textContent=String(i.name||'')+' — '+String(i.code||'');
+       d.style.cssText='display:block!important;padding:10px 12px;background:#fff;color:#111;border-bottom:1px solid #ddd;cursor:pointer;font-size:15px;';
+       d.onmousedown=(e)=>{
+         e.preventDefault();
+         pi.value=String(i.name||'');
+         pi.dataset.selectedCode=String(i.code||'');
+         pb.style.display='none';
+       };
+       pb.appendChild(d);
+     });
+     pb.style.display=list.length?'block':'none';
+   };
+   pi.addEventListener('input',show);
+   pi.addEventListener('focus',show);
+   pi.addEventListener('keyup',show);
+ }
+ const ps=$('pmSupplier'),sb=$('pmSupplierSuggest');
+ if(ps&&sb)pmShowSuggestions(ps,sb,()=>pmGet().map(x=>({name:x.supplier})),x=>String(x.name||''),x=>{ps.value=x.name||''});
+ const pp=$('purchaseCode'),ppb=$('itemSuggestPurchase');
+ if(pp&&ppb)pmShowSuggestions(pp,ppb,()=>items||[],x=>String(x.name||'')+' — '+String(x.code||''),x=>{pp.value=x.name||'';pp.dataset.selectedCode=x.code||'';pmAutoRate()});
+ const pps=$('purchaseSupplier'),ppsb=$('purchaseSupplierSuggest');
+ if(pps&&ppsb)pmShowSuggestions(pps,ppsb,()=>pmGet().map(x=>({name:x.supplier})),x=>String(x.name||''),x=>{pps.value=x.name||'';pmAutoRate()});
+}
+function pmAdd(){
+ const supplier=$('pmSupplier').value.trim();
+ const item=$('pmItem').value.trim();
+ let code=$('pmItem').dataset.selectedCode||'';
+ const rateText=$('pmRate').value.trim();
+ const rate=rateText===''?0:Number(rateText);
+
+ if(!supplier)return alert('Supplier Name નાખો.');
+ /* Item Name and Rate are optional. Supplier alone can be saved. */
+ if(!code && item){
+   const found=(items||[]).find(i=>
+     String(i.name||'').trim().toLowerCase()===item.toLowerCase() ||
+     String(i.code||'').trim().toLowerCase()===item.toLowerCase()
+   );
+   if(found){
+     code=String(found.code||'');
+     $('pmItem').dataset.selectedCode=code;
+   }
+ }
+ if(!code && item)return alert('Item Masterમાંથી Item Name અથવા Item Code પસંદ કરો.');
+
+ const a=pmGet();
+ const old=a.find(x=>
+   String(x.supplier||'').trim().toLowerCase()===supplier.toLowerCase() &&
+   String(x.itemCode||'').trim().toLowerCase()===code.toLowerCase()
+ );
+
+ if(old){
+   old.supplier=supplier;
+   old.itemName=item;
+   old.itemCode=code;
+   old.rate=Number.isFinite(rate)?rate:0;
+ }else{
+   a.push({
+     id:'PM-'+Date.now().toString().slice(-8),
+     supplier:supplier,
+     itemName:item,
+     itemCode:code,
+     rate:Number.isFinite(rate)?rate:0
+   });
+ }
+
+ pmPut(a);
+ pmRender();
+
+ $('pmMsg').textContent='Supplier details save થઈ ગયા.';
+ $('pmSupplier').value='';
+ $('pmItem').value='';
+ $('pmItem').dataset.selectedCode='';
+ $('pmRate').value='';
+}
+function pmRender(){
+ const b=$('pmTable');if(!b)return;
+ const a=pmGet();
+ b.innerHTML=a.map(x=>`<tr><td>${x.supplier||''}</td><td>${x.itemName||'All / Not Fixed'}</td><td>${x.rate?('₹'+Number(x.rate).toFixed(2)):'Not Fixed'}</td><td><button type="button" data-pme="${x.id}">✏️ Edit</button> <button type="button" data-pmd="${x.id}">🗑 Delete</button></td></tr>`).join('')||'<tr><td colspan="4">No Supplier details</td></tr>';
+ document.querySelectorAll('[data-pme]').forEach(b=>b.onclick=()=>{
+   const a=pmGet(),x=a.find(v=>v.id===b.dataset.pme);if(!x)return;
+   const n=prompt('Supplier Name:',x.supplier||'');if(n===null)return;
+   const i=prompt('Item Name:',x.itemName||'');if(i===null)return;
+   const r=prompt('Rate (Optional):',Number(x.rate||0).toFixed(2));if(r===null)return;
+   x.supplier=n.trim();x.itemName=i.trim();x.rate=Number(r)||0;pmPut(a);pmRender();
+ });
+ document.querySelectorAll('[data-pmd]').forEach(b=>b.onclick=()=>{
+   if(!confirm('આ Supplier details delete કરવી છે?'))return;
+   pmPut(pmGet().filter(x=>x.id!==b.dataset.pmd));pmRender();
+ });
+}
+function pmAutoRate(){
+ const s=String($('purchaseSupplier')?.value||'').trim().toLowerCase();
+ const code=String($('purchaseItem')?.dataset.selectedCode||'').trim().toLowerCase();
+ const name=String($('purchaseItem')?.value||'').trim().toLowerCase();
+ if(!s)return;
+ const a=pmGet();
+ const match=a.find(x=>String(x.supplier||'').trim().toLowerCase()===s &&
+   ((code&&String(x.itemCode||'').trim().toLowerCase()===code) ||
+    (!code&&name&&String(x.itemName||'').trim().toLowerCase()===name)) &&
+   Number(x.rate||0)>0);
+ if(match && $('purchaseRate'))$('purchaseRate').value=Number(match.rate).toFixed(2);
+}
+function render(){
+ $('itemTable').innerHTML=items.map(i=>`<tr><td>${i.code}</td><td>${i.name}</td><td>${i.cat}</td><td>${i.unit}</td><td>${i.weight}</td><td>${i.stock}</td><td><button data-edit="${i.code}">✏️ Edit</button> <button data-del="${i.code}">🗑 Delete</button></td></tr>`).join('');
+ $('stockTable').innerHTML=$('itemTable').innerHTML;
+ document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editItem(b.dataset.edit));
+ document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteItem(b.dataset.del));
+ const products=[...new Set(boms.map(b=>b.product))];
+$('bomTable').innerHTML=products.map(p=>{
+ const rows=boms.filter(b=>b.product===p);
+ return `<tr><td>${p}</td><td>${rows.map(r=>r.component).join('<br>')}</td><td>${rows.map(r=>r.qty).join('<br>')}</td><td>${rows.map(r=>r.unit).join('<br>')}</td><td><button data-bom-edit="${p}">✏️ Edit</button> <button data-bom-del="${p}">🗑 Delete</button></td></tr>`;
+}).join('');
+document.querySelectorAll('[data-bom-edit]').forEach(b=>b.onclick=()=>editBom(b.dataset.bomEdit));
+document.querySelectorAll('[data-bom-del]').forEach(b=>b.onclick=()=>deleteBomProduct(b.dataset.bomDel));
+ $('transactionTable').innerHTML=[...transactions].reverse().map(t=>`<tr><td>${t.date}</td><td>${t.type}</td><td>${t.ref}</td><td>${t.item}</td><td>${t.qty} ${t.unit}</td><td><button data-ref="${t.ref}">🗑 Delete</button></td></tr>`).join('');
+ document.querySelectorAll('[data-ref]').forEach(b=>b.onclick=()=>deleteTransaction(b.dataset.ref));
+ $('dashItems').textContent=items.length;
+ const dashSales=(transactions||[]).filter(t=>String(t.type||'').toUpperCase()==='DISPATCH')
+   .reduce((a,t)=>a+(Number(t.grandTotal??t.amount??0)||0),0);
+ const dashPurchase=(transactions||[]).filter(t=>['RAW MATERIAL PURCHASE','RAW MATERIAL COMPANY INWARD','PURCHASE'].includes(String(t.type||'').toUpperCase()))
+   .reduce((a,t)=>a+(Number(t.amount??((Number(t.qty)||0)*Number(t.purchaseRate??t.inwardRate??t.rate??0)))||0),0);
+ $('dashSales').textContent='₹'+dashSales.toFixed(2);
+ $('dashPurchase').textContent='₹'+dashPurchase.toFixed(2);
+ $('dashRaw').textContent=rawMaterials.filter(i=>i.unit==='KG').reduce((a,i)=>a+Number(i.stock),0).toFixed(3)+' KG';
+ $('dashVendor').textContent=jobwork.reduce((a,x)=>a+(String(x.unit).toUpperCase()==='G'?Number(x.qty||0)/1000:Number(x.qty||0)),0).toFixed(3)+' KG';
+ $('dashFg').textContent=items.filter(i=>i.cat==='Finished Goods'&&i.unit==='PCS').reduce((a,i)=>a+i.stock,0)+' PCS';
+ $('dashLow').textContent=items.filter(i=>i.stock<=i.min).length;
+ document.querySelectorAll('#dashboardDetailsTable tr').forEach(r=>{
+   const cells=r.querySelectorAll('td');
+   if(cells.length>=7){
+     const stock=parseFloat(cells[5].textContent)||0;
+     const min=parseFloat(cells[6].textContent)||0;
+     if(stock<=min)r.classList.add('low-stock-row');
+   }
+ });
+
+ renderJobWorkRates();
+ 
+ const purchases=transactions.filter(t=>t.type==='RAW MATERIAL PURCHASE'||t.type==='RAW MATERIAL COMPANY INWARD');
+ $('rmPurchaseTable').innerHTML=purchases.length?purchases.slice().reverse().map(t=>`<tr><td>${t.date}</td><td>${t.ref}</td><td>${(rawMaterials.find(r=>('RM:'+r.code)===t.item)||{name:t.item}).name}</td><td>${Number(t.qty||0).toFixed(3)}</td><td>₹${fmtRate2(t.purchaseRate??t.inwardRate??t.rate??0)}</td><td>${t.unit}</td><td><button data-rmp="${t.id}">🗑 Delete</button></td></tr>`).join(''):'<tr><td colspan="7">No inward entries</td></tr>';
+ document.querySelectorAll('[data-rmp]').forEach(b=>b.onclick=()=>deletePurchase(b.dataset.rmp));
+$('rmTable').innerHTML=rawMaterials.map(r=>`<tr><td>${r.name}</td><td>${Number(r.stock||0).toFixed(3)} ${r.unit}</td></tr>`).join('');
+ document.querySelectorAll('[data-rm-edit]').forEach(b=>b.onclick=()=>editRawMaterial(b.dataset.rmEdit));
+ document.querySelectorAll('[data-rm-del]').forEach(b=>b.onclick=()=>deleteRawMaterial(b.dataset.rmDel));
+
+ $('jwTable').innerHTML=jobwork.filter(x=>Number(x.qty)>0.000001).map(x=>`<tr><td>${x.vendor}</td><td>${(rawMaterials.find(i=>i.code===x.raw)||{name:x.raw}).name}</td><td>${Number(x.qty).toFixed(3)}</td><td>${x.unit}</td><td><button type="button" data-jw-edit="${x.key}">✏️ Edit</button> <button type="button" data-jw-del="${x.key}">🗑 Delete</button></td></tr>`).join('')||'<tr><td colspan="5">No Vendor Stock</td></tr>';
+document.querySelectorAll('[data-jw-edit]').forEach(b=>b.onclick=()=>{
+ const x=jobwork.find(v=>v.key===b.dataset.jwEdit); if(!x)return;
+ const val=prompt('Vendor Stock Quantity બદલો:',Number(x.qty||0).toFixed(3));
+ if(val===null)return; const n=Number(val);
+ if(!Number.isFinite(n)||n<0)return alert('Valid quantity નાખો.');
+ x.qty=n; save();
+});
+document.querySelectorAll('[data-jw-del]').forEach(b=>b.onclick=()=>{
+ const x=jobwork.find(v=>v.key===b.dataset.jwDel); if(!x)return;
+ if(!confirm('આ Vendor Stock entry delete કરવી છે?'))return;
+ jobwork=jobwork.filter(v=>v.key!==b.dataset.jwDel); save();
+});
+}
+$('addItemBtn').onclick=addItem;$('addBomRow').onclick=addBomRow;$('saveBom').onclick=saveBom;$('deleteBom').onclick=deleteBom;
+$('addRM').onclick=addRawMaterial;$('addRateBtn').onclick=saveJobWorkRate;$('rmPurchaseBtn').onclick=purchaseRawMaterial;$('purchaseBtn').onclick=purchase;$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>{generatePurchaseReport();setTimeout(()=>window.print(),300)};
+if($('openProductionReport'))$('openProductionReport').onclick=()=>{document.querySelector('[data-page="reports"]').click();};
+if($('printProductionReport'))$('printProductionReport').onclick=()=>{generateProductionReport();setTimeout(()=>window.print(),300);};
+if($('printJWReport'))$('printJWReport').onclick=()=>{generateJWReport();setTimeout(()=>window.print(),300);};$('addVendorBtn').onclick=addVendor;$('jwReceiveQty').addEventListener('input',updateJWConsumption);$('jwReceiveVendor').addEventListener('input',updateAutoJobRate);$('jwComponent').addEventListener('input',updateAutoJobRate);
+addBomRow();refreshDropdowns();
+if($('addCustomerBtn'))$('addCustomerBtn').onclick=addCustomerMaster;renderCustomerMaster();if($('addFgRateBtn'))$('addFgRateBtn').onclick=addFgRateMaster;setupFgRateItemSuggest();renderFgRateMaster();if($('dispatchBtn'))$('dispatchBtn').onclick=dispatch;setupDispatchClearButtonsV83();if($('dispatchTaxRate'))$('dispatchTaxRate').addEventListener('input',dispatchUpdateAmount);if($('accPaymentBtn'))$('accPaymentBtn').onclick=saveAccountingPayment;setupAccountingPaymentCustomerSuggest();renderAccounting();setupAccountingPaymentClear();setupAccountingCustomerAndDateV94();setPaymentDateToday();if($('downloadCustomerLedgerPdf'))$('downloadCustomerLedgerPdf').onclick=downloadCustomerLedgerPDF;setupDueCustomerFilter();renderCustomerDueSummary();if($('dispatchReportMainBtn'))$('dispatchReportMainBtn').onclick=generateDispatchMainReport;setupDispatchMainReportSuggestions();setupDispatchReportClearButtons();setupAllReportClearButtons();if($('dispatchReportBtn'))$('dispatchReportBtn').onclick=generateDispatchReport;setupDispatchReportSuggestions();setupDispatchCustomerSuggest();if($('dispatchQty'))$('dispatchQty').addEventListener('input',dispatchUpdateAmount);if($('dispatchRate'))$('dispatchRate').addEventListener('input',dispatchUpdateAmount);renderDispatchEntries();showNextDispatchBillNo();if($('pmAddBtn')) $('pmAddBtn').onclick=pmAdd;if($('purchaseInlineReportBtn'))$('purchaseInlineReportBtn').onclick=generatePurchaseInlineReport;setupPurchaseInlineSupplierSuggest();
+window._generatePurchaseReport=generatePurchaseReport;window._generateProductionReport=generateProductionReport;
+pmInit();
+pmRender();
+render();setupAllAutocomplete();setupAllMasterSuggestionsV92();setupProductionSuggestions();setupJobWorkSuggestions();setupRateSuggestions();setupRawPurchaseSuggest();setupRawMaterialSupplierSuggestV84();setupDashboardCards();setupReportSelectors();
+})();
+
+document.addEventListener('DOMContentLoaded',function(){
+ var b=document.getElementById('generatePurchaseReport');
+ if(b)b.onclick=function(e){e.preventDefault();generatePurchaseReport();};
+ var p=document.getElementById('printPurchaseReport');
+ if(p)p.onclick=function(e){e.preventDefault();generatePurchaseReport();setTimeout(function(){window.print();},200);};
+});
+
+</script>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  function bind(id,fn){
+    var b=document.getElementById(id);
+    if(!b||typeof fn!=='function')return;
+    b.addEventListener('click',function(e){
+      e.preventDefault();e.stopPropagation();
+      try{fn();}catch(err){
+        var msg=document.getElementById(id==='generatePurchaseReport'?'purchaseReportMsg':'productionReportMsg');
+        if(msg)msg.textContent='Report error: '+err.message;
+      }
+    });
+  }
+  bind('generatePurchaseReport',window._generatePurchaseReport);
+  bind('generateProductionReport',window._generateProductionReport);
+});
+</script>
+
+<script>
+(function(){
+ function bindPurchaseReport(){
+  var b=document.getElementById('generatePurchaseReport');
+  if(!b)return;
+  b.onclick=function(e){e.preventDefault();e.stopPropagation();try{generatePurchaseReport();}catch(x){var m=document.getElementById('purchaseReportMsg');if(m)m.textContent='Report error: '+x.message;}};
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindPurchaseReport);else bindPurchaseReport();
+})();
+</script>
+
+<script>
+(function(){
+ function bind(id,fn){
+  var b=document.getElementById(id);if(!b)return;
+  b.onclick=function(e){e.preventDefault();e.stopPropagation();fn();};
+ }
+ function init(){bind('generatePurchaseReport',generatePurchaseReport);bind('dispatchReportMainBtn',generateDispatchMainReport);}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
+<script>
+(function restoreSuggestionsAndDateV97(){
+  function today(id){
+    const e=document.getElementById(id);
+    if(!e || e.value) return;
+    const d=new Date();
+    e.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function run(){
+    try{ if(typeof setupAllMasterSuggestionsV92==='function') setupAllMasterSuggestionsV92(); }catch(e){}
+    try{ if(typeof setupAccountingCustomerAndDateV94==='function') setupAccountingCustomerAndDateV94(); }catch(e){}
+    try{ if(typeof setupMergedPartyLedgerV87==='function') setupMergedPartyLedgerV87(); }catch(e){}
+    today('accPaymentDate');
+    today('accPaySupplierDate');
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run);
+  else run();
+})();
+</script>
+
+<script>
+(function(){
+ const run=()=>{try{applyLowStockHighlightV101()}catch(e){}};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);else run();
+ setInterval(run,1000);
+})();
+</script>
+
+<script>
+(function(){
+  function updateOnlineStatus(){
+    const e=document.getElementById('sentidosOnlineStatusText');
+    if(!e)return;
+    if(typeof window.sentidosOnlineReady==='function' && window.sentidosOnlineReady()){
+      e.textContent='Firebase Ready — configuration added';
+    }else{
+      e.textContent='Local / Offline — Firebase configuration required';
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',updateOnlineStatus);
+  else updateOnlineStatus();
+})();
+</script>
+</body></html>
