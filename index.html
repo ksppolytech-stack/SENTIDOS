@@ -2842,4 +2842,50 @@ document.addEventListener('DOMContentLoaded',function(){
   else updateOnlineStatus();
 })();
 </script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    doc,
+    setDoc,
+    updateDoc,
+    deleteDoc,
+    onSnapshot
+  } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBz6JN_h6H85WHskMfb90LvMY2n1_AMrdM",
+    authDomain: "sentidos-erp.firebaseapp.com",
+    projectId: "sentidos-erp",
+    storageBucket: "sentidos-erp.firebasestorage.app",
+    messagingSenderId: "432426760522",
+    appId: "1:432426760522:web:a969a00ed00d9259fa29b3"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ERP માટે Firebase ready
+  window.sentidosFirebase = {
+    app,
+    db,
+    collection,
+    addDoc,
+    getDocs,
+    doc,
+    setDoc,
+    updateDoc,
+    deleteDoc,
+    onSnapshot
+  };
+
+  window.sentidosOnlineReady = function () {
+    return true;
+  };
+
+  console.log("SENTIDOS ERP - Firebase Connected");
+</script>
 </body></html>
