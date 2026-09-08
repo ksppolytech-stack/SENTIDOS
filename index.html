@@ -184,6 +184,7 @@ tr.low-stock-row td * {
 <hr>
 <h3>Company Raw Material Inward / Stock Add</h3><p class="small">ઉપરની listમાં માત્ર Material Name અને Total Stock દેખાશે. નીચેની Inward listમાં દરેક batchનો Rate અલગ દેખાશે.</p>
 <div class="grid">
+<input id="rmPurchaseDate" type="date" title="Inward Date">
 <div class="autowrap" style="position:relative"><input id="rmPurchaseSupplier" placeholder="Type Supplier Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearRMPurchaseSupplier" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer">×</button><div id="rmPurchaseSupplierSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
 <div class="autowrap" style="position:relative"><input id="rmPurchase" placeholder="Type Material Name"><div id="rmPurchaseSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
 <input id="rmPurchaseQty" type="number" step="0.001" placeholder="Quantity">
@@ -1144,6 +1145,7 @@ function setupRawPurchaseSuggest(){
  });
 }
 function purchaseRawMaterial(){
+ const inwardDate=$('rmPurchaseDate').value || new Date().toISOString().slice(0,10);
  const supplier=$('rmPurchaseSupplier').value.trim();
  const input=$('rmPurchase');
  const r=rawMaterials.find(x=>x.code===(input.dataset.selectedCode||input.value.trim()))||
@@ -1160,13 +1162,14 @@ function purchaseRawMaterial(){
  const ref='RMI-'+String(++rmPurchaseNo).padStart(5,'0');
  addTxn('RAW MATERIAL COMPANY INWARD',ref,'RM:'+r.code,qty,r.unit);
  const tr=transactions[transactions.length-1];
+ tr.date=inwardDate;
  tr.supplier=supplier;
  tr.inwardRate=rate;
  tr.inwardRef=$('rmPurchaseRef').value.trim();
  tr.amount=qty*rate;
  save();
  msg('rmPurchaseMsg','Raw Material Stock add થયું. No: '+ref+' | '+r.name+' | '+qty.toFixed(3)+' '+r.unit+' | Rate ₹'+rate.toFixed(3)+' | Total Stock '+Number(r.stock).toFixed(3));
- $('rmPurchaseSupplier').value='';$('rmPurchaseSupplier').dataset.selectedSupplier='';$('rmPurchase').value='';$('rmPurchase').dataset.selectedCode='';$('rmPurchaseQty').value='';$('rmPurchaseRate').value='';$('rmPurchaseRef').value='';
+ $('rmPurchaseDate').value=new Date().toISOString().slice(0,10);$('rmPurchaseSupplier').value='';$('rmPurchaseSupplier').dataset.selectedSupplier='';$('rmPurchase').value='';$('rmPurchase').dataset.selectedCode='';$('rmPurchaseQty').value='';$('rmPurchaseRate').value='';$('rmPurchaseRef').value='';
 }
 function addRawMaterial(){
  const code=$('rmCode').value.trim(),name=$('rmName').value.trim();
@@ -2858,6 +2861,7 @@ document.addEventListener('DOMContentLoaded',function(){
     try{ if(typeof setupMergedPartyLedgerV87==='function') setupMergedPartyLedgerV87(); }catch(e){}
     today('accPaymentDate');
     today('accPaySupplierDate');
+    today('rmPurchaseDate');
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run);
   else run();
