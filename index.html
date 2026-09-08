@@ -2763,7 +2763,7 @@ document.querySelectorAll('[data-bom-del]').forEach(b=>b.onclick=()=>deleteBomPr
  renderJobWorkRates();
  
  const purchases=transactions.filter(t=>t.type==='RAW MATERIAL PURCHASE'||t.type==='RAW MATERIAL COMPANY INWARD');
- $('rmPurchaseTable').innerHTML=purchases.length?purchases.slice().reverse().map(t=>`<tr><td>${t.date}</td><td>${t.ref}</td><td>${(rawMaterials.find(r=>('RM:'+r.code)===t.item)||{name:t.item}).name}</td><td>${Number(t.qty||0).toFixed(3)}</td><td>₹${fmtRate2(t.purchaseRate??t.inwardRate??t.rate??0)}</td><td>${t.unit}</td><td><button data-rmp="${t.id}">🗑 Delete</button></td></tr>`).join(''):'<tr><td colspan="7">No inward entries</td></tr>';
+ $('rmPurchaseTable').innerHTML=purchases.length?purchases.slice().reverse().map(t=>`<tr><td>${t.date}</td><td>${t.ref}</td><td>${t.supplier||''}</td><td>${(rawMaterials.find(r=>('RM:'+r.code)===t.item)||{name:t.item}).name}</td><td>${Number(t.qty||0).toFixed(3)}</td><td>₹${fmtRate2(t.purchaseRate??t.inwardRate??t.rate??0)}</td><td>${t.unit||''}</td><td><button data-rmp="${t.id}">🗑 Delete</button></td></tr>`).join(''):'<tr><td colspan="7">No inward entries</td></tr>';
  document.querySelectorAll('[data-rmp]').forEach(b=>b.onclick=()=>deletePurchase(b.dataset.rmp));
 $('rmTable').innerHTML=rawMaterials.map(r=>`<tr><td>${r.name}</td><td>${Number(r.stock||0).toFixed(3)} ${r.unit}</td><td><button type="button" data-rm-edit="${r.code}">✏️ Edit</button> <button type="button" data-rm-del="${r.code}">🗑 Delete</button></td></tr>`).join('');
  document.querySelectorAll('[data-rm-edit]').forEach(b=>b.onclick=()=>editRawMaterial(b.dataset.rmEdit));
