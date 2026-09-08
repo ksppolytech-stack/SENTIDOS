@@ -1330,6 +1330,45 @@ function showDashboardFilter(type){
 function setupDashboardCards(){
  document.querySelectorAll('.dashCard').forEach(c=>c.onclick=()=>showDashboardFilter(c.dataset.filter));
 }
+function editPurchase(id){
+ const t=transactions.find(x=>String(x.id)===String(id));
+ if(!t)return;
+ const oldCode=String(t.item||'').replace(/^RM:/,'');
+ const oldR=rawMaterials.find(x=>x.code===oldCode);
+ if(!oldR)return;
+ const oldQty=Number(t.qty)||0;
+ const oldRate=Number(t.purchaseRate??t.inwardRate??t.rate??0);
+ const date=prompt('Inward Date (YYYY-MM-DD)',t.date||''); if(date===null)return;
+ const supplier=prompt('Supplier',t.supplier||''); if(supplier===null)return;
+ const material=prompt('Raw Material Name / Code',oldR.name+' — '+oldR.code); if(material===null)return;
+ const q=prompt('Quantity',oldQty); if(q===null)return;
+ const rate=prompt('Rate',oldRate); if(rate===null)return;
+ const ref=prompt('Invoice / Ref',t.inwardRef||''); if(ref===null)return;
+ const qty=Number(q),newRate=Number(rate);
+ const newR=rawMaterials.find(x=>x.code===material.trim())||rawMaterials.find(x=>x.name.toLowerCase()===material.trim().toLowerCase())||rawMaterials.find(x=>(x.name+' — '+x.code).toLowerCase()===material.trim().toLowerCase());
+ if(!supplier.trim())return alert('Supplier જરૂરી છે.');
+ if(!newR)return alert('Raw Material મળ્યું નથી.');
+ if(!Number.isFinite(qty)||qty<=0)return alert('Quantity ખોટી છે.');
+ if(!Number.isFinite(newRate)||newRate<0)return alert('Rate ખોટો છે.');
+ if(oldR.stock<oldQty)return alert('જૂની entry reverse કરવા માટે પૂરતો stock નથી.');
+ oldR.stock-=oldQty;
+ let lots=ensureRawLots(oldCode),idx=lots.findIndex(l=>Math.abs(Number(l.qty)-oldQty)<0.000001&&Math.abs(Number(l.rate)-oldRate)<0.000001);
+ if(idx<0)idx=lots.findIndex(l=>Math.abs(Number(l.rate)-oldRate)<0.000001&&Number(l.qty)>=oldQty);
+ if(idx>=0){lots[idx].qty-=oldQty;if(lots[idx].qty<=0.000001)lots.splice(idx,1);}
+ oldR.rate=getRawAverageRate(oldCode);
+ newR.stock=Number(newR.stock||0)+qty;
+ addRawMaterialLot(newR.code,qty,newRate);
+ newR.rate=getRawAverageRate(newR.code);
+ t.date=date.trim()||t.date;
+ t.supplier=supplier.trim();
+ t.item='RM:'+newR.code;
+ t.qty=qty;
+ t.unit=newR.unit;
+ t.inwardRate=newRate;
+ t.inwardRef=ref.trim();
+ t.amount=qty*newRate;
+ save();render();
+}
 function deletePurchase(id){
  const t=transactions.find(x=>String(x.id)===String(id));
  if(!t)return;
@@ -2767,7 +2806,8 @@ document.querySelectorAll('[data-bom-del]').forEach(b=>b.onclick=()=>deleteBomPr
  renderJobWorkRates();
  
  const purchases=transactions.filter(t=>t.type==='RAW MATERIAL PURCHASE'||t.type==='RAW MATERIAL COMPANY INWARD');
- $('rmPurchaseTable').innerHTML=purchases.length?purchases.slice().reverse().map(t=>`<tr><td>${t.date}</td><td>${t.ref}</td><td>${t.supplier||''}</td><td>${(rawMaterials.find(r=>('RM:'+r.code)===t.item)||{name:t.item}).name}</td><td>${Number(t.qty||0).toFixed(3)}</td><td>₹${fmtRate2(t.purchaseRate??t.inwardRate??t.rate??0)}</td><td>${t.unit||''}</td><td><button data-rmp="${t.id}">🗑 Delete</button></td></tr>`).join(''):'<tr><td colspan="7">No inward entries</td></tr>';
+ $('rmPurchaseTable').innerHTML=purchases.length?purchases.slice().reverse().map(t=>`<tr><td>${t.date}</td><td>${t.ref}</td><td>${t.supplier||''}</td><td>${(rawMaterials.find(r=>('RM:'+r.code)===t.item)||{name:t.item}).name}</td><td>${Number(t.qty||0).toFixed(3)}</td><td>₹${fmtRate2(t.purchaseRate??t.inwardRate??t.rate??0)}</td><td>${t.unit||''}</td><td><button data-rmp-edit="${t.id}">✏️ Edit</button> <button data-rmp="${t.id}">🗑 Delete</button></td></tr>`).join(''):'<tr><td colspan="7">No inward entries</td></tr>';
+ document.querySelectorAll('[data-rmp-edit]').forEach(b=>b.onclick=()=>editPurchase(b.dataset.rmpEdit));
  document.querySelectorAll('[data-rmp]').forEach(b=>b.onclick=()=>deletePurchase(b.dataset.rmp));
 $('rmTable').innerHTML=rawMaterials.map(r=>`<tr><td>${r.name}</td><td>${Number(r.stock||0).toFixed(3)} ${r.unit}</td><td><button type="button" data-rm-edit="${r.code}">✏️ Edit</button> <button type="button" data-rm-del="${r.code}">🗑 Delete</button></td></tr>`).join('');
  document.querySelectorAll('[data-rm-edit]').forEach(b=>b.onclick=()=>editRawMaterial(b.dataset.rmEdit));
