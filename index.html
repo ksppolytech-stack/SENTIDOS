@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V109 - Firebase Online Sync</title>
+<title>Sentidos ERP V110 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -138,7 +138,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V109</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V110</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -3047,8 +3047,28 @@ const loginScreen = document.getElementById("loginScreen");
 const globalRefreshBtn = document.getElementById("globalRefreshBtn");
 
 if (globalRefreshBtn) {
-  globalRefreshBtn.onclick = function () { location.reload(); };
+  globalRefreshBtn.onclick = function () {
+    const active = document.querySelector('.tabs button.active');
+    const page = active ? active.dataset.page : 'dashboard';
+    try { sessionStorage.setItem('sentidosLastPage', page); } catch(e) {}
+    location.reload();
+  };
 }
+
+// V110: restore the same ERP page after browser/ERP refresh.
+function restoreSentidosLastPage(){
+  let page='dashboard';
+  try { page=sessionStorage.getItem('sentidosLastPage') || 'dashboard'; } catch(e) {}
+  const target=document.getElementById(page);
+  const tab=document.querySelector('.tabs button[data-page="'+page+'"]');
+  if(!target || !tab) return;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  target.classList.add('active');
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+  tab.classList.add('active');
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',restoreSentidosLastPage);
+else restoreSentidosLastPage();
 
 let firebaseBootStarted = false;
 
