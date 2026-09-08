@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V105 - Firebase Online Sync</title>
+<title>Sentidos ERP V109 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -98,6 +98,7 @@ tr.low-stock-row td * {
 </style>
 </head>
 <body>
+<button id="globalRefreshBtn" type="button" title="Refresh Page" aria-label="Refresh Page" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
 <div id="loginScreen" style="position:fixed;inset:0;background:#f3f5f7;z-index:99999;display:flex;align-items:center;justify-content:center;">
   <div style="background:#fff;padding:30px;border-radius:12px;width:360px;max-width:90%;box-shadow:0 4px 20px rgba(0,0,0,.15);">
     
@@ -137,7 +138,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V105</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V109</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -2895,6 +2896,7 @@ document.addEventListener('DOMContentLoaded',function(){
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 import {
   getAuth,
+  onAuthStateChanged,
   signInWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
  import {
@@ -3030,9 +3032,9 @@ const ERP_COLLECTION = "erpData";
       cloudReady=true;
       installLocalStorageCloudSync();
       listenCloud();
-      console.log("SENTIDOS ERP V104 - Firebase sync ready");
+      console.log("SENTIDOS ERP V109 - Firebase sync ready");
     }catch(err){
-      console.error("SENTIDOS ERP V104 Firebase error:",err);
+      console.error("SENTIDOS ERP V109 Firebase error:",err);
       cloudReady=false;
       setStatus("Firebase Error — Local / Offline mode",false);
     }
@@ -3041,32 +3043,53 @@ const loginBtn = document.getElementById("loginBtn");
 const loginEmail = document.getElementById("loginEmail");
 const loginPassword = document.getElementById("loginPassword");
 const loginError = document.getElementById("loginError");
+const loginScreen = document.getElementById("loginScreen");
+const globalRefreshBtn = document.getElementById("globalRefreshBtn");
+
+if (globalRefreshBtn) {
+  globalRefreshBtn.onclick = function () { location.reload(); };
+}
+
+let firebaseBootStarted = false;
+
+function startFirebaseAfterLogin(){
+  if(firebaseBootStarted)return;
+  firebaseBootStarted = true;
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",bootFirebaseSync);
+  else bootFirebaseSync();
+}
 
 if (loginBtn) {
   loginBtn.onclick = async function () {
     loginError.textContent = "";
-
     const email = loginEmail.value.trim();
     const password = loginPassword.value;
-
     if (!email || !password) {
       loginError.textContent = "Email અને Password નાખો.";
       return;
     }
-
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Logging in...";
     try {
       await signInWithEmailAndPassword(auth, email, password);
-
-      document.getElementById("loginScreen").style.display = "none";
-
     } catch (err) {
       console.error(err);
       loginError.textContent = "Login failed. Email અથવા Password ખોટો છે.";
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.textContent = "Login";
     }
   };
 }
-  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",bootFirebaseSync);
-  else bootFirebaseSync();
+
+onAuthStateChanged(auth, user => {
+  if(user){
+    if(loginScreen)loginScreen.style.display="none";
+    startFirebaseAfterLogin();
+  }else{
+    if(loginScreen)loginScreen.style.display="flex";
+  }
+});
 </script>
  
 </body></html>
