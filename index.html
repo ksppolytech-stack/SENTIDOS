@@ -170,13 +170,16 @@ tr.low-stock-row td * {
 
 
 <section id="rawmaterials" class="page"><div class="panel"><h2>Raw Material Master</h2><p class="small"><b>આ જ Raw Material stockનું main source છે.</b> અહીં Add/Purchase કરેલા materialમાંથી Purchase, Vendor Job Work Issue અને Vendor Consumption બધું deduct/add થશે.</p>
+<div id="rawMaterialMasterAddBox" style="display:none">
 <div class="grid">
 <input id="rmCode" placeholder="Material Code"><input id="rmName" placeholder="Material Name">
 <select id="rmUnit"><option>KG</option><option>G</option></select>
 <input id="rmRate" type="number" step="0.001" placeholder="Rate / KG">
 <input id="rmOpening" type="number" step="0.001" placeholder="Opening Stock">
 <input id="rmMin" type="number" step="0.001" placeholder="Minimum Stock">
-</div><br><button class="primary" id="addRM">➕ Add Raw Material</button>
+</div><br><button class="primary" id="addRM">➕ Save Raw Material</button>
+</div>
+<button type="button" id="showRawMaterialMasterBtn" class="primary" style="margin-bottom:12px">➕ Add Raw Material</button>
 <table><thead><tr><th>Material Name</th><th>Total Stock</th><th>Action</th></tr></thead><tbody id="rmTable"></tbody></table><div id="rawLotDetails" class="small"></div>
 <hr>
 <h3>Company Raw Material Inward / Stock Add</h3><p class="small">ઉપરની listમાં માત્ર Material Name અને Total Stock દેખાશે. નીચેની Inward listમાં દરેક batchનો Rate અલગ દેખાશે.</p>
@@ -1174,6 +1177,8 @@ function addRawMaterial(){
  if(opening>0)addRawMaterialLot(code,opening,rate);
  save();['rmCode','rmName','rmRate','rmOpening','rmMin'].forEach(id=>$(id).value='');
  render();refreshDropdowns();
+ if($('rawMaterialMasterAddBox'))$('rawMaterialMasterAddBox').style.display='none';
+ if($('showRawMaterialMasterBtn'))$('showRawMaterialMasterBtn').style.display='inline-block';
 }
 function editRawMaterial(code){
  const r=rawMaterials.find(x=>x.code===code);if(!r)return;
@@ -2779,7 +2784,7 @@ document.querySelectorAll('[data-jw-del]').forEach(b=>b.onclick=()=>{
 });
 }
 $('addItemBtn').onclick=addItem;$('addBomRow').onclick=addBomRow;$('saveBom').onclick=saveBom;$('deleteBom').onclick=deleteBom;
-$('addRM').onclick=addRawMaterial;$('addRateBtn').onclick=saveJobWorkRate;$('rmPurchaseBtn').onclick=purchaseRawMaterial;$('purchaseBtn').onclick=purchase;$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>{generatePurchaseReport();setTimeout(()=>window.print(),300)};
+$('addRM').onclick=addRawMaterial;if($('showRawMaterialMasterBtn'))$('showRawMaterialMasterBtn').onclick=()=>{if($('rawMaterialMasterAddBox'))$('rawMaterialMasterAddBox').style.display='block';$('showRawMaterialMasterBtn').style.display='none';};$('addRateBtn').onclick=saveJobWorkRate;$('rmPurchaseBtn').onclick=purchaseRawMaterial;$('purchaseBtn').onclick=purchase;$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>{generatePurchaseReport();setTimeout(()=>window.print(),300)};
 if($('openProductionReport'))$('openProductionReport').onclick=()=>{document.querySelector('[data-page="reports"]').click();};
 if($('printProductionReport'))$('printProductionReport').onclick=()=>{generateProductionReport();setTimeout(()=>window.print(),300);};
 if($('printJWReport'))$('printJWReport').onclick=()=>{generateJWReport();setTimeout(()=>window.print(),300);};$('addVendorBtn').onclick=addVendor;$('jwReceiveQty').addEventListener('input',updateJWConsumption);$('jwReceiveVendor').addEventListener('input',updateAutoJobRate);$('jwComponent').addEventListener('input',updateAutoJobRate);
