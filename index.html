@@ -231,13 +231,19 @@ tr.low-stock-row td * {
 <div class="grid">
 <input id="purchaseDate" type="date" title="Purchase Date">
 <div class="autowrap" style="position:relative"><input id="purchaseSupplier" placeholder="Supplier Name"><div id="purchaseSupplierSuggest" class="suggestbox" style="display:none"></div></div>
+<input id="purchaseRef" placeholder="Invoice / Bill No. / Ref">
 <div class="autowrap" style="position:relative"><input id="purchaseCode" placeholder="Type Item Name / Code"><div id="itemSuggestPurchase" class="suggestbox" style="display:none"></div></div>
-<input id="purchaseQty" type="number" step="0.001" placeholder="Quantity"><select id="purchaseUnit"><option value="KG">KG</option><option value="PCS">PCS</option></select>
+<input id="purchaseQty" type="number" step="0.001" placeholder="Quantity">
+<select id="purchaseUnit"><option value="KG">KG</option><option value="PCS">PCS</option></select>
 <input id="purchaseRate" type="number" step="0.01" placeholder="Rate ₹0.00 (Editable)">
-<input id="purchaseRef" placeholder="Invoice / Ref">
 </div><br>
+<button type="button" id="addPurchaseItem">➕ Add Item</button>
 <button type="button" id="openPurchaseMaster">🏢 Supplier Master</button>
-<button class="primary" id="purchaseBtn">Save Purchase</button>
+<button class="primary" id="purchaseBtn">💾 Save Purchase</button>
+<div class="small" style="margin-top:8px">એક જ Supplier અને એક જ Bill/Invoiceમાં ઘણી Items હોય તો દરેક Item <b>Add Item</b> કરો અને અંતે એક વખત <b>Save Purchase</b> કરો.</div>
+<div style="overflow:auto;margin-top:12px">
+<table id="purchaseCartTable"><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Amount</th><th>Action</th></tr></thead><tbody><tr><td colspan="6">No items added</td></tr></tbody></table>
+</div>
 <div class="msg" id="purchaseMsg"></div>
 <hr>
 <h3>📋 Purchase Entries</h3>
@@ -750,29 +756,64 @@ function deleteBom(){
  if(confirm('Delete BOM for '+p+'?')){boms=boms.filter(b=>b.product!==p);save();}
 }
 function addTxn(type,ref,item,qty,unit){transactions.push({id:Date.now()+Math.random(),date:new Date().toLocaleString(),type,ref,item,qty,unit});}
-function purchase(){
- const purchaseDate=$('purchaseDate').value || new Date().toISOString().slice(0,10);
- const supplier=$('purchaseSupplier').value.trim();
+let purchaseCart=[];
+function getPurchaseItemFromFields(){
  const input=$('purchaseCode').value.trim();
  const code=$('purchaseCode').dataset.selectedCode||input;
- const i=items.find(x=>x.code===code)||items.find(x=>String(x.name||'').toLowerCase()===input.toLowerCase());
+ return items.find(x=>x.code===code)||items.find(x=>String(x.name||'').toLowerCase()===input.toLowerCase());
+}
+function renderPurchaseCart(){
+ const body=$('purchaseCartTable')?.querySelector('tbody');if(!body)return;
+ body.innerHTML=purchaseCart.map((x,idx)=>{
+   const amount=(Number(x.qty)||0)*(Number(x.rate)||0);
+   return `<tr><td>${x.name||x.code}</td><td>${Number(x.qty||0).toFixed(3)}</td><td>${x.unit}</td><td>₹${fmtRate2(Number(x.rate)||0)}</td><td>₹${amount.toFixed(2)}</td><td><button type="button" data-purchase-cart-delete="${idx}">🗑</button></td></tr>`;
+ }).join('')||'<tr><td colspan="6">No items added</td></tr>';
+ document.querySelectorAll('[data-purchase-cart-delete]').forEach(btn=>btn.onclick=()=>{purchaseCart.splice(Number(btn.dataset.purchaseCartDelete),1);renderPurchaseCart();});
+}
+function addPurchaseItem(){
+ const i=getPurchaseItemFromFields();
  const q=Number($('purchaseQty').value)||0;
  const unit=$('purchaseUnit').value||'KG';
  const r=Number($('purchaseRate').value)||0;
+ if(!i||q<=0)return alert('Item અને Quantity નાખો.');
+ purchaseCart.push({code:i.code,name:i.name,qty:q,unit,rate:r});
+ renderPurchaseCart();
+ $('purchaseCode').value='';
+ $('purchaseCode').dataset.selectedCode='';
+ $('purchaseQty').value='';
+ $('purchaseRate').value='';
+ $('purchaseCode').focus();
+}
+function purchase(){
+ const purchaseDate=$('purchaseDate').value || new Date().toISOString().slice(0,10);
+ const supplier=$('purchaseSupplier').value.trim();
  const ref=$('purchaseRef').value.trim();
- if(!supplier||!i||q<=0||!ref)return alert('Supplier, Item, Quantity અને Ref નાખો.');
- i.stock+=q;
- addTxn('PURCHASE',ref,i.code,q,unit);
- const t=transactions[transactions.length-1];
- t.date=purchaseDate;
- t.supplier=supplier;
- t.purchaseRate=r;
- t.purchaseUnit=unit;
+ if(!supplier||!ref)return alert('Supplier અને Invoice / Bill No. / Ref નાખો.');
+ // If current item is filled but not added, add it automatically before saving.
+ const currentItem=getPurchaseItemFromFields();
+ if(currentItem && (Number($('purchaseQty').value)||0)>0){ addPurchaseItem(); }
+ if(!purchaseCart.length)return alert('ઓછામાં ઓછી 1 Item Add Item કરો.');
+ purchaseCart.forEach(x=>{
+   const i=items.find(y=>y.code===x.code);
+   if(!i)return;
+   i.stock+=Number(x.qty)||0;
+   addTxn('PURCHASE',ref,i.code,Number(x.qty)||0,x.unit);
+   const t=transactions[transactions.length-1];
+   t.date=purchaseDate;
+   t.supplier=supplier;
+   t.purchaseRate=Number(x.rate)||0;
+   t.purchaseUnit=x.unit;
+ });
  save();
- msg('purchaseMsg','Purchase saved.');renderPurchaseEntries();
+ msg('purchaseMsg',purchaseCart.length+' Purchase item(s) saved under Bill/Invoice '+ref+'.');
+ purchaseCart=[];
+ renderPurchaseCart();
+ $('purchaseCode').value='';
+ $('purchaseCode').dataset.selectedCode='';
  $('purchaseQty').value='';
  $('purchaseRate').value='';
  $('purchaseRef').value='';
+ renderPurchaseEntries();
 }
 function setupProductionSuggestions(){
  const input=document.getElementById("productionCode");
@@ -2834,7 +2875,9 @@ document.querySelectorAll('[data-jw-del]').forEach(b=>b.onclick=()=>{
 });
 }
 $('addItemBtn').onclick=addItem;$('addBomRow').onclick=addBomRow;$('saveBom').onclick=saveBom;$('deleteBom').onclick=deleteBom;
-$('addRM').onclick=addRawMaterial;if($('showRawMaterialMasterBtn'))$('showRawMaterialMasterBtn').onclick=()=>{if($('rawMaterialMasterAddBox'))$('rawMaterialMasterAddBox').style.display='block';$('showRawMaterialMasterBtn').style.display='none';};$('addRateBtn').onclick=saveJobWorkRate;$('rmPurchaseBtn').onclick=purchaseRawMaterial;$('purchaseBtn').onclick=purchase;$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>{generatePurchaseReport();setTimeout(()=>window.print(),300)};
+$('addRM').onclick=addRawMaterial;if($('showRawMaterialMasterBtn'))$('showRawMaterialMasterBtn').onclick=()=>{if($('rawMaterialMasterAddBox'))$('rawMaterialMasterAddBox').style.display='block';$('showRawMaterialMasterBtn').style.display='none';};$('addRateBtn').onclick=saveJobWorkRate;$('rmPurchaseBtn').onclick=purchaseRawMaterial;$('purchaseBtn').onclick=purchase;
+const addPurchaseItemBtn=document.getElementById('addPurchaseItem');if(addPurchaseItemBtn)addPurchaseItemBtn.onclick=addPurchaseItem;
+renderPurchaseCart();$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>{generatePurchaseReport();setTimeout(()=>window.print(),300)};
 if($('openProductionReport'))$('openProductionReport').onclick=()=>{document.querySelector('[data-page="reports"]').click();};
 if($('printProductionReport'))$('printProductionReport').onclick=()=>{generateProductionReport();setTimeout(()=>window.print(),300);};
 if($('printJWReport'))$('printJWReport').onclick=()=>{generateJWReport();setTimeout(()=>window.print(),300);};$('addVendorBtn').onclick=addVendor;$('jwReceiveQty').addEventListener('input',updateJWConsumption);$('jwReceiveVendor').addEventListener('input',updateAutoJobRate);$('jwComponent').addEventListener('input',updateAutoJobRate);
