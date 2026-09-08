@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V104 - Firebase Online Sync</title>
+<title>Sentidos ERP V105 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -137,7 +137,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V104</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V105</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -177,7 +177,7 @@ tr.low-stock-row td * {
 <input id="rmOpening" type="number" step="0.001" placeholder="Opening Stock">
 <input id="rmMin" type="number" step="0.001" placeholder="Minimum Stock">
 </div><br><button class="primary" id="addRM">➕ Add Raw Material</button>
-<table><thead><tr><th>Material Name</th><th>Total Stock</th></tr></thead><tbody id="rmTable"></tbody></table><div id="rawLotDetails" class="small"></div>
+<table><thead><tr><th>Material Name</th><th>Total Stock</th><th>Action</th></tr></thead><tbody id="rmTable"></tbody></table><div id="rawLotDetails" class="small"></div>
 <hr>
 <h3>Company Raw Material Inward / Stock Add</h3><p class="small">ઉપરની listમાં માત્ર Material Name અને Total Stock દેખાશે. નીચેની Inward listમાં દરેક batchનો Rate અલગ દેખાશે.</p>
 <div class="grid">
@@ -2760,7 +2760,7 @@ document.querySelectorAll('[data-bom-del]').forEach(b=>b.onclick=()=>deleteBomPr
  const purchases=transactions.filter(t=>t.type==='RAW MATERIAL PURCHASE'||t.type==='RAW MATERIAL COMPANY INWARD');
  $('rmPurchaseTable').innerHTML=purchases.length?purchases.slice().reverse().map(t=>`<tr><td>${t.date}</td><td>${t.ref}</td><td>${(rawMaterials.find(r=>('RM:'+r.code)===t.item)||{name:t.item}).name}</td><td>${Number(t.qty||0).toFixed(3)}</td><td>₹${fmtRate2(t.purchaseRate??t.inwardRate??t.rate??0)}</td><td>${t.unit}</td><td><button data-rmp="${t.id}">🗑 Delete</button></td></tr>`).join(''):'<tr><td colspan="7">No inward entries</td></tr>';
  document.querySelectorAll('[data-rmp]').forEach(b=>b.onclick=()=>deletePurchase(b.dataset.rmp));
-$('rmTable').innerHTML=rawMaterials.map(r=>`<tr><td>${r.name}</td><td>${Number(r.stock||0).toFixed(3)} ${r.unit}</td></tr>`).join('');
+$('rmTable').innerHTML=rawMaterials.map(r=>`<tr><td>${r.name}</td><td>${Number(r.stock||0).toFixed(3)} ${r.unit}</td><td><button type="button" data-rm-edit="${r.code}">✏️ Edit</button> <button type="button" data-rm-del="${r.code}">🗑 Delete</button></td></tr>`).join('');
  document.querySelectorAll('[data-rm-edit]').forEach(b=>b.onclick=()=>editRawMaterial(b.dataset.rmEdit));
  document.querySelectorAll('[data-rm-del]').forEach(b=>b.onclick=()=>deleteRawMaterial(b.dataset.rmDel));
 
