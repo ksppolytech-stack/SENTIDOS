@@ -14,8 +14,8 @@ main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-w
 @media print{
  body{background:#fff}.tabs,header,.noPrint{display:none!important}.page{display:none!important}
  #reports{display:block!important}.reportArea{box-shadow:none!important;margin:0;padding:0}
- body.report-printing #reports > section{display:none!important}
- body.report-printing #reports > section.report-print-target{display:block!important}
+ body.report-printing #reports > *{display:none!important}
+ body.report-printing #reports > *.report-print-target{display:block!important}
  body.report-printing #reports > section.report-print-target button,body.report-printing #reports > section.report-print-target input,body.report-printing #reports > section.report-print-target select,body.report-printing #reports > section.report-print-target .msg{display:none!important}
  table{font-size:11px}h2{margin-top:0}
 }
@@ -2998,7 +2998,7 @@ function printOnlyReport(panelId, generateFn){
  const panel=document.getElementById(panelId); if(!panel)return;
  if(typeof generateFn==='function')generateFn();
  document.body.classList.add('report-printing');
- document.querySelectorAll('#reports > section').forEach(x=>x.classList.remove('report-print-target'));
+ document.querySelectorAll('#reports > *').forEach(x=>x.classList.remove('report-print-target'));
  panel.classList.add('report-print-target');
  const cleanup=()=>{document.body.classList.remove('report-printing');panel.classList.remove('report-print-target');window.removeEventListener('afterprint',cleanup);};
  window.addEventListener('afterprint',cleanup);
