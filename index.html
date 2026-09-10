@@ -1026,6 +1026,8 @@ function setupRawSale(){
   };
   m.addEventListener('input',()=>{m.dataset.selectedCode='';renderMaterials();});
   m.addEventListener('focus',renderMaterials);
+  m.addEventListener('click',renderMaterials);
+  document.addEventListener('click',e=>{if(e.target!==m&&!mb.contains(e.target))mb.style.display='none';});
  }
  const c=$('rawSaleCustomer'),cb=$('rawSaleCustomerSuggest');
  if(c&&cb){
@@ -1041,6 +1043,8 @@ function setupRawSale(){
   };
   c.addEventListener('input',renderCustomers);
   c.addEventListener('focus',renderCustomers);
+  c.addEventListener('click',renderCustomers);
+  document.addEventListener('click',e=>{if(e.target!==c&&!cb.contains(e.target))cb.style.display='none';});
  }
  $('rawSaleAddItem')?.addEventListener('click',addRawSaleItem);$('rawSaleSave')?.addEventListener('click',saveRawSaleInvoice);$('rawSalePrint')?.addEventListener('click',()=>printRawSaleInvoice(rawSaleLastInvoiceRows,$('rawSaleInvoiceNo').value,$('rawSaleCustomer').value,'Last Invoice'));
 }
@@ -3047,7 +3051,7 @@ if($('addCustomerBtn'))$('addCustomerBtn').onclick=addCustomerMaster;renderCusto
 window._generatePurchaseReport=generatePurchaseReport;window._generateProductionReport=generateProductionReport;
 pmInit();
 pmRender();
-render();setupAllAutocomplete();setupAllMasterSuggestionsV92();setupProductionSuggestions();setupJobWorkSuggestions();
+render();setupRawSale();setupAllAutocomplete();setupAllMasterSuggestionsV92();setupProductionSuggestions();setupJobWorkSuggestions();
   if($('jwReceiveDate')) $('jwReceiveDate').value=new Date().toISOString().slice(0,10);setupRateSuggestions();setupRawPurchaseSuggest();setupRawMaterialSupplierSuggestV84();setupDashboardCards();setupReportSelectors();
 })();
 
