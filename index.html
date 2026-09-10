@@ -412,7 +412,7 @@ tr.low-stock-row td * {
 <div class="autowrap" style="position:relative"><input id="jwReceiveVendor" placeholder="Type Vendor Name"><div id="receiveVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
 <div class="autowrap" style="position:relative"><input id="jwComponent" placeholder="Type Component Name"><div id="componentSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
 <input id="jwComponentWeight" readonly placeholder="Weight / PCS (gram)">
-<input id="jwReceiveQty" type="number" step="0.001" placeholder="Receive Qty"><input id="jwJobRate" type="text" readonly placeholder="Auto Rate / PCS">
+<input id="jwReceiveQty" type="number" step="0.001" placeholder="Receive Qty"><input id="jwJobRate" type="text" readonly placeholder="Auto Rate / PCS" title="Vendor + Component rate; component-only fallback if uniquely saved">
 
 </div>
 <p class="small">Raw Material Consumption = Component Weight × Receive Qty. Vendor પાસે issue થયેલા Raw Materialમાંથી આ quantity automatic deduct થશે.</p>
@@ -1353,16 +1353,26 @@ function setupRateSuggestions(){
  setupItemSuggest('rateComponent','rateComponentSuggest',i=>i.cat==='Component'||i.cat==='Finished Goods');
 }
 function getJobWorkRate(vendor,code){
- const v=String(vendor||'').trim().toLowerCase();
- const c=String(code||'').trim().toLowerCase();
- const item=items.find(i=>String(i.code||'').trim().toLowerCase()===c)||items.find(i=>String(i.name||'').trim().toLowerCase()===c);
- const itemCode=item?String(item.code||'').trim().toLowerCase():c;
- const itemName=item?String(item.name||'').trim().toLowerCase():c;
- const r=jobworkRates.find(x=>{
-   const xv=String(x.vendor||'').trim().toLowerCase();
-   const xc=String(x.component||'').trim().toLowerCase();
-   return xv===v && (xc===itemCode || xc===itemName || xc===c);
+ const norm=v=>String(v||'').trim().toLowerCase().replace(/\s+/g,' ');
+ const compact=v=>norm(v).replace(/[^a-z0-9]/g,'');
+ const v=norm(vendor), vc=compact(vendor), c=norm(code);
+ const item=items.find(i=>norm(i.code)===c)||items.find(i=>norm(i.name)===c)||items.find(i=>compact(i.code)===compact(code))||items.find(i=>compact(i.name)===compact(code));
+ const itemCode=norm(item?item.code:c), itemName=norm(item?item.name:c);
+ const itemCodeC=compact(itemCode), itemNameC=compact(itemName), cC=compact(c);
+ // First preference: exact Vendor + Component rate.
+ let r=jobworkRates.find(x=>{
+   const xv=norm(x.vendor), xvc=compact(x.vendor), xc=norm(x.component), xcc=compact(x.component);
+   return (xv===v || xvc===vc) && (xc===itemCode || xc===itemName || xc===c || xcc===itemCodeC || xcc===itemNameC || xcc===cC);
  });
+ // Fallback: if the component has exactly one saved rate, use it even when
+ // vendor text/capitalization differs or the older rate was saved without the vendor match.
+ if(!r){
+   const matches=jobworkRates.filter(x=>{
+     const xc=norm(x.component), xcc=compact(x.component);
+     return xc===itemCode || xc===itemName || xc===c || xcc===itemCodeC || xcc===itemNameC || xcc===cC;
+   });
+   if(matches.length===1) r=matches[0];
+ }
  return r?Number(r.rate)||0:0;
 }
 function saveJobWorkRate(){
