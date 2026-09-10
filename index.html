@@ -138,14 +138,14 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V110</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V117</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
 <button class="active" data-page="dashboard">🏠 Dashboard</button>
 <button data-page="items">📦 Item Master</button><button data-page="rawmaterials">🧱 Raw Material Master</button><button data-page="bom">🔧 BOM Master</button>
 <button data-page="purchase">🛒 Purchase</button><button data-page="purchaseMaster">🏢 Supplier Master</button><button data-page="customerMaster">👤 Customer Master</button><button data-page="fgRateMaster">💰 Finished Goods Rate Master</button><button data-page="production">🏭 Production</button>
-<button data-page="dispatch">🚚 Dispatch</button><button data-page="accounting">💰 Accounting</button><button data-page="jobwork">🏭 Job Work</button><button data-page="jwrates">💰 Job Work Rate Master</button><button data-page="reports">📄 Reports</button><button data-page="stock">📊 Stock</button>
+<button data-page="dispatch">🚚 Dispatch</button><button data-page="rawSale">🧾 Raw Material Sale</button><button data-page="accounting">💰 Accounting</button><button data-page="jobwork">🏭 Job Work</button><button data-page="jwrates">💰 Job Work Rate Master</button><button data-page="reports">📄 Reports</button><button data-page="stock">📊 Stock</button>
 </div>
 
 
@@ -344,6 +344,30 @@ tr.low-stock-row td * {
 </table>
 </div>
 </section>
+<section id="rawSale" class="page">
+<div class="panel"><h2>🧾 Raw Material Sale / Invoice</h2>
+<p class="small">Customerને Raw Material વેચવા માટે અહીં Invoice બનાવો. એક જ Invoiceમાં ઘણી Raw Material items ઉમેરી શકાય છે.</p>
+<div class="grid">
+<input id="rawSaleDate" type="date" title="Sale Date">
+<div style="position:relative"><input id="rawSaleCustomer" placeholder="Type Customer Name" autocomplete="off"><div id="rawSaleCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
+<input id="rawSaleInvoiceNo" placeholder="Invoice No." readonly>
+</div>
+<div class="grid" style="margin-top:10px">
+<div style="position:relative"><input id="rawSaleMaterial" placeholder="Type Raw Material" autocomplete="off"><div id="rawSaleMaterialSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
+<input id="rawSaleQty" type="number" step="0.001" placeholder="Quantity">
+<input id="rawSaleRate" type="number" step="0.01" placeholder="Sale Rate / KG">
+<input id="rawSaleTaxRate" type="number" step="0.01" placeholder="GST %">
+</div>
+<br><button type="button" id="rawSaleAddItem">➕ Add Item</button>
+<table id="rawSaleCartTable" style="margin-top:12px"><thead><tr><th>Raw Material</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Taxable</th><th>GST</th><th>Grand Total</th><th>Action</th></tr></thead><tbody></tbody></table>
+<div style="margin-top:10px;text-align:right"><b>Taxable: ₹<span id="rawSaleTotal">0.00</span> &nbsp; GST: ₹<span id="rawSaleTaxTotal">0.00</span> &nbsp; Grand Total: ₹<span id="rawSaleGrandTotal">0.00</span></b></div>
+<input id="rawSaleRemark" placeholder="Remark (Optional)" style="margin-top:10px">
+<br><button class="primary" id="rawSaleSave">💾 Save Raw Material Invoice</button> <button type="button" id="rawSalePrint" disabled>🖨️ Print Last Invoice</button>
+<div class="msg" id="rawSaleMsg"></div>
+<hr><h3>📋 Raw Material Sale Invoices</h3>
+<div style="overflow:auto"><table id="rawSaleTable"><thead><tr><th>Date</th><th>Invoice No.</th><th>Customer</th><th>Raw Material</th><th>Qty</th><th>Rate</th><th>Taxable</th><th>GST</th><th>Grand Total</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+</div></section>
+
 <section id="dispatch" class="page"><div class="panel"><h2>🚚 Dispatch</h2>
 <div class="grid">
 <div style="position:relative"><div style="position:relative"><input id="dispatchCustomer" placeholder="Type Customer Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearDispatchCustomer" aria-label="Clear Customer" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button></div><div id="dispatchCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:200px;overflow:auto"></div></div>
@@ -631,15 +655,16 @@ function getRawAverageRate(code){
  return qty?value/qty:0;
 }
 function consumeRawMaterialFIFO(code,qty){
- let need=Number(qty)||0,totalCost=0,consumed=0;
+ let need=Number(qty)||0,totalCost=0,consumed=0,layers=[];
  const lots=ensureRawLots(code);
  while(need>0.0000001 && lots.length){
    const lot=lots[0], take=Math.min(need,Number(lot.qty)||0);
    totalCost+=take*(Number(lot.rate)||0); consumed+=take; need-=take;
+   layers.push({qty:take,rate:Number(lot.rate)||0,date:lot.date||new Date().toISOString()});
    lot.qty-=take;
    if(lot.qty<=0.0000001)lots.shift();
  }
- return {consumed,cost:totalCost,remaining:need};
+ return {consumed,cost:totalCost,remaining:need,layers};
 }
 function rebuildRawLotsFromTransactions(){
  if(Object.keys(rawMaterialLots).length)return;
@@ -917,6 +942,71 @@ function getNextDispatchBillNo(){
 function showNextDispatchBillNo(){
  const el=$('dispatchBillNo');if(el)el.value=getNextDispatchBillNo();
 }
+let rawSaleCart=[];
+let rawSaleLastInvoiceRows=[];
+function getNextRawSaleInvoiceNo(){
+ const nums=(transactions||[]).filter(t=>String(t.type||'').toUpperCase()==='RAW MATERIAL SALE').map(t=>Number(t.invoiceNo)).filter(n=>Number.isFinite(n)&&n>0);
+ return (nums.length?Math.max(...nums):0)+1;
+}
+function rawSaleSelectedMaterial(){
+ const input=String($('rawSaleMaterial')?.value||'').trim(), code=$('rawSaleMaterial')?.dataset.selectedCode||input;
+ return (rawMaterials||[]).find(r=>String(r.code)===String(code)) || (rawMaterials||[]).find(r=>String(r.name||'').toLowerCase()===input.toLowerCase());
+}
+function renderRawSaleCart(){
+ const body=$('rawSaleCartTable')?.querySelector('tbody');if(!body)return;
+ let taxable=0,tax=0,grand=0;
+ body.innerHTML=rawSaleCart.map((x,n)=>{const a=x.qty*x.rate,t=a*x.taxRate/100,g=a+t;taxable+=a;tax+=t;grand+=g;return `<tr><td>${x.name}</td><td>${x.qty.toFixed(3)}</td><td>${x.unit}</td><td>₹${x.rate.toFixed(2)}</td><td>₹${a.toFixed(2)}</td><td>₹${t.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td><button type="button" data-rs-del="${n}">🗑</button></td></tr>`}).join('')||'<tr><td colspan="8">No items added</td></tr>';
+ $('rawSaleTotal').textContent=taxable.toFixed(2);$('rawSaleTaxTotal').textContent=tax.toFixed(2);$('rawSaleGrandTotal').textContent=grand.toFixed(2);
+ document.querySelectorAll('[data-rs-del]').forEach(b=>b.onclick=()=>{rawSaleCart.splice(Number(b.dataset.rsDel),1);renderRawSaleCart();});
+}
+function addRawSaleItem(){
+ const r=rawSaleSelectedMaterial(),q=Number($('rawSaleQty').value)||0,rate=Number($('rawSaleRate').value)||0,taxRate=Number($('rawSaleTaxRate').value)||0;
+ if(!r||q<=0||rate<0)return alert('Raw Material, Quantity અને valid Sale Rate નાખો.');
+ if(q>Number(r.stock||0)+0.000001)return alert('Company Raw Material Stock પૂરતો નથી. Available: '+Number(r.stock||0).toFixed(3)+' '+(r.unit||'KG'));
+ rawSaleCart.push({code:r.code,name:r.name,unit:r.unit||'KG',qty:q,rate,taxRate});
+ renderRawSaleCart();$('rawSaleMaterial').value='';$('rawSaleMaterial').dataset.selectedCode='';$('rawSaleQty').value='';$('rawSaleRate').value='';$('rawSaleTaxRate').value='';$('rawSaleMaterial').focus();
+}
+function printRawSaleInvoice(rows,invoiceNo,customer,date){
+ const totals=rows.reduce((a,x)=>{a.taxable+=x.amount;a.tax+=x.tax;a.grand+=x.grandTotal;return a},{taxable:0,tax:0,grand:0});
+ const w=window.open('','_blank','width=900,height=700');if(!w)return alert('Popup blocked. Browserમાં popup allow કરો.');
+ w.document.write(`<!doctype html><html><head><title>Raw Material Invoice ${invoiceNo}</title><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #333;padding:8px;text-align:left}td.num,th.num{text-align:right}.tot{margin-top:20px;text-align:right;font-size:18px}</style></head><body><h1>RAW MATERIAL SALES INVOICE</h1><p><b>Invoice No:</b> ${invoiceNo}<br><b>Date:</b> ${date}<br><b>Customer:</b> ${customer}</p><table><thead><tr><th>Raw Material</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate</th><th class="num">Taxable</th><th class="num">GST</th><th class="num">Total</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.name}</td><td class="num">${x.qty.toFixed(3)}</td><td>${x.unit}</td><td class="num">₹${x.rate.toFixed(2)}</td><td class="num">₹${x.amount.toFixed(2)}</td><td class="num">₹${x.tax.toFixed(2)}</td><td class="num">₹${x.grandTotal.toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="tot">Taxable: ₹${totals.taxable.toFixed(2)}<br>GST: ₹${totals.tax.toFixed(2)}<br><b>Grand Total: ₹${totals.grand.toFixed(2)}</b></div><script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close();
+}
+function saveRawSaleInvoice(){
+ const date=$('rawSaleDate').value||new Date().toISOString().slice(0,10),customer=$('rawSaleCustomer').value.trim(),remark=$('rawSaleRemark').value.trim();
+ if(!customer)return alert('Customer Name નાખો.');
+ if(!rawSaleCart.length)return alert('ઓછામાં ઓછી 1 Raw Material item Add કરો.');
+ const invoiceNo=getNextRawSaleInvoiceNo(),rows=[];
+ for(const x of rawSaleCart){
+   const r=rawMaterials.find(y=>String(y.code)===String(x.code));if(!r||x.qty>Number(r.stock||0)+0.000001)return alert('Stock changed. '+x.name+' માટે available stock ઓછો છે.');
+   const layer=consumeRawMaterialFIFO(x.code,x.qty);if(layer.remaining>0.000001)return alert('Stock insufficient for '+x.name);
+   const amount=x.qty*x.rate,tax=amount*x.taxRate/100,grandTotal=amount+tax;
+   r.stock-=x.qty;r.rate=getRawAverageRate(x.code);
+   addTxn('RAW MATERIAL SALE', '', 'RM:'+x.code, -x.qty, x.unit);
+   const t=transactions[transactions.length-1];t.date=date;t.invoiceNo=invoiceNo;t.customer=customer;t.saleRate=x.rate;t.amount=amount;t.taxRate=x.taxRate;t.tax=tax;t.grandTotal=grandTotal;t.remark=remark;t.itemName=x.name;t.costLayers=layer.layers||[];
+   rows.push({name:x.name,qty:x.qty,unit:x.unit,rate:x.rate,amount,tax,grandTotal});
+ }
+ save();rawSaleLastInvoiceRows=rows;$('rawSaleInvoiceNo').value=invoiceNo; $('rawSalePrint').disabled=false;renderRawSaleEntries();msg('rawSaleMsg','Raw Material Invoice saved. Invoice No. '+invoiceNo);
+ rawSaleCart=[];renderRawSaleCart();$('rawSaleMaterial').value='';$('rawSaleCustomer').value='';$('rawSaleRemark').value='';$('rawSaleDate').value=new Date().toISOString().slice(0,10);showNextRawSaleInvoiceNo();
+}
+function showNextRawSaleInvoiceNo(){if($('rawSaleInvoiceNo'))$('rawSaleInvoiceNo').value=getNextRawSaleInvoiceNo();}
+function renderRawSaleEntries(){
+ const body=$('rawSaleTable')?.querySelector('tbody');if(!body)return;
+ const rows=(transactions||[]).filter(t=>String(t.type||'').toUpperCase()==='RAW MATERIAL SALE').slice().reverse();
+ body.innerHTML=rows.map((t,n)=>{const q=Math.abs(Number(t.qty)||0),r=Number(t.saleRate||0),a=Number(t.amount??q*r),tax=Number(t.tax??0),g=Number(t.grandTotal??a+tax);return `<tr><td>${t.date||''}</td><td>${t.invoiceNo||''}</td><td>${t.customer||''}</td><td>${t.itemName||String(t.item||'').replace(/^RM:/,'')}</td><td>${q.toFixed(3)}</td><td>₹${r.toFixed(2)}</td><td>₹${a.toFixed(2)}</td><td>₹${tax.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td><button type="button" data-rs-entry-del="${t.id||n}">🗑 Delete</button></td></tr>`}).join('')||'<tr><td colspan="10">No raw material sale invoices</td></tr>';
+ document.querySelectorAll('[data-rs-entry-del]').forEach(b=>b.onclick=()=>deleteRawSaleTransaction(b.dataset.rsEntryDel));
+}
+function deleteRawSaleTransaction(id){
+ const t=(transactions||[]).find((x,n)=>String(x.id||n)===String(id));if(!t)return;if(!confirm('Delete Raw Material Invoice and reverse stock?'))return;
+ const code=String(t.item||'').replace(/^RM:/,''),r=rawMaterials.find(x=>String(x.code)===code),layers=Array.isArray(t.costLayers)?t.costLayers:[];
+ if(r){r.stock+=Math.abs(Number(t.qty)||0);const lots=ensureRawLots(code);if(layers.length){layers.slice().reverse().forEach(l=>lots.unshift({qty:Number(l.qty)||0,rate:Number(l.rate)||0,date:l.date||new Date().toISOString()}));}else lots.push({qty:Math.abs(Number(t.qty)||0),rate:Number(t.saleRate||r.rate||0),date:new Date().toISOString()});r.rate=getRawAverageRate(code);}
+ const ix=transactions.indexOf(t);if(ix>=0)transactions.splice(ix,1);save();renderRawSaleEntries();showNextRawSaleInvoiceNo();
+}
+function setupRawSale(){
+ const d=$('rawSaleDate');if(d&&!d.value)d.value=new Date().toISOString().slice(0,10);showNextRawSaleInvoiceNo();renderRawSaleCart();renderRawSaleEntries();
+ const m=$('rawSaleMaterial'),mb=$('rawSaleMaterialSuggest');if(m&&mb){m.addEventListener('input',()=>{m.dataset.selectedCode='';const q=m.value.trim().toLowerCase();mb.innerHTML='';if(!q){mb.style.display='none';return}(rawMaterials||[]).filter(r=>(String(r.name||'')+' '+String(r.code||'')).toLowerCase().includes(q)).slice(0,10).forEach(r=>{const x=document.createElement('div');x.textContent=r.name+' — '+r.code+' (Stock: '+Number(r.stock||0).toFixed(3)+' '+(r.unit||'KG')+')';x.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';x.onmousedown=e=>{e.preventDefault();m.value=r.name;m.dataset.selectedCode=r.code;mb.style.display='none';};mb.appendChild(x)});mb.style.display=mb.children.length?'block':'none';});}
+ const c=$('rawSaleCustomer'),cb=$('rawSaleCustomerSuggest');if(c&&cb){c.addEventListener('input',()=>{const q=c.value.trim().toLowerCase();cb.innerHTML='';if(!q){cb.style.display='none';return}getCustomerMaster().filter(x=>String(x.name||'').toLowerCase().includes(q)).slice(0,10).forEach(x=>{const d=document.createElement('div');d.textContent=x.name;d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();c.value=x.name;cb.style.display='none';};cb.appendChild(d)});cb.style.display=cb.children.length?'block':'none';});}
+ $('rawSaleAddItem')?.addEventListener('click',addRawSaleItem);$('rawSaleSave')?.addEventListener('click',saveRawSaleInvoice);$('rawSalePrint')?.addEventListener('click',()=>printRawSaleInvoice(rawSaleLastInvoiceRows,$('rawSaleInvoiceNo').value,$('rawSaleCustomer').value,'Last Invoice'));}
+
 function dispatch(){
  const customer=$('dispatchCustomer').value.trim();
  const input=$('dispatchCode').value.trim();
@@ -3213,7 +3303,7 @@ onAuthStateChanged(auth, user => {
 <script id="sentidosBackupV114">
 (function(){
   const SENTIDOS_GOOGLE_CLIENT_ID="432426760522-0ih73mcaeqf4ccf4ueaj6l737v2cfnsb.apps.googleusercontent.com";
-  function fullBackup(){const data={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf("adr_")===0)data[k]=localStorage.getItem(k);}return JSON.stringify({app:"Sentidos ERP",version:"V114",createdAt:new Date().toISOString(),data:data},null,2);}
+  function fullBackup(){const data={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf("adr_")===0)data[k]=localStorage.getItem(k);}return JSON.stringify({app:"Sentidos ERP",version:"V117",createdAt:new Date().toISOString(),data:data},null,2);}
   window.downloadSentidosBackup=function(){const blob=new Blob([fullBackup()],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="Sentidos_ERP_Backup_"+new Date().toISOString().slice(0,10)+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
   window.restoreSentidosBackup=function(input){const f=input.files&&input.files[0];if(!f)return;const r=new FileReader();r.onload=function(){try{const x=JSON.parse(r.result);if(!x.data||typeof x.data!=="object")throw Error("Invalid backup");if(!confirm("Restore backup? Current local data will be replaced."))return;Object.keys(x.data).forEach(k=>localStorage.setItem(k,x.data[k]));alert("Backup restored. Page will refresh.");location.reload();}catch(e){alert("Backup restore failed: "+e.message);}};r.readAsText(f);};
   window.saveSentidosToDrive=function(){const clientId=SENTIDOS_GOOGLE_CLIENT_ID;if(!window.google||!google.accounts||!google.accounts.oauth2){alert("Google authorization library હજુ load નથી થયું. ફરી પ્રયાસ કરો.");return;}try{const tokenClient=google.accounts.oauth2.initTokenClient({client_id:clientId,scope:"https://www.googleapis.com/auth/drive.file",callback:async function(resp){if(resp.error){alert("Google permission failed: "+(resp.error_description||resp.error));return;}try{const meta={name:"Sentidos_ERP_Backup_"+new Date().toISOString().replace(/[:.]/g,"-")+".json",mimeType:"application/json"};const form=new FormData();form.append("metadata",new Blob([JSON.stringify(meta)],{type:"application/json"}));form.append("file",new Blob([fullBackup()],{type:"application/json"}));const q=await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink",{method:"POST",headers:{Authorization:"Bearer "+resp.access_token},body:form});const j=await q.json();if(!q.ok){if(j.error?.message&&/API has not been used|has not been enabled/i.test(j.error.message))throw Error("Google Drive API enabled નથી. Google Cloud માં Drive API Enable કરો.");if(j.error?.message&&/origin|origin_mismatch/i.test(j.error.message))throw Error("Authorized JavaScript origin mismatch. https://sentidos.pages.dev add/check કરો.");throw Error(j.error?.message||"Drive upload failed");}alert("Backup Google Drive માં save થઈ ગયું.\n"+(j.name||""));}catch(e){alert("Drive backup failed: "+e.message);}}});tokenClient.requestAccessToken({prompt:"consent"});}catch(e){alert("Google authorization failed: "+e.message);}};
