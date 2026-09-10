@@ -443,7 +443,12 @@ tr.low-stock-row td * {
 <section id="accounting" class="page">
 <div class="panel">
 <h2>💰 Accounting</h2>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px">
+<button type="button" class="primary" id="openReceivePaymentBtn">🧾 Receive Payment</button>
+<button type="button" class="primary" id="openPaySupplierBtn">💸 Pay Supplier / Vendor</button>
+</div>
 
+<div id="receivePaymentSection" style="display:none">
 <hr>
 <h3>🧾 Receive Payment</h3>
 <div class="grid">
@@ -455,6 +460,9 @@ tr.low-stock-row td * {
 <button type="button" class="primary" id="accPaymentBtn">Save Payment</button>
 </div>
 <div class="msg" id="accMsg"></div>
+</div>
+
+<div id="paySupplierSection" style="display:none">
 <hr>
 <h3>💸 Pay Supplier / Vendor</h3>
 <div class="grid">
@@ -466,6 +474,8 @@ tr.low-stock-row td * {
 <button type="button" class="primary" id="accPaySupplierBtn">Save Payment</button>
 </div>
 <div class="msg" id="accPaySupplierMsg"></div>
+</div>
+
 <hr>
 <h3>📊 Customer Account Summary</h3>
 <div class="grid">
@@ -2180,6 +2190,19 @@ function saveAccountingPayment(){
  renderAccounting();
  if($('accMsg'))$('accMsg').textContent='Payment saved.';
 }
+function setupAccountingPaymentButtonsV133(){
+ const r=$('openReceivePaymentBtn'),p=$('openPaySupplierBtn'),rs=$('receivePaymentSection'),ps=$('paySupplierSection');
+ if(!r||!p||!rs||!ps)return;
+ const show=(which)=>{
+  rs.style.display=which==='receive'?'block':'none';
+  ps.style.display=which==='pay'?'block':'none';
+  if(which==='receive'){ try{setPaymentDateToday();}catch(e){} }
+  if(which==='pay'){ try{setDateTodayV87('accPaySupplierDate');}catch(e){} }
+ };
+ r.onclick=()=>show('receive');
+ p.onclick=()=>show('pay');
+}
+
 function setupAccountingCustomerSuggest(){
  const i=$('accCustomer'),b=$('accCustomerSuggest');if(!i||!b)return;
  const show=()=>{const q=i.value.toLowerCase().trim();b.innerHTML='';if(!q){b.style.display='none';renderAccounting();return}let a=[];try{a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]')}catch(e){}[...new Set(a.map(x=>String(x.name||'').trim()).filter(Boolean))].filter(n=>n.toLowerCase().includes(q)).slice(0,12).forEach(n=>{const d=document.createElement('div');d.textContent=n;d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();i.value=n;b.style.display='none';renderAccounting()};b.appendChild(d)});b.style.display=b.children.length?'block':'none'};
@@ -3087,7 +3110,7 @@ if($('openProductionReport'))$('openProductionReport').onclick=()=>{document.que
 if($('printProductionReport'))$('printProductionReport').onclick=()=>printOnlyReport('productionReportPanel',generateProductionReport);
 if($('printJWReport'))$('printJWReport').onclick=()=>printOnlyReport('jobWorkMonthlyReportPanel',generateJWReport);if($('printDispatchReportMain'))$('printDispatchReportMain').onclick=()=>printOnlyReport('dispatchReportPanel',generateDispatchMainReport);$('addVendorBtn').onclick=addVendor;$('jwReceiveQty').addEventListener('input',updateJWConsumption);$('jwReceiveVendor').addEventListener('input',updateAutoJobRate);$('jwComponent').addEventListener('input',updateAutoJobRate);
 addBomRow();refreshDropdowns();
-if($('addCustomerBtn'))$('addCustomerBtn').onclick=addCustomerMaster;renderCustomerMaster();if($('addFgRateBtn'))$('addFgRateBtn').onclick=addFgRateMaster;setupFgRateItemSuggest();renderFgRateMaster();if($('dispatchBtn'))$('dispatchBtn').onclick=dispatch;setupDispatchClearButtonsV83();if($('dispatchTaxRate'))$('dispatchTaxRate').addEventListener('input',dispatchUpdateAmount);if($('accPaymentBtn'))$('accPaymentBtn').onclick=saveAccountingPayment;setupAccountingPaymentCustomerSuggest();renderAccounting();setupAccountingPaymentClear();setupAccountingCustomerAndDateV94();setPaymentDateToday();if($('downloadCustomerLedgerPdf'))$('downloadCustomerLedgerPdf').onclick=downloadCustomerLedgerPDF;setupDueCustomerFilter();renderCustomerDueSummary();if($('dispatchReportMainBtn'))$('dispatchReportMainBtn').onclick=generateDispatchMainReport;setupDispatchMainReportSuggestions();setupDispatchReportClearButtons();setupAllReportClearButtons();if($('dispatchReportBtn'))$('dispatchReportBtn').onclick=generateDispatchReport;setupDispatchReportSuggestions();setupDispatchCustomerSuggest();if($('dispatchQty'))$('dispatchQty').addEventListener('input',dispatchUpdateAmount);if($('dispatchRate'))$('dispatchRate').addEventListener('input',dispatchUpdateAmount);renderDispatchEntries();showNextDispatchBillNo();if($('pmAddBtn')) $('pmAddBtn').onclick=pmAdd;if($('purchaseInlineReportBtn'))$('purchaseInlineReportBtn').onclick=generatePurchaseInlineReport;setupPurchaseInlineSupplierSuggest();
+if($('addCustomerBtn'))$('addCustomerBtn').onclick=addCustomerMaster;renderCustomerMaster();if($('addFgRateBtn'))$('addFgRateBtn').onclick=addFgRateMaster;setupFgRateItemSuggest();renderFgRateMaster();if($('dispatchBtn'))$('dispatchBtn').onclick=dispatch;setupDispatchClearButtonsV83();if($('dispatchTaxRate'))$('dispatchTaxRate').addEventListener('input',dispatchUpdateAmount);if($('accPaymentBtn'))$('accPaymentBtn').onclick=saveAccountingPayment;setupAccountingPaymentButtonsV133();setupAccountingPaymentCustomerSuggest();renderAccounting();setupAccountingPaymentClear();setupAccountingCustomerAndDateV94();setPaymentDateToday();if($('downloadCustomerLedgerPdf'))$('downloadCustomerLedgerPdf').onclick=downloadCustomerLedgerPDF;setupDueCustomerFilter();renderCustomerDueSummary();if($('dispatchReportMainBtn'))$('dispatchReportMainBtn').onclick=generateDispatchMainReport;setupDispatchMainReportSuggestions();setupDispatchReportClearButtons();setupAllReportClearButtons();if($('dispatchReportBtn'))$('dispatchReportBtn').onclick=generateDispatchReport;setupDispatchReportSuggestions();setupDispatchCustomerSuggest();if($('dispatchQty'))$('dispatchQty').addEventListener('input',dispatchUpdateAmount);if($('dispatchRate'))$('dispatchRate').addEventListener('input',dispatchUpdateAmount);renderDispatchEntries();showNextDispatchBillNo();if($('pmAddBtn')) $('pmAddBtn').onclick=pmAdd;if($('purchaseInlineReportBtn'))$('purchaseInlineReportBtn').onclick=generatePurchaseInlineReport;setupPurchaseInlineSupplierSuggest();
 window._generatePurchaseReport=generatePurchaseReport;window._generateProductionReport=generateProductionReport;
 pmInit();
 pmRender();
