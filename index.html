@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V110 - Firebase Online Sync</title>
+<title>Sentidos ERP V123 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -14,6 +14,9 @@ main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-w
 @media print{
  body{background:#fff}.tabs,header,.noPrint{display:none!important}.page{display:none!important}
  #reports{display:block!important}.reportArea{box-shadow:none!important;margin:0;padding:0}
+ body.report-printing #reports > section{display:none!important}
+ body.report-printing #reports > section.report-print-target{display:block!important}
+ body.report-printing #reports > section.report-print-target button,body.report-printing #reports > section.report-print-target input,body.report-printing #reports > section.report-print-target select,body.report-printing #reports > section.report-print-target .msg{display:none!important}
  table{font-size:11px}h2{margin-top:0}
 }
 </style>
@@ -552,7 +555,7 @@ tr.low-stock-row td * {
 <input id="dispatchReportToMain" type="date">
 <div style="position:relative"><div style="position:relative"><input id="dispatchReportCustomerMain" placeholder="Type Customer Name" autocomplete="off" style="padding-right:34px"><button type="button" id="clearDispatchReportCustomer" aria-label="Clear Customer" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px">×</button></div><div id="dispatchReportCustomerMainSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
 <div style="position:relative"><div style="position:relative"><input id="dispatchReportItemMain" placeholder="Type Finished Good" autocomplete="off" style="padding-right:34px"><button type="button" id="clearDispatchReportItem" aria-label="Clear Finished Good" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px">×</button></div><div id="dispatchReportItemMainSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
-<button type="button" class="primary" id="dispatchReportMainBtn">Generate Dispatch Report</button>
+<button type="button" class="primary" id="dispatchReportMainBtn">Generate Dispatch Report</button><button type="button" id="printDispatchReportMain">🖨 Print / PDF</button>
 </div>
 <div class="msg" id="dispatchReportMainMsg"></div>
 <div style="overflow:auto">
@@ -602,7 +605,7 @@ tr.low-stock-row td * {
   <div style="margin-top:10px"><b>Total Production: <span id="productionReportTotal">0.000</span> PCS</b></div>
 </div>
 
-<div class="panel reportArea">
+<div class="panel reportArea" id="jobWorkMonthlyReportPanel">
 <h2>Job Work Monthly Report</h2>
 <div class="grid noPrint">
 <select id="reportMonth"></select>
@@ -2991,10 +2994,20 @@ document.querySelectorAll('[data-jw-del]').forEach(b=>b.onclick=()=>{
 $('addItemBtn').onclick=addItem;$('addBomRow').onclick=addBomRow;$('saveBom').onclick=saveBom;$('deleteBom').onclick=deleteBom;
 $('addRM').onclick=addRawMaterial;if($('showRawMaterialMasterBtn'))$('showRawMaterialMasterBtn').onclick=()=>{if($('rawMaterialMasterAddBox'))$('rawMaterialMasterAddBox').style.display='block';$('showRawMaterialMasterBtn').style.display='none';};$('addRateBtn').onclick=saveJobWorkRate;$('rmPurchaseBtn').onclick=purchaseRawMaterial;$('purchaseBtn').onclick=purchase;
 const addPurchaseItemBtn=document.getElementById('addPurchaseItem');if(addPurchaseItemBtn)addPurchaseItemBtn.onclick=addPurchaseItem;
-renderPurchaseCart();$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>{generatePurchaseReport();setTimeout(()=>window.print(),300)};
+function printOnlyReport(panelId, generateFn){
+ const panel=document.getElementById(panelId); if(!panel)return;
+ if(typeof generateFn==='function')generateFn();
+ document.body.classList.add('report-printing');
+ document.querySelectorAll('#reports > section').forEach(x=>x.classList.remove('report-print-target'));
+ panel.classList.add('report-print-target');
+ const cleanup=()=>{document.body.classList.remove('report-printing');panel.classList.remove('report-print-target');window.removeEventListener('afterprint',cleanup);};
+ window.addEventListener('afterprint',cleanup);
+ setTimeout(()=>window.print(),300);
+}
+renderPurchaseCart();$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>printOnlyReport('purchaseReportPanel',generatePurchaseReport);
 if($('openProductionReport'))$('openProductionReport').onclick=()=>{document.querySelector('[data-page="reports"]').click();};
-if($('printProductionReport'))$('printProductionReport').onclick=()=>{generateProductionReport();setTimeout(()=>window.print(),300);};
-if($('printJWReport'))$('printJWReport').onclick=()=>{generateJWReport();setTimeout(()=>window.print(),300);};$('addVendorBtn').onclick=addVendor;$('jwReceiveQty').addEventListener('input',updateJWConsumption);$('jwReceiveVendor').addEventListener('input',updateAutoJobRate);$('jwComponent').addEventListener('input',updateAutoJobRate);
+if($('printProductionReport'))$('printProductionReport').onclick=()=>printOnlyReport('productionReportPanel',generateProductionReport);
+if($('printJWReport'))$('printJWReport').onclick=()=>printOnlyReport('jobWorkMonthlyReportPanel',generateJWReport);if($('printDispatchReportMain'))$('printDispatchReportMain').onclick=()=>printOnlyReport('dispatchReportPanel',generateDispatchMainReport);$('addVendorBtn').onclick=addVendor;$('jwReceiveQty').addEventListener('input',updateJWConsumption);$('jwReceiveVendor').addEventListener('input',updateAutoJobRate);$('jwComponent').addEventListener('input',updateAutoJobRate);
 addBomRow();refreshDropdowns();
 if($('addCustomerBtn'))$('addCustomerBtn').onclick=addCustomerMaster;renderCustomerMaster();if($('addFgRateBtn'))$('addFgRateBtn').onclick=addFgRateMaster;setupFgRateItemSuggest();renderFgRateMaster();if($('dispatchBtn'))$('dispatchBtn').onclick=dispatch;setupDispatchClearButtonsV83();if($('dispatchTaxRate'))$('dispatchTaxRate').addEventListener('input',dispatchUpdateAmount);if($('accPaymentBtn'))$('accPaymentBtn').onclick=saveAccountingPayment;setupAccountingPaymentCustomerSuggest();renderAccounting();setupAccountingPaymentClear();setupAccountingCustomerAndDateV94();setPaymentDateToday();if($('downloadCustomerLedgerPdf'))$('downloadCustomerLedgerPdf').onclick=downloadCustomerLedgerPDF;setupDueCustomerFilter();renderCustomerDueSummary();if($('dispatchReportMainBtn'))$('dispatchReportMainBtn').onclick=generateDispatchMainReport;setupDispatchMainReportSuggestions();setupDispatchReportClearButtons();setupAllReportClearButtons();if($('dispatchReportBtn'))$('dispatchReportBtn').onclick=generateDispatchReport;setupDispatchReportSuggestions();setupDispatchCustomerSuggest();if($('dispatchQty'))$('dispatchQty').addEventListener('input',dispatchUpdateAmount);if($('dispatchRate'))$('dispatchRate').addEventListener('input',dispatchUpdateAmount);renderDispatchEntries();showNextDispatchBillNo();if($('pmAddBtn')) $('pmAddBtn').onclick=pmAdd;if($('purchaseInlineReportBtn'))$('purchaseInlineReportBtn').onclick=generatePurchaseInlineReport;setupPurchaseInlineSupplierSuggest();
 window._generatePurchaseReport=generatePurchaseReport;window._generateProductionReport=generateProductionReport;
@@ -3008,7 +3021,7 @@ document.addEventListener('DOMContentLoaded',function(){
  var b=document.getElementById('generatePurchaseReport');
  if(b)b.onclick=function(e){e.preventDefault();generatePurchaseReport();};
  var p=document.getElementById('printPurchaseReport');
- if(p)p.onclick=function(e){e.preventDefault();generatePurchaseReport();setTimeout(function(){window.print();},200);};
+ if(p)p.onclick=function(e){e.preventDefault();printOnlyReport('purchaseReportPanel',generatePurchaseReport);};
 });
 
 </script>
