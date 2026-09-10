@@ -1640,7 +1640,7 @@ function setupReportSelectors(){
 function setupReportSelectors(){
  const now=new Date(), y=now.getFullYear(), m=now.getMonth();
  const sel=$('reportMonth'); if(!sel)return;
- sel.innerHTML='';
+ sel.innerHTML='<option value="ALL">All Months</option>';
  for(let k=0;k<24;k++){
    const d=new Date(y,m-k,1);
    const val=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
@@ -1660,7 +1660,7 @@ function generateJWReport(){
    const d=new Date(t.date);
    if(isNaN(d.getTime()))return false;
    const ym=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-   return ym===month && (!vendor||t.vendor===vendor);
+   return (month==='ALL' || ym===month) && (!vendor||t.vendor===vendor);
  });
  const grouped={};
  rows.forEach(t=>{
@@ -1684,8 +1684,8 @@ function generateJWReport(){
  $('jwReportQty').textContent=tq.toFixed(3);
  $('jwReportAmount').textContent='₹'+ta.toFixed(2);
  $('jwReportRM').textContent=trm.toFixed(3)+' KG';
- const d=new Date(month+'-01T00:00:00');
- $('jwReportHeader').innerHTML='<p><b>Month:</b> '+d.toLocaleString('en-IN',{month:'long',year:'numeric'})+' &nbsp; <b>Vendor:</b> '+(vendor||'All Vendors')+' &nbsp; <b>Entries:</b> '+rows.length+'</p>';
+ const monthLabel=month==='ALL'?'All Months':(()=>{const d=new Date(month+'-01T00:00:00'); return d.toLocaleString('en-IN',{month:'long',year:'numeric'});})();
+ $('jwReportHeader').innerHTML='<p><b>Month:</b> '+monthLabel+' &nbsp; <b>Vendor:</b> '+(vendor||'All Vendors')+' &nbsp; <b>Entries:</b> '+rows.length+'</p>';
  $('reports').style.display='block';
 }
 
