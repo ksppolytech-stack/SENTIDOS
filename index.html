@@ -2585,28 +2585,41 @@ function isReturnMergedV96(t){return t.isReturn===true||String(t.entryType||'').
 function setupMergedPartyLedgerV87(){
  const i=$('mergedPartyFilter'),b=$('mergedPartySuggest'),c=$('clearMergedPartyFilter');
  if(!i||!b)return;
- const partyNames=()=>{
-  const out=[];
-  const add=n=>{n=String(n||'').trim();if(n&&!out.some(x=>x.toLowerCase()===n.toLowerCase()))out.push(n)};
-  (transactions||[]).forEach(t=>add(t.customer||t.supplier||t.vendor));
-  if(typeof getAccountingPayments==='function')getAccountingPayments().forEach(p=>add(p.customer));
-  if(typeof getSupplierPayments==='function')getSupplierPayments().forEach(p=>add(p.party));
-  // Also include current masters when available.
-  try{const a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]');a.forEach(x=>add(x.customer||x.customerName||x.name))}catch(e){}
-  try{const a=JSON.parse(localStorage.getItem('adr_supplier_master_v1')||'[]');a.forEach(x=>add(x.supplier||x.supplierName||x.name))}catch(e){}
-  try{const a=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]');a.forEach(x=>add(x.vendor||x.vendorName||x.name))}catch(e){}
-  return out;
+ const partyMap=()=>{
+  const map=new Map();
+  const add=(name,type='Party')=>{
+   name=String(name||'').trim(); if(!name)return;
+   const key=name.toLowerCase();
+   if(!map.has(key))map.set(key,{name,type});
+   else if(map.get(key).type==='Party' && type!=='Party')map.get(key).type=type;
+  };
+  // All three masters are included so the combined ledger can select any party.
+  try{const a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]');if(Array.isArray(a))a.forEach(x=>add(x.customer||x.customerName||x.name,'Customer'))}catch(e){}
+  try{const a=JSON.parse(localStorage.getItem('adr_supplier_master_v1')||'[]');if(Array.isArray(a))a.forEach(x=>add(x.supplier||x.supplierName||x.name,'Supplier'))}catch(e){}
+  try{const a=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]');if(Array.isArray(a))a.forEach(x=>add(x.vendor||x.vendorName||x.name,'Job Work Vendor'))}catch(e){}
+  // Also include every party that has actually participated in money transactions.
+  (transactions||[]).forEach(t=>{
+   const type=String(t.type||'').toUpperCase();
+   const n=String(t.customer||t.supplier||t.vendor||'').trim();
+   if(!n)return;
+   if(type==='DISPATCH'||type==='RAW MATERIAL SALE'||type==='SALES RETURN'||type==='CUSTOMER RETURN'||type==='DISPATCH RETURN') add(n,'Customer');
+   else if(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD') add(n,'Supplier');
+   else if(type==='JOB WORK RECEIVE'||type==='JOB WORK') add(n,'Job Work Vendor');
+   else add(n,'Party');
+  });
+  if(typeof getAccountingPayments==='function')getAccountingPayments().forEach(p=>add(p.customer,'Customer'));
+  if(typeof getSupplierPayments==='function')getSupplierPayments().forEach(p=>add(p.party,'Supplier / Vendor'));
+  return [...map.values()].sort((a,z)=>a.name.localeCompare(z.name));
  };
  const hide=()=>{b.innerHTML='';b.style.display='none'};
  const show=()=>{
   const q=i.value.trim().toLowerCase();b.innerHTML='';
-  if(!q){hide();return}
-  const list=partyNames().filter(n=>n.toLowerCase().includes(q)).slice(0,25);
-  list.forEach(n=>{
+  const list=partyMap().filter(x=>!q||x.name.toLowerCase().includes(q)).slice(0,40);
+  list.forEach(x=>{
    const d=document.createElement('div');
-   d.textContent=n;
-   d.style.cssText='display:block;width:100%;box-sizing:border-box;padding:10px 12px;min-height:40px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#111;background:#fff;border-bottom:1px solid #ddd;cursor:pointer;font-size:15px;line-height:20px';
-   d.onmousedown=e=>{e.preventDefault();i.value=n;hide();if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger()};
+   d.innerHTML='<b>'+x.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</b><span style="float:right;font-size:12px;color:#666">'+x.type+'</span>';
+   d.style.cssText='display:block;width:100%;box-sizing:border-box;padding:10px 12px;min-height:42px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#111;background:#fff;border-bottom:1px solid #ddd;cursor:pointer;font-size:15px;line-height:20px';
+   d.onmousedown=e=>{e.preventDefault();i.value=x.name;i.dataset.selectedParty=x.name;hide();if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger()};
    b.appendChild(d);
   });
   b.style.display=list.length?'block':'none';
@@ -2614,7 +2627,7 @@ function setupMergedPartyLedgerV87(){
  i.addEventListener('input',show);
  i.addEventListener('focus',show);
  i.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();hide();if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger()}});
- if(c)c.onclick=()=>{i.value='';hide();if($('mergedPartySummaryWrap'))$('mergedPartySummaryWrap').style.display='none';if($('mergedPartyLedgerWrap'))$('mergedPartyLedgerWrap').style.display='none'};
+ if(c)c.onclick=()=>{i.value='';i.dataset.selectedParty='';hide();if($('mergedPartySummaryWrap'))$('mergedPartySummaryWrap').style.display='none';if($('mergedPartyLedgerWrap'))$('mergedPartyLedgerWrap').style.display='none'};
  document.addEventListener('click',e=>{if(e.target!==i&&!b.contains(e.target))hide()});
 }
 
