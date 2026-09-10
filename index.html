@@ -99,6 +99,7 @@ tr.low-stock-row td * {
 </head>
 <body>
 <button id="globalRefreshBtn" type="button" title="Refresh Page" aria-label="Refresh Page" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
+<button id="globalLogoutBtn" type="button" title="Logout" aria-label="Logout" style="display:none;position:fixed;top:10px;right:100px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#b71c1c;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🚪 Logout</button>
 <div id="loginScreen" style="position:fixed;inset:0;background:#f3f5f7;z-index:99999;display:flex;align-items:center;justify-content:center;">
   <div style="background:#fff;padding:30px;border-radius:12px;width:360px;max-width:90%;box-shadow:0 4px 20px rgba(0,0,0,.15);">
     
@@ -3101,7 +3102,8 @@ document.addEventListener('DOMContentLoaded',function(){
 import {
   getAuth,
   onAuthStateChanged,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
+  signOut
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
  import {
     getFirestore,
@@ -3249,6 +3251,23 @@ const loginPassword = document.getElementById("loginPassword");
 const loginError = document.getElementById("loginError");
 const loginScreen = document.getElementById("loginScreen");
 const globalRefreshBtn = document.getElementById("globalRefreshBtn");
+const globalLogoutBtn = document.getElementById("globalLogoutBtn");
+
+if (globalLogoutBtn) {
+  globalLogoutBtn.onclick = async function () {
+    if (!confirm("Logout કરવું છે?")) return;
+    globalLogoutBtn.disabled = true;
+    try {
+      await signOut(auth);
+      try { sessionStorage.removeItem("sentidosLastPage"); } catch(e) {}
+    } catch (err) {
+      console.error(err);
+      alert("Logout failed. ફરી પ્રયાસ કરો.");
+    } finally {
+      globalLogoutBtn.disabled = false;
+    }
+  };
+}
 
 if (globalRefreshBtn) {
   globalRefreshBtn.onclick = function () {
@@ -3309,9 +3328,13 @@ if (loginBtn) {
 onAuthStateChanged(auth, user => {
   if(user){
     if(loginScreen)loginScreen.style.display="none";
+    if(globalLogoutBtn)globalLogoutBtn.style.display="block";
     startFirebaseAfterLogin();
   }else{
     if(loginScreen)loginScreen.style.display="flex";
+    if(globalLogoutBtn)globalLogoutBtn.style.display="none";
+    firebaseBootStarted = false;
+    cloudReady = false;
   }
 });
 </script>
@@ -3321,7 +3344,7 @@ onAuthStateChanged(auth, user => {
 <script id="sentidosBackupV114">
 (function(){
   const SENTIDOS_GOOGLE_CLIENT_ID="432426760522-0ih73mcaeqf4ccf4ueaj6l737v2cfnsb.apps.googleusercontent.com";
-  function fullBackup(){const data={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf("adr_")===0)data[k]=localStorage.getItem(k);}return JSON.stringify({app:"Sentidos ERP",version:"V117",createdAt:new Date().toISOString(),data:data},null,2);}
+  function fullBackup(){const data={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf("adr_")===0)data[k]=localStorage.getItem(k);}return JSON.stringify({app:"Sentidos ERP",version:"V122",createdAt:new Date().toISOString(),data:data},null,2);}
   window.downloadSentidosBackup=function(){const blob=new Blob([fullBackup()],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="Sentidos_ERP_Backup_"+new Date().toISOString().slice(0,10)+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
   window.restoreSentidosBackup=function(input){const f=input.files&&input.files[0];if(!f)return;const r=new FileReader();r.onload=function(){try{const x=JSON.parse(r.result);if(!x.data||typeof x.data!=="object")throw Error("Invalid backup");if(!confirm("Restore backup? Current local data will be replaced."))return;Object.keys(x.data).forEach(k=>localStorage.setItem(k,x.data[k]));alert("Backup restored. Page will refresh.");location.reload();}catch(e){alert("Backup restore failed: "+e.message);}};r.readAsText(f);};
   window.saveSentidosToDrive=function(){const clientId=SENTIDOS_GOOGLE_CLIENT_ID;if(!window.google||!google.accounts||!google.accounts.oauth2){alert("Google authorization library હજુ load નથી થયું. ફરી પ્રયાસ કરો.");return;}try{const tokenClient=google.accounts.oauth2.initTokenClient({client_id:clientId,scope:"https://www.googleapis.com/auth/drive.file",callback:async function(resp){if(resp.error){alert("Google permission failed: "+(resp.error_description||resp.error));return;}try{const meta={name:"Sentidos_ERP_Backup_"+new Date().toISOString().replace(/[:.]/g,"-")+".json",mimeType:"application/json"};const form=new FormData();form.append("metadata",new Blob([JSON.stringify(meta)],{type:"application/json"}));form.append("file",new Blob([fullBackup()],{type:"application/json"}));const q=await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink",{method:"POST",headers:{Authorization:"Bearer "+resp.access_token},body:form});const j=await q.json();if(!q.ok){if(j.error?.message&&/API has not been used|has not been enabled/i.test(j.error.message))throw Error("Google Drive API enabled નથી. Google Cloud માં Drive API Enable કરો.");if(j.error?.message&&/origin|origin_mismatch/i.test(j.error.message))throw Error("Authorized JavaScript origin mismatch. https://sentidos.pages.dev add/check કરો.");throw Error(j.error?.message||"Drive upload failed");}alert("Backup Google Drive માં save થઈ ગયું.\n"+(j.name||""));}catch(e){alert("Drive backup failed: "+e.message);}}});tokenClient.requestAccessToken({prompt:"consent"});}catch(e){alert("Google authorization failed: "+e.message);}};
