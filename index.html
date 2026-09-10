@@ -475,14 +475,14 @@ tr.low-stock-row td * {
 <div><b>Due / Outstanding</b><div id="accDue">₹0.00</div></div>
 </div>
 <hr>
-<table id="accTable">
+<table id="accTable" style="display:none">
 <thead><tr><th>Date</th><th>Type</th><th>Customer</th><th>Bill No. / Ref</th><th>Finished Good</th><th>Qty</th><th>Taxable Amount</th><th>Tax</th><th>Grand Total</th><th>Payment Mode</th><th>Remark</th></tr></thead>
 <tbody></tbody>
 </table>
 
 
 <section class="panel" id="mergedPartyLedger">
-<h3>🔗 Party Merged Ledger (Customer + Supplier + Vendor)</h3>
+<h3>📚 Combined Party Ledger (Customer + Supplier + Job Work Vendor)</h3>
 <div class="grid">
 <div style="position:relative"><input id="mergedPartyFilter" placeholder="Type Party Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearMergedPartyFilter" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer">×</button><div id="mergedPartySuggest" style="position:absolute;left:0;right:0;top:100%;z-index:99999;background:#fff;color:#111;border:1px solid #999;display:none;max-height:240px;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;font-size:15px;line-height:1.4;box-shadow:0 3px 8px rgba(0,0,0,.15);"></div></div>
 </div>
@@ -495,7 +495,7 @@ tr.low-stock-row td * {
 </div>
 </section>
 
-<section class="panel" id="customerDueSummary">
+<section class="panel" id="customerDueSummary" style="display:none">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h3>🔗 Customer-wise Party Balance</h3><button type="button" class="primary" id="downloadCustomerLedgerPdf">📄 Download PDF</button></div>
 <div class="grid">
 <div style="position:relative"><input id="dueCustomerFilter" placeholder="Type Customer Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearDueCustomerFilter" aria-label="Clear Customer" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button><div id="dueCustomerFilterSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
@@ -510,7 +510,7 @@ tr.low-stock-row td * {
 </section>
 </div>
 
-<section class="panel" id="partyLedgers">
+<section class="panel" id="partyLedgers" style="display:none">
 <h3>📚 Supplier / Job Work Vendor / Combined Due</h3>
 <div class="grid">
 <div><b>Customer Receivable</b><div id="combinedCustomerDue">₹0.00</div></div>
