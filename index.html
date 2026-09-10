@@ -384,6 +384,7 @@ tr.low-stock-row td * {
 
 <hr><h3>2. Component Receive from Vendor</h3><p class="small">Receive Challan No. software automatic generate કરશે.</p>
 <div class="grid">
+<input id="jwReceiveDate" type="date" title="Receive Date">
 <div class="autowrap" style="position:relative"><input id="jwReceiveVendor" placeholder="Type Vendor Name"><div id="receiveVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
 <div class="autowrap" style="position:relative"><input id="jwComponent" placeholder="Type Component Name"><div id="componentSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
 <input id="jwComponentWeight" readonly placeholder="Weight / PCS (gram)">
@@ -1264,13 +1265,15 @@ function setupRateSuggestions(){
 function getJobWorkRate(vendor,code){
  const v=String(vendor||'').trim().toLowerCase();
  const c=String(code||'').trim().toLowerCase();
- const item=items.find(i=>String(i.code).toLowerCase()===c)||items.find(i=>String(i.name).trim().toLowerCase()===c);
- const itemCode=item?String(item.code).toLowerCase():c;
- const r=jobworkRates.find(x=>
-   String(x.vendor||'').trim().toLowerCase()===v &&
-   String(x.component||'').trim().toLowerCase()===itemCode
- );
- return r?Number(r.rate):0;
+ const item=items.find(i=>String(i.code||'').trim().toLowerCase()===c)||items.find(i=>String(i.name||'').trim().toLowerCase()===c);
+ const itemCode=item?String(item.code||'').trim().toLowerCase():c;
+ const itemName=item?String(item.name||'').trim().toLowerCase():c;
+ const r=jobworkRates.find(x=>{
+   const xv=String(x.vendor||'').trim().toLowerCase();
+   const xc=String(x.component||'').trim().toLowerCase();
+   return xv===v && (xc===itemCode || xc===itemName || xc===c);
+ });
+ return r?Number(r.rate)||0:0;
 }
 function saveJobWorkRate(){
  const vendorInput=$('rateVendor').value.trim();
@@ -1294,10 +1297,11 @@ function renderJobWorkRates(){
  document.querySelectorAll('[data-rate-del]').forEach(b=>b.onclick=()=>{if(confirm('Delete this rate?')){jobworkRates.splice(Number(b.dataset.rateDel),1);save();}});
 }
 function receiveFromVendor(){
+ const receiveDate=$('jwReceiveDate').value || new Date().toISOString().slice(0,10);
  const vendor=$('jwReceiveVendor').value.trim();
  const comp=items.find(i=>i.code===$('jwComponent').dataset.selectedCode)||findItemByText($('jwComponent').value);
  const qty=Number($('jwReceiveQty').value)||0;
- const rate=getJobWorkRate(vendor,comp?comp.code:'');
+ const rate=getJobWorkRate(vendor,comp?comp.code:$('jwComponent').value);
  $('jwJobRate').value=rate>0?rate.toFixed(2):'Rate not set';
  if(!vendor||!comp||qty<=0)return alert('Vendor, Component અને Qty નાખો.');
  if(rate<=0)return alert('આ Vendor + Component માટે Rate set નથી.');
@@ -1339,11 +1343,12 @@ function receiveFromVendor(){
  const amount=qty*rate;
  addTxn('JOB WORK RECEIVE',ref,comp.code,qty,comp.unit);
  const tr=transactions[transactions.length-1];
+ tr.date=receiveDate;
  tr.jobRate=rate;tr.jobAmount=amount;tr.vendor=vendor;tr.rmConsumed=consumptionKG;
  tr.rawMaterialCost=rawCost;tr.componentCost=(rawCost/qty)||0;tr.rmConsumptionDetails=details;
  save();
  msg('jwReceiveMsg','Component received. Challan No: '+ref+' | Rate ₹'+rate.toFixed(2)+' | Job Work ₹'+amount.toFixed(2)+' | Material Cost ₹'+rawCost.toFixed(2)+' | ADR stock unchanged.');
- $('jwReceiveVendor').value='';$('jwComponent').value='';$('jwComponentWeight').value='';$('jwReceiveQty').value='';$('jwJobRate').value='';$('jwConsumption').textContent='';$('jwJobAmount').textContent='';
+ $('jwReceiveDate').value=new Date().toISOString().slice(0,10);$('jwReceiveVendor').value='';$('jwComponent').value='';$('jwComponentWeight').value='';$('jwReceiveQty').value='';$('jwJobRate').value='';$('jwConsumption').textContent='';$('jwJobAmount').textContent='';
 }
 function showDashboardFilter(type){
  const box=$('dashboardDetails'),title=$('dashboardDetailsTitle'),table=$('dashboardDetailsTable');
@@ -2886,7 +2891,8 @@ if($('addCustomerBtn'))$('addCustomerBtn').onclick=addCustomerMaster;renderCusto
 window._generatePurchaseReport=generatePurchaseReport;window._generateProductionReport=generateProductionReport;
 pmInit();
 pmRender();
-render();setupAllAutocomplete();setupAllMasterSuggestionsV92();setupProductionSuggestions();setupJobWorkSuggestions();setupRateSuggestions();setupRawPurchaseSuggest();setupRawMaterialSupplierSuggestV84();setupDashboardCards();setupReportSelectors();
+render();setupAllAutocomplete();setupAllMasterSuggestionsV92();setupProductionSuggestions();setupJobWorkSuggestions();
+  if($('jwReceiveDate')) $('jwReceiveDate').value=new Date().toISOString().slice(0,10);setupRateSuggestions();setupRawPurchaseSuggest();setupRawMaterialSupplierSuggestV84();setupDashboardCards();setupReportSelectors();
 })();
 
 document.addEventListener('DOMContentLoaded',function(){
