@@ -2607,48 +2607,52 @@ function isReturnMergedV96(t){return t.isReturn===true||String(t.entryType||'').
 
 function setupMergedPartyLedgerV87(){
  const i=$('mergedPartyFilter'),b=$('mergedPartySuggest'),c=$('clearMergedPartyFilter');
- if(!i||!b)return;
+ if(!i||!b||i.dataset.mergedPartySuggestBound==='1')return;
+ i.dataset.mergedPartySuggestBound='1';
  const partyMap=()=>{
   const map=new Map();
   const add=(name,type='Party')=>{
    name=String(name||'').trim(); if(!name)return;
    const key=name.toLowerCase();
-   if(!map.has(key)) map.set(key,{name,type});
-   else if(map.get(key).type==='Party'&&type!=='Party') map.get(key).type=type;
+   if(!map.has(key))map.set(key,{name,type});
+   else if(map.get(key).type==='Party'&&type!=='Party')map.get(key).type=type;
   };
-  const read=(key,fields,type)=>{try{const a=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(a))a.forEach(x=>add(fields.map(f=>x?.[f]).find(v=>String(v||'').trim()),type));}catch(e){}};
-  read('adr_customer_master_v1',['name','customer','customerName'],'Customer');
-  read('adr_supplier_master_v1',['name','supplier','supplierName'],'Supplier');
-  read('adr_vendors_v2',['name','vendor','vendorName'],'Job Work Vendor');
-  (transactions||[]).forEach(t=>{const n=String(t.customer||t.supplier||t.vendor||'').trim();if(!n)return;const ty=String(t.type||'').toUpperCase();add(n,ty.includes('DISPATCH')||ty.includes('SALE')?'Customer':ty.includes('PURCHASE')||ty.includes('INWARD')?'Supplier':ty.includes('JOB WORK')?'Job Work Vendor':'Party');});
+  const read=(keys,fields,type)=>keys.forEach(k=>{try{const a=JSON.parse(localStorage.getItem(k)||'[]');if(Array.isArray(a))a.forEach(x=>{const v=fields.map(f=>x?.[f]).find(v=>String(v??'').trim()!=='');add(v,type)});}catch(e){}});
+  read(['adr_customer_master_v1'],['name','customer','customerName'],'Customer');
+  read(['adr_supplier_master_v1','adr_purchase_master_v4','adr_purchase_master_v3','adr_purchase_master_v2','adr_suppliers_v1'],['name','supplier','supplierName'],'Supplier');
+  read(['adr_vendors_v2'],['name','vendor','vendorName'],'Job Work Vendor');
+  (transactions||[]).forEach(t=>{const n=String(t.customer||t.supplier||t.vendor||'').trim();if(!n)return;const ty=String(t.type||'').toUpperCase();add(n,(ty==='DISPATCH'||ty==='RAW MATERIAL SALE'||ty.includes('RETURN'))?'Customer':(ty==='PURCHASE'||ty==='RAW MATERIAL COMPANY INWARD')?'Supplier':ty.includes('JOB WORK')?'Job Work Vendor':'Party')});
   if(typeof getAccountingPayments==='function')getAccountingPayments().forEach(p=>add(p.customer,'Customer'));
   if(typeof getSupplierPayments==='function')getSupplierPayments().forEach(p=>add(p.party,'Supplier / Vendor'));
-  return Array.from(map.values()).sort((a,z)=>a.name.localeCompare(z.name));
+  return [...map.values()].sort((a,z)=>a.name.localeCompare(z.name));
  };
- const hide=()=>{b.innerHTML='';b.style.display='none'};
+ const hide=()=>{b.innerHTML='';b.style.display='none';};
+ const position=()=>{const r=i.getBoundingClientRect();b.style.position='fixed';b.style.left=r.left+'px';b.style.top=(r.bottom+2)+'px';b.style.width=r.width+'px';};
  const show=()=>{
-  const q=String(i.value||'').trim().toLowerCase();
-  b.innerHTML='';
+  const q=String(i.value||'').trim().toLowerCase();b.innerHTML='';
   const list=partyMap().filter(x=>!q||x.name.toLowerCase().includes(q)).slice(0,100);
   list.forEach(x=>{
    const d=document.createElement('div');
-   const name=document.createElement('b'); name.textContent=x.name;
-   const type=document.createElement('span'); type.textContent=x.type; type.style.cssText='float:right;font-size:12px;color:#666';
-   d.append(name,type);
-   d.style.cssText='display:block;width:100%;box-sizing:border-box;padding:10px 12px;min-height:42px;color:#111;background:#fff;border-bottom:1px solid #ddd;cursor:pointer;font-size:15px;line-height:20px';
-   d.onmousedown=e=>{e.preventDefault();i.value=x.name;i.dataset.selectedParty=x.name;hide();renderMergedPartyLedger();};
+   d.textContent=x.name+'  —  '+x.type;
+   d.style.cssText='display:block;width:100%;box-sizing:border-box;padding:10px 12px;min-height:40px;color:#111;background:#fff;border-bottom:1px solid #ddd;cursor:pointer;font-size:15px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+   d.onmousedown=e=>{e.preventDefault();e.stopPropagation();i.value=x.name;i.dataset.selectedParty=x.name;hide();renderMergedPartyLedger();};
    b.appendChild(d);
   });
-  b.style.display=list.length?'block':'none';
+  if(list.length){position();b.style.display='block';}else hide();
  };
- i.onfocus=show; i.onclick=show; i.oninput=show;
- i.onkeydown=e=>{if(e.key==='Escape')hide();if(e.key==='Enter'){e.preventDefault();const first=b.firstElementChild;if(first)first.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));else renderMergedPartyLedger();}};
- if(c)c.onclick=()=>{i.value='';i.dataset.selectedParty='';hide();if($('mergedPartySummaryWrap'))$('mergedPartySummaryWrap').style.display='block';if($('mergedPartyLedgerWrap'))$('mergedPartyLedgerWrap').style.display='none';renderMergedPartyLedger();};
- b.onmousedown=e=>e.stopPropagation();
- document.addEventListener('mousedown',e=>{if(e.target!==i&&!b.contains(e.target))hide();});
- // Force a fresh binding after all ERP initialization scripts have run.
- setTimeout(()=>{try{show();}catch(e){}},50);
+ // Move the suggestion box to BODY so no panel/table overflow can hide it.
+ if(b.parentElement!==document.body)document.body.appendChild(b);
+ i.addEventListener('focus',show);
+ i.addEventListener('click',e=>{e.stopPropagation();show();});
+ i.addEventListener('input',show);
+ i.addEventListener('keyup',show);
+ i.addEventListener('keydown',e=>{if(e.key==='Escape')hide();if(e.key==='Enter'){e.preventDefault();hide();renderMergedPartyLedger();}});
+ window.addEventListener('resize',()=>{if(b.style.display==='block')position();});
+ window.addEventListener('scroll',()=>{if(b.style.display==='block')position();},true);
+ if(c)c.onclick=e=>{e.stopPropagation();i.value='';i.dataset.selectedParty='';hide();if($('mergedPartySummaryWrap'))$('mergedPartySummaryWrap').style.display='none';if($('mergedPartyLedgerWrap'))$('mergedPartyLedgerWrap').style.display='none';};
+ document.addEventListener('click',e=>{if(e.target!==i&&!b.contains(e.target))hide();});
 }
+
 function setupAllMasterSuggestionsV92(){
  const unique=a=>[...new Set(a.map(x=>String(x||'').trim()).filter(Boolean))];
  const masterNames=(keys,fields)=>{
