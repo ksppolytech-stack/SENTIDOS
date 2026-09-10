@@ -1007,9 +1007,43 @@ function deleteRawSaleTransaction(id){
 }
 function setupRawSale(){
  const d=$('rawSaleDate');if(d&&!d.value)d.value=new Date().toISOString().slice(0,10);showNextRawSaleInvoiceNo();renderRawSaleCart();renderRawSaleEntries();
- const m=$('rawSaleMaterial'),mb=$('rawSaleMaterialSuggest');if(m&&mb){m.addEventListener('input',()=>{m.dataset.selectedCode='';const q=m.value.trim().toLowerCase();mb.innerHTML='';if(!q){mb.style.display='none';return}(rawMaterials||[]).filter(r=>(String(r.name||'')+' '+String(r.code||'')).toLowerCase().includes(q)).slice(0,10).forEach(r=>{const x=document.createElement('div');x.textContent=r.name+' — '+r.code+' (Stock: '+Number(r.stock||0).toFixed(3)+' '+(r.unit||'KG')+')';x.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';x.onmousedown=e=>{e.preventDefault();m.value=r.name;m.dataset.selectedCode=r.code;mb.style.display='none';};mb.appendChild(x)});mb.style.display=mb.children.length?'block':'none';});}
- const c=$('rawSaleCustomer'),cb=$('rawSaleCustomerSuggest');if(c&&cb){c.addEventListener('input',()=>{const q=c.value.trim().toLowerCase();cb.innerHTML='';if(!q){cb.style.display='none';return}getCustomerMaster().filter(x=>String(x.name||'').toLowerCase().includes(q)).slice(0,10).forEach(x=>{const d=document.createElement('div');d.textContent=x.name;d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();c.value=x.name;cb.style.display='none';};cb.appendChild(d)});cb.style.display=cb.children.length?'block':'none';});}
- $('rawSaleAddItem')?.addEventListener('click',addRawSaleItem);$('rawSaleSave')?.addEventListener('click',saveRawSaleInvoice);$('rawSalePrint')?.addEventListener('click',()=>printRawSaleInvoice(rawSaleLastInvoiceRows,$('rawSaleInvoiceNo').value,$('rawSaleCustomer').value,'Last Invoice'));}
+ const m=$('rawSaleMaterial'),mb=$('rawSaleMaterialSuggest');
+ if(m&&mb){
+  const renderMaterials=()=>{
+   const q=m.value.trim().toLowerCase();mb.innerHTML='';
+   const list=(rawMaterials||[]).filter(r=>{
+    const name=String(r.name||'').toLowerCase(),code=String(r.code||'').toLowerCase();
+    return !q || name.includes(q) || code.includes(q);
+   }).slice(0,10);
+   list.forEach(r=>{
+    const x=document.createElement('div');
+    x.textContent=r.name+' — '+r.code+' (Stock: '+Number(r.stock||0).toFixed(3)+' '+(r.unit||'KG')+')';
+    x.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';
+    x.onmousedown=e=>{e.preventDefault();m.value=r.name;m.dataset.selectedCode=r.code;mb.style.display='none';};
+    mb.appendChild(x);
+   });
+   mb.style.display=mb.children.length?'block':'none';
+  };
+  m.addEventListener('input',()=>{m.dataset.selectedCode='';renderMaterials();});
+  m.addEventListener('focus',renderMaterials);
+ }
+ const c=$('rawSaleCustomer'),cb=$('rawSaleCustomerSuggest');
+ if(c&&cb){
+  const renderCustomers=()=>{
+   const q=c.value.trim().toLowerCase();cb.innerHTML='';
+   const list=getCustomerMaster().filter(x=>String(x.name||'').toLowerCase().includes(q)).slice(0,10);
+   list.forEach(x=>{
+    const d=document.createElement('div');d.textContent=x.name;d.style.cssText='padding:10px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';
+    d.onmousedown=e=>{e.preventDefault();c.value=x.name;cb.style.display='none';};
+    cb.appendChild(d);
+   });
+   cb.style.display=cb.children.length?'block':'none';
+  };
+  c.addEventListener('input',renderCustomers);
+  c.addEventListener('focus',renderCustomers);
+ }
+ $('rawSaleAddItem')?.addEventListener('click',addRawSaleItem);$('rawSaleSave')?.addEventListener('click',saveRawSaleInvoice);$('rawSalePrint')?.addEventListener('click',()=>printRawSaleInvoice(rawSaleLastInvoiceRows,$('rawSaleInvoiceNo').value,$('rawSaleCustomer').value,'Last Invoice'));
+}
 
 function dispatch(){
  const customer=$('dispatchCustomer').value.trim();
