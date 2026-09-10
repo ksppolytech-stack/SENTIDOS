@@ -983,11 +983,7 @@ function addRawSaleItem(){
 function printRawSaleInvoice(rows,invoiceNo,customer,date){
  const totals=rows.reduce((a,x)=>{a.taxable+=x.amount;a.tax+=x.tax;a.grand+=x.grandTotal;return a},{taxable:0,tax:0,grand:0});
  const w=window.open('','_blank','width=900,height=700');if(!w)return alert('Popup blocked. Browserમાં popup allow કરો.');
- w.document.write(`<!doctype html><html><head><title>Raw Material Invoice ${invoiceNo}</title><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #333;padding:8px;text-align:left}td.num,th.num{text-align:right}.tot{margin-top:20px;text-align:right;font-size:18px}</style></head><body><h1>RAW MATERIAL SALES INVOICE</h1><p><b>Invoice No:</b> ${invoiceNo}<br><b>Date:</b> ${date}<br><b>Customer:</b> ${customer}</p><table><thead><tr><th>Raw Material</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate</th><th class="num">Taxable</th><th class="num">GST</th><th class="num">Total</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.name}</td><td class="num">${x.qty.toFixed(3)}</td><td>${x.unit}</td><td class="num">₹${x.rate.toFixed(2)}</td><td class="num">₹${x.amount.toFixed(2)}</td><td class="num">₹${x.tax.toFixed(2)}</td><td class="num">₹${x.grandTotal.toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="tot">Taxable: ₹${totals.taxable.toFixed(2)}<br>GST: ₹${totals.tax.toFixed(2)}<br><b>Grand Total: ₹${totals.grand.toFixed(2)}</b></div><script>window.onload=()=>window.print()<\/script>
-<script id="sentidosMergedPartySuggestV135">
-(function(){function init(){try{if(typeof setupMergedPartyLedgerV87==='function')setupMergedPartyLedgerV87();}catch(e){}} if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else setTimeout(init,0);})();
-</script>
-</body></html>`);w.document.close();
+ w.document.write(`<!doctype html><html><head><title>Raw Material Invoice ${invoiceNo}</title><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #333;padding:8px;text-align:left}td.num,th.num{text-align:right}.tot{margin-top:20px;text-align:right;font-size:18px}</style></head><body><h1>RAW MATERIAL SALES INVOICE</h1><p><b>Invoice No:</b> ${invoiceNo}<br><b>Date:</b> ${date}<br><b>Customer:</b> ${customer}</p><table><thead><tr><th>Raw Material</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate</th><th class="num">Taxable</th><th class="num">GST</th><th class="num">Total</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.name}</td><td class="num">${x.qty.toFixed(3)}</td><td>${x.unit}</td><td class="num">₹${x.rate.toFixed(2)}</td><td class="num">₹${x.amount.toFixed(2)}</td><td class="num">₹${x.tax.toFixed(2)}</td><td class="num">₹${x.grandTotal.toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="tot">Taxable: ₹${totals.taxable.toFixed(2)}<br>GST: ₹${totals.tax.toFixed(2)}<br><b>Grand Total: ₹${totals.grand.toFixed(2)}</b></div><script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close();
 }
 function saveRawSaleInvoice(){
  const date=$('rawSaleDate').value||new Date().toISOString().slice(0,10),customer=$('rawSaleCustomer').value.trim(),remark=$('rawSaleRemark').value.trim();
@@ -2194,7 +2190,7 @@ function saveAccountingPayment(){
  renderAccounting();
  if($('accMsg'))$('accMsg').textContent='Payment saved.';
 }
-function setupAccountingPaymentButtonsV135(){
+function setupAccountingPaymentButtonsV133(){
  const r=$('openReceivePaymentBtn'),p=$('openPaySupplierBtn'),rs=$('receivePaymentSection'),ps=$('paySupplierSection');
  if(!r||!p||!rs||!ps)return;
  const show=(which)=>{
@@ -2612,69 +2608,50 @@ function isReturnMergedV96(t){return t.isReturn===true||String(t.entryType||'').
 function setupMergedPartyLedgerV87(){
  const i=$('mergedPartyFilter'),b=$('mergedPartySuggest'),c=$('clearMergedPartyFilter');
  if(!i||!b)return;
- const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
  const partyMap=()=>{
   const map=new Map();
   const add=(name,type='Party')=>{
-   name=String(name??'').trim(); if(!name)return;
+   name=String(name||'').trim(); if(!name)return;
    const key=name.toLowerCase();
-   if(!map.has(key)) map.set(key,{name,type});
-   else if(map.get(key).type==='Party' && type!=='Party') map.get(key).type=type;
+   if(!map.has(key))map.set(key,{name,type});
+   else if(map.get(key).type==='Party' && type!=='Party')map.get(key).type=type;
   };
-  const readArr=(keys,fields,type)=>keys.forEach(k=>{
-   try{const a=JSON.parse(localStorage.getItem(k)||'[]');
-    if(Array.isArray(a)) a.forEach(x=>{if(typeof x==='string') add(x,type); else if(x&&typeof x==='object'){for(const f of fields){if(String(x[f]??'').trim()){add(x[f],type);break;}}}});
-   }catch(e){}
-  });
-  readArr(['adr_customer_master_v1','adr_customers_v1','adr_customerMaster_v1'],['customer','customerName','name','partyName'],'Customer');
-  readArr(['adr_supplier_master_v1','adr_suppliers_v1','adr_supplierMaster_v1'],['supplier','supplierName','name','partyName'],'Supplier');
-  readArr(['adr_vendors_v2','adr_vendor_master_v1','adr_vendors_v1'],['vendor','vendorName','name','partyName'],'Job Work Vendor');
+  // All three masters are included so the combined ledger can select any party.
+  try{const a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]');if(Array.isArray(a))a.forEach(x=>add(x.customer||x.customerName||x.name,'Customer'))}catch(e){}
+  try{const a=JSON.parse(localStorage.getItem('adr_supplier_master_v1')||'[]');if(Array.isArray(a))a.forEach(x=>add(x.supplier||x.supplierName||x.name,'Supplier'))}catch(e){}
+  try{const a=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]');if(Array.isArray(a))a.forEach(x=>add(x.vendor||x.vendorName||x.name,'Job Work Vendor'))}catch(e){}
+  // Also include every party that has actually participated in money transactions.
   (transactions||[]).forEach(t=>{
    const type=String(t.type||'').toUpperCase();
-   const fields=['customer','supplier','vendor','party','partyName','customerName','supplierName','vendorName'];
-   let n=''; for(const f of fields){if(String(t[f]??'').trim()){n=String(t[f]).trim();break;}}
+   const n=String(t.customer||t.supplier||t.vendor||'').trim();
    if(!n)return;
-   if(type==='DISPATCH'||type==='RAW MATERIAL SALE'||type.includes('SALES RETURN')||type.includes('CUSTOMER RETURN')) add(n,'Customer');
+   if(type==='DISPATCH'||type==='RAW MATERIAL SALE'||type==='SALES RETURN'||type==='CUSTOMER RETURN'||type==='DISPATCH RETURN') add(n,'Customer');
    else if(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD') add(n,'Supplier');
    else if(type==='JOB WORK RECEIVE'||type==='JOB WORK') add(n,'Job Work Vendor');
    else add(n,'Party');
   });
-  try{if(typeof getAccountingPayments==='function')getAccountingPayments().forEach(p=>add(p.customer||p.party||p.name,'Customer'));}catch(e){}
-  try{if(typeof getSupplierPayments==='function')getSupplierPayments().forEach(p=>add(p.party||p.supplier||p.vendor||p.name,'Supplier / Vendor'));}catch(e){}
-  // Fallback: scan localStorage for party-like fields so older data formats are also included.
-  try{for(let n=0;n<localStorage.length;n++){
-    const key=localStorage.key(n)||''; if(!/^adr_/i.test(key))continue;
-    const raw=localStorage.getItem(key); if(!raw||raw.length>1000000)continue;
-    let a; try{a=JSON.parse(raw)}catch(e){continue}; if(!Array.isArray(a))continue;
-    a.forEach(x=>{if(!x||typeof x!=='object')return; const vals=['customer','customerName','supplier','supplierName','vendor','vendorName','party','partyName','name'];
-      const val=vals.map(f=>x[f]).find(v=>String(v??'').trim()); if(val)add(val,'Party');});
-  }}catch(e){}
+  if(typeof getAccountingPayments==='function')getAccountingPayments().forEach(p=>add(p.customer,'Customer'));
+  if(typeof getSupplierPayments==='function')getSupplierPayments().forEach(p=>add(p.party,'Supplier / Vendor'));
   return [...map.values()].sort((a,z)=>a.name.localeCompare(z.name));
  };
- const hide=()=>{b.innerHTML='';b.style.display='none';};
+ const hide=()=>{b.innerHTML='';b.style.display='none'};
  const show=()=>{
-  const q=String(i.value||'').trim().toLowerCase();
-  const list=partyMap().filter(x=>!q||x.name.toLowerCase().includes(q)).slice(0,100);
-  b.innerHTML='';
+  const q=i.value.trim().toLowerCase();b.innerHTML='';
+  const list=partyMap().filter(x=>!q||x.name.toLowerCase().includes(q)).slice(0,40);
   list.forEach(x=>{
    const d=document.createElement('div');
-   d.innerHTML='<span style="font-weight:700">'+esc(x.name)+'</span><span style="float:right;font-size:12px;color:#666">'+esc(x.type)+'</span>';
-   d.style.cssText='display:block!important;width:100%!important;box-sizing:border-box;padding:10px 12px;min-height:42px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#111;background:#fff;border-bottom:1px solid #ddd;cursor:pointer;font-size:15px;line-height:20px';
-   d.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();i.value=x.name;i.dataset.selectedParty=x.name;hide();renderMergedPartyLedger();});
+   d.innerHTML='<b>'+x.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</b><span style="float:right;font-size:12px;color:#666">'+x.type+'</span>';
+   d.style.cssText='display:block;width:100%;box-sizing:border-box;padding:10px 12px;min-height:42px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#111;background:#fff;border-bottom:1px solid #ddd;cursor:pointer;font-size:15px;line-height:20px';
+   d.onmousedown=e=>{e.preventDefault();i.value=x.name;i.dataset.selectedParty=x.name;hide();if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger()};
    b.appendChild(d);
   });
   b.style.display=list.length?'block':'none';
  };
- ['input','focus','click'].forEach(ev=>i.addEventListener(ev,show));
- i.setAttribute('autocomplete','off'); i.setAttribute('aria-autocomplete','list');
- b.style.position='absolute';b.style.left='0';b.style.right='0';b.style.top='100%';b.style.zIndex='2147483647';
- b.style.background='#fff';b.style.color='#111';b.style.border='1px solid #999';b.style.maxHeight='260px';b.style.overflowY='auto';
- if(i.parentElement)i.parentElement.style.position='relative';
- i.addEventListener('keydown',e=>{if(e.key==='Escape')hide();if(e.key==='Enter'){e.preventDefault();const first=b.querySelector('div');if(first)first.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));else renderMergedPartyLedger();hide();}});
- if(c)c.onclick=()=>{i.value='';i.dataset.selectedParty='';hide();if($('mergedPartySummaryWrap'))$('mergedPartySummaryWrap').style.display='none';if($('mergedPartyLedgerWrap'))$('mergedPartyLedgerWrap').style.display='none';};
- document.addEventListener('mousedown',e=>{if(e.target!==i&&!b.contains(e.target))hide();});
- // Explicit initial render: clicking the field must always show the current party list.
- setTimeout(show,50);
+ i.addEventListener('input',show);
+ i.addEventListener('focus',show);
+ i.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();hide();if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger()}});
+ if(c)c.onclick=()=>{i.value='';i.dataset.selectedParty='';hide();if($('mergedPartySummaryWrap'))$('mergedPartySummaryWrap').style.display='none';if($('mergedPartyLedgerWrap'))$('mergedPartyLedgerWrap').style.display='none'};
+ document.addEventListener('click',e=>{if(e.target!==i&&!b.contains(e.target))hide()});
 }
 
 function setupAllMasterSuggestionsV92(){
@@ -3133,7 +3110,7 @@ if($('openProductionReport'))$('openProductionReport').onclick=()=>{document.que
 if($('printProductionReport'))$('printProductionReport').onclick=()=>printOnlyReport('productionReportPanel',generateProductionReport);
 if($('printJWReport'))$('printJWReport').onclick=()=>printOnlyReport('jobWorkMonthlyReportPanel',generateJWReport);if($('printDispatchReportMain'))$('printDispatchReportMain').onclick=()=>printOnlyReport('dispatchReportPanel',generateDispatchMainReport);$('addVendorBtn').onclick=addVendor;$('jwReceiveQty').addEventListener('input',updateJWConsumption);$('jwReceiveVendor').addEventListener('input',updateAutoJobRate);$('jwComponent').addEventListener('input',updateAutoJobRate);
 addBomRow();refreshDropdowns();
-if($('addCustomerBtn'))$('addCustomerBtn').onclick=addCustomerMaster;renderCustomerMaster();if($('addFgRateBtn'))$('addFgRateBtn').onclick=addFgRateMaster;setupFgRateItemSuggest();renderFgRateMaster();if($('dispatchBtn'))$('dispatchBtn').onclick=dispatch;setupDispatchClearButtonsV83();if($('dispatchTaxRate'))$('dispatchTaxRate').addEventListener('input',dispatchUpdateAmount);if($('accPaymentBtn'))$('accPaymentBtn').onclick=saveAccountingPayment;setupAccountingPaymentButtonsV135();setupAccountingPaymentCustomerSuggest();renderAccounting();setupAccountingPaymentClear();setupAccountingCustomerAndDateV94();setPaymentDateToday();if($('downloadCustomerLedgerPdf'))$('downloadCustomerLedgerPdf').onclick=downloadCustomerLedgerPDF;setupDueCustomerFilter();renderCustomerDueSummary();if($('dispatchReportMainBtn'))$('dispatchReportMainBtn').onclick=generateDispatchMainReport;setupDispatchMainReportSuggestions();setupDispatchReportClearButtons();setupAllReportClearButtons();if($('dispatchReportBtn'))$('dispatchReportBtn').onclick=generateDispatchReport;setupDispatchReportSuggestions();setupDispatchCustomerSuggest();if($('dispatchQty'))$('dispatchQty').addEventListener('input',dispatchUpdateAmount);if($('dispatchRate'))$('dispatchRate').addEventListener('input',dispatchUpdateAmount);renderDispatchEntries();showNextDispatchBillNo();if($('pmAddBtn')) $('pmAddBtn').onclick=pmAdd;if($('purchaseInlineReportBtn'))$('purchaseInlineReportBtn').onclick=generatePurchaseInlineReport;setupPurchaseInlineSupplierSuggest();
+if($('addCustomerBtn'))$('addCustomerBtn').onclick=addCustomerMaster;renderCustomerMaster();if($('addFgRateBtn'))$('addFgRateBtn').onclick=addFgRateMaster;setupFgRateItemSuggest();renderFgRateMaster();if($('dispatchBtn'))$('dispatchBtn').onclick=dispatch;setupDispatchClearButtonsV83();if($('dispatchTaxRate'))$('dispatchTaxRate').addEventListener('input',dispatchUpdateAmount);if($('accPaymentBtn'))$('accPaymentBtn').onclick=saveAccountingPayment;setupAccountingPaymentButtonsV133();setupAccountingPaymentCustomerSuggest();renderAccounting();setupAccountingPaymentClear();setupAccountingCustomerAndDateV94();setPaymentDateToday();if($('downloadCustomerLedgerPdf'))$('downloadCustomerLedgerPdf').onclick=downloadCustomerLedgerPDF;setupDueCustomerFilter();renderCustomerDueSummary();if($('dispatchReportMainBtn'))$('dispatchReportMainBtn').onclick=generateDispatchMainReport;setupDispatchMainReportSuggestions();setupDispatchReportClearButtons();setupAllReportClearButtons();if($('dispatchReportBtn'))$('dispatchReportBtn').onclick=generateDispatchReport;setupDispatchReportSuggestions();setupDispatchCustomerSuggest();if($('dispatchQty'))$('dispatchQty').addEventListener('input',dispatchUpdateAmount);if($('dispatchRate'))$('dispatchRate').addEventListener('input',dispatchUpdateAmount);renderDispatchEntries();showNextDispatchBillNo();if($('pmAddBtn')) $('pmAddBtn').onclick=pmAdd;if($('purchaseInlineReportBtn'))$('purchaseInlineReportBtn').onclick=generatePurchaseInlineReport;setupPurchaseInlineSupplierSuggest();
 window._generatePurchaseReport=generatePurchaseReport;window._generateProductionReport=generateProductionReport;
 pmInit();
 pmRender();
