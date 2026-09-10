@@ -1353,25 +1353,35 @@ function setupRateSuggestions(){
  setupItemSuggest('rateComponent','rateComponentSuggest',i=>i.cat==='Component'||i.cat==='Finished Goods');
 }
 function getJobWorkRate(vendor,code){
- const norm=v=>String(v||'').trim().toLowerCase().replace(/\s+/g,' ');
+ const norm=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
  const compact=v=>norm(v).replace(/[^a-z0-9]/g,'');
  const v=norm(vendor), vc=compact(vendor), c=norm(code);
  const item=items.find(i=>norm(i.code)===c)||items.find(i=>norm(i.name)===c)||items.find(i=>compact(i.code)===compact(code))||items.find(i=>compact(i.name)===compact(code));
  const itemCode=norm(item?item.code:c), itemName=norm(item?item.name:c);
  const itemCodeC=compact(itemCode), itemNameC=compact(itemName), cC=compact(c);
- // First preference: exact Vendor + Component rate.
+ const isSameComponent=x=>{
+   const xc=norm(x.component), xcc=compact(x.component);
+   return xc===itemCode || xc===itemName || xc===c || xcc===itemCodeC || xcc===itemNameC || xcc===cC;
+ };
+ // 1) Always prefer the exact Vendor + Component rate.
  let r=jobworkRates.find(x=>{
-   const xv=norm(x.vendor), xvc=compact(x.vendor), xc=norm(x.component), xcc=compact(x.component);
-   return (xv===v || xvc===vc) && (xc===itemCode || xc===itemName || xc===c || xcc===itemCodeC || xcc===itemNameC || xcc===cC);
+   const xv=norm(x.vendor), xvc=compact(x.vendor);
+   return (xv===v || xvc===vc) && isSameComponent(x);
  });
- // Fallback: if the component has exactly one saved rate, use it even when
- // vendor text/capitalization differs or the older rate was saved without the vendor match.
- if(!r){
-   const matches=jobworkRates.filter(x=>{
-     const xc=norm(x.component), xcc=compact(x.component);
-     return xc===itemCode || xc===itemName || xc===c || xcc===itemCodeC || xcc===itemNameC || xcc===cC;
+ // 2) If the vendor/component text differs slightly, allow a unique vendor match.
+ if(!r && v){
+   const vendorMatches=jobworkRates.filter(x=>{
+     const xv=norm(x.vendor), xvc=compact(x.vendor);
+     return (xv===v || xvc===vc) && isSameComponent(x);
    });
-   if(matches.length===1) r=matches[0];
+   if(vendorMatches.length) r=vendorMatches[vendorMatches.length-1];
+ }
+ // 3) Component-only fallback. If several rates exist, use the most recently
+ // saved matching rate instead of returning 'Rate not set'. This also supports
+ // older records where the vendor was not stored consistently.
+ if(!r){
+   const matches=jobworkRates.filter(isSameComponent);
+   if(matches.length) r=matches[matches.length-1];
  }
  return r?Number(r.rate)||0:0;
 }
