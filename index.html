@@ -996,8 +996,35 @@ function showNextRawSaleInvoiceNo(){if($('rawSaleInvoiceNo'))$('rawSaleInvoiceNo
 function renderRawSaleEntries(){
  const body=$('rawSaleTable')?.querySelector('tbody');if(!body)return;
  const rows=(transactions||[]).filter(t=>String(t.type||'').toUpperCase()==='RAW MATERIAL SALE').slice().reverse();
- body.innerHTML=rows.map((t,n)=>{const q=Math.abs(Number(t.qty)||0),r=Number(t.saleRate||0),a=Number(t.amount??q*r),tax=Number(t.tax??0),g=Number(t.grandTotal??a+tax);return `<tr><td>${t.date||''}</td><td>${t.invoiceNo||''}</td><td>${t.customer||''}</td><td>${t.itemName||String(t.item||'').replace(/^RM:/,'')}</td><td>${q.toFixed(3)}</td><td>₹${r.toFixed(2)}</td><td>₹${a.toFixed(2)}</td><td>₹${tax.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td><button type="button" data-rs-entry-del="${t.id||n}">🗑 Delete</button></td></tr>`}).join('')||'<tr><td colspan="10">No raw material sale invoices</td></tr>';
+ body.innerHTML=rows.map((t,n)=>{const q=Math.abs(Number(t.qty)||0),r=Number(t.saleRate||0),a=Number(t.amount??q*r),tax=Number(t.tax??0),g=Number(t.grandTotal??a+tax);return `<tr><td>${t.date||''}</td><td>${t.invoiceNo||''}</td><td>${t.customer||''}</td><td>${t.itemName||String(t.item||'').replace(/^RM:/,'')}</td><td>${q.toFixed(3)}</td><td>₹${r.toFixed(2)}</td><td>₹${a.toFixed(2)}</td><td>₹${tax.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td><button type="button" data-rs-entry-edit="${t.id||n}">✏️ Edit</button> <button type="button" data-rs-entry-del="${t.id||n}">🗑 Delete</button></td></tr>`}).join('')||'<tr><td colspan="10">No raw material sale invoices</td></tr>';
+ document.querySelectorAll('[data-rs-entry-edit]').forEach(b=>b.onclick=()=>editRawSaleTransaction(b.dataset.rsEntryEdit));
  document.querySelectorAll('[data-rs-entry-del]').forEach(b=>b.onclick=()=>deleteRawSaleTransaction(b.dataset.rsEntryDel));
+}
+function editRawSaleTransaction(id){
+ const t=(transactions||[]).find((x,n)=>String(x.id||n)===String(id));if(!t)return;
+ const oldCode=String(t.item||'').replace(/^RM:/,''), oldQty=Math.abs(Number(t.qty)||0);
+ const newDate=prompt('Sale Date (YYYY-MM-DD):',t.date||new Date().toISOString().slice(0,10));if(newDate===null)return;
+ const newCustomer=prompt('Customer Name:',t.customer||'');if(newCustomer===null)return;
+ const currentName=t.itemName||String(t.item||'').replace(/^RM:/,'');
+ const materialInput=prompt('Raw Material Name / Code:',currentName);if(materialInput===null)return;
+ const materialText=String(materialInput).trim();
+ const rm=rawMaterials.find(x=>String(x.code).toLowerCase()===materialText.toLowerCase()||String(x.name).toLowerCase()===materialText.toLowerCase());
+ if(!rm)return alert('Raw Material not found in Master.');
+ const newQty=Number(prompt('Quantity:',oldQty));if(!Number.isFinite(newQty)||newQty<=0)return alert('Valid Quantity નાખો.');
+ const newRate=Number(prompt('Sale Rate / KG:',Number(t.saleRate||0)));if(!Number.isFinite(newRate)||newRate<0)return alert('Valid Sale Rate નાખો.');
+ const newTaxRate=Number(prompt('GST %:',Number(t.taxRate||0)));if(!Number.isFinite(newTaxRate)||newTaxRate<0)return alert('Valid GST નાખો.');
+ const newRemark=prompt('Remark (Optional):',t.remark||'');if(newRemark===null)return;
+ // Reverse old sale first so the old quantity is available for the edited transaction.
+ const oldRm=rawMaterials.find(x=>String(x.code)===oldCode);
+ if(oldRm){oldRm.stock+=oldQty;const lots=ensureRawLots(oldCode);const layers=Array.isArray(t.costLayers)?t.costLayers:[];if(layers.length)layers.slice().reverse().forEach(l=>lots.unshift({qty:Number(l.qty)||0,rate:Number(l.rate)||0,date:l.date||new Date().toISOString()}));else lots.push({qty:oldQty,rate:Number(t.saleRate||oldRm.rate||0),date:new Date().toISOString()});oldRm.rate=getRawAverageRate(oldCode);}
+ if(newQty>Number(rm.stock||0)+0.000001){ // restore rollback on validation failure
+   if(oldRm){oldRm.stock-=oldQty;const lots=ensureRawLots(oldCode);if(Array.isArray(t.costLayers)&&t.costLayers.length){let left=oldQty;for(let i=lots.length-1;i>=0&&left>0;i--){const take=Math.min(Number(lots[i].qty)||0,left);lots[i].qty-=take;left-=take;if(lots[i].qty<=0.000001)lots.splice(i,1);}}else{let left=oldQty;for(let i=lots.length-1;i>=0&&left>0;i--){const take=Math.min(Number(lots[i].qty)||0,left);lots[i].qty-=take;left-=take;if(lots[i].qty<=0.000001)lots.splice(i,1);}}oldRm.rate=getRawAverageRate(oldCode);}
+   return alert('Stock insufficient for '+rm.name);
+ }
+ const layer=consumeRawMaterialFIFO(String(rm.code),newQty);if(layer.remaining>0.000001)return alert('Stock insufficient for '+rm.name);
+ rm.stock-=newQty;rm.rate=getRawAverageRate(String(rm.code));
+ t.date=newDate.trim();t.customer=newCustomer.trim();t.item='RM:'+rm.code;t.itemName=rm.name;t.qty=-newQty;t.unit=rm.unit||'KG';t.saleRate=newRate;t.amount=newQty*newRate;t.taxRate=newTaxRate;t.tax=t.amount*newTaxRate/100;t.grandTotal=t.amount+t.tax;t.remark=newRemark;t.costLayers=layer.layers||[];
+ save();renderRawSaleEntries();msg('rawSaleMsg','Raw Material Sale entry updated successfully.');
 }
 function deleteRawSaleTransaction(id){
  const t=(transactions||[]).find((x,n)=>String(x.id||n)===String(id));if(!t)return;if(!confirm('Delete Raw Material Invoice and reverse stock?'))return;
