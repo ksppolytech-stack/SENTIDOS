@@ -1228,7 +1228,7 @@ function setupVendorSuggest(inputId,boxId){
  const input=$(inputId),box=$(boxId);if(!input||!box)return;
  input.addEventListener('input',function(){const q=input.value.trim().toLowerCase();box.innerHTML='';if(!q){box.style.display='none';return;}
   const list=vendors.filter(v=>v.name.toLowerCase().includes(q)).slice(0,10);
-  list.forEach(v=>{const d=document.createElement('div');d.textContent=v.name;d.style.padding='10px';d.onclick=()=>{input.value=v.name;box.style.display='none';};box.appendChild(d);});
+  list.forEach(v=>{const d=document.createElement('div');d.textContent=v.name;d.style.padding='10px';d.onclick=()=>{input.value=v.name;box.style.display='none';if(inputId==='jwReceiveVendor' && typeof updateAutoJobRate==='function')updateAutoJobRate();};box.appendChild(d);});
   box.style.display=list.length?'block':'none';
  });
 }
@@ -1236,7 +1236,7 @@ function setupItemSuggest(inputId,boxId,filter){
  const input=$(inputId),box=$(boxId);if(!input||!box)return;
  input.addEventListener('input',function(){const q=input.value.trim().toLowerCase();box.innerHTML='';if(!q){box.style.display='none';return;}
   const list=items.filter(filter).filter(i=>(i.name+' '+i.code).toLowerCase().includes(q)).slice(0,10);
-  list.forEach(i=>{const d=document.createElement('div');d.textContent=i.name+' — '+i.code;d.style.padding='10px';d.onclick=()=>{input.value=i.name;input.dataset.selectedCode=i.code;box.style.display='none';if(inputId==='jwComponent'){ $('jwComponentWeight').value=i.weight||0; updateJWConsumption(); }};box.appendChild(d);});
+  list.forEach(i=>{const d=document.createElement('div');d.textContent=i.name+' — '+i.code;d.style.padding='10px';d.onclick=()=>{input.value=i.name;input.dataset.selectedCode=i.code;box.style.display='none';if(inputId==='jwComponent'){ $('jwComponentWeight').value=i.weight||0; updateJWConsumption(); if(typeof updateAutoJobRate==='function')updateAutoJobRate(); }};box.appendChild(d);});
   box.style.display=list.length?'block':'none';
  });
 }
@@ -1552,10 +1552,10 @@ function deletePurchase(id){
 
 
 function updateAutoJobRate(){
- const v=$('jwReceiveVendor').value.trim();
- const c=findItemByText($('jwComponent').value);
+ const v=($('jwReceiveVendor')?.value||'').trim();
+ const c=items.find(i=>i.code===($('jwComponent')?.dataset.selectedCode||''))||findItemByText($('jwComponent')?.value||'');
  const rate=c?getJobWorkRate(v,c.code):0;
- $('jwJobRate').value=rate>0?rate.toFixed(3):'Rate not set';
+ $('jwJobRate').value=rate>0?Number(rate).toFixed(3):'Rate not set';
 }
 function setupReportSelectors(){
  const now=new Date(), y=now.getFullYear(), m=now.getMonth();
@@ -1568,11 +1568,6 @@ function setupReportSelectors(){
  $('reportVendor').innerHTML='<option value="">All Vendors</option>'+vendors.map(v=>`<option value="${v.name}">${v.name}</option>`).join('');
 }
 
-function updateAutoJobRate(){
- const v=$('jwReceiveVendor').value.trim(), c=findItemByText($('jwComponent').value);
- const rate=c?getJobWorkRate(v,c.code):0;
- $('jwJobRate').value=rate?rate.toFixed(3):'Rate not set';
-}
 function setupReportSelectors(){
  const now=new Date(), y=now.getFullYear(), m=now.getMonth();
  const sel=$('reportMonth'); if(!sel)return;
