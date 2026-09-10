@@ -1567,6 +1567,7 @@ function setupReportSelectors(){
  $('reportVendor').innerHTML='<option value="">All Vendors</option>'+vendors.map(v=>`<option value="${v.name}">${v.name}</option>`).join('');
 }
 function generateJWReport(){
+ // Report Rate = actual Job Work Receive rate saved on each Component Receive transaction (weighted average when multiple receives exist).
  const month=$('reportMonth').value;
  const vendor=$('reportVendor').value;
  if(!month){alert('Month select કરો.');return;}
@@ -1580,15 +1581,17 @@ function generateJWReport(){
  const grouped={};
  rows.forEach(t=>{
    const key=(t.vendor||'Unknown')+'|'+t.item;
-   if(!grouped[key])grouped[key]={vendor:t.vendor||'Unknown',item:t.item,qty:0,amount:0,rm:0};
-   grouped[key].qty+=Number(t.qty)||0;
-   grouped[key].amount+=Number(t.jobAmount)||0;
+   if(!grouped[key])grouped[key]={vendor:t.vendor||'Unknown',item:t.item,qty:0,amount:0,rm:0,rateAmount:0};
+   const tq=Number(t.qty)||0, tr=Number(t.jobRate??t.rate??0)||0, ta=Number(t.jobAmount??(tq*tr))||0;
+   grouped[key].qty+=tq;
+   grouped[key].amount+=ta;
+   grouped[key].rateAmount+=tq*tr;
    grouped[key].rm+=Number(t.rmConsumed)||0;
  });
  const data=Object.values(grouped);
  $('jwReportTable').innerHTML=data.length?data.map(x=>{
    const it=items.find(i=>i.code===x.item);
-   const rate=x.qty?x.amount/x.qty:0;
+   const rate=x.qty?x.rateAmount/x.qty:(x.amount/x.qty||0);
    return `<tr><td>${x.vendor}</td><td>${it?it.name:x.item}</td><td>${x.qty.toFixed(3)}</td><td>₹${rate.toFixed(3)}</td><td>₹${x.amount.toFixed(2)}</td><td>${x.rm.toFixed(3)}</td></tr>`;
  }).join(''):'<tr><td colspan="6">No Job Work Receive entries for selected month.</td></tr>';
  const tq=data.reduce((a,x)=>a+x.qty,0);
