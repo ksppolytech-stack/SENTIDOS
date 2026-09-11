@@ -1582,6 +1582,43 @@ function receiveFromVendor(){
 function showDashboardFilter(type){
  const box=$('dashboardDetails'),title=$('dashboardDetailsTitle'),table=$('dashboardDetailsTable');
  let list=[],label='';
+ if(type==='sales' || type==='purchase'){
+   const isSales=type==='sales';
+   const source=(transactions||[]).filter(t=>{
+     const tt=String(t.type||'').toUpperCase();
+     return isSales ? tt==='DISPATCH' : ['RAW MATERIAL PURCHASE','RAW MATERIAL COMPANY INWARD','PURCHASE'].includes(tt);
+   });
+   const byMonth={};
+   const monthKey=v=>{
+     const s=String(v||'').trim();
+     let m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+     if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');
+     m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+     if(m)return m[3]+'-'+String(m[2]).padStart(2,'0');
+     const d=new Date(s);if(!isNaN(d))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+     return 'Unknown';
+   };
+   source.forEach(t=>{
+     const mk=monthKey(t.date),q=Math.abs(Number(t.qty)||0);
+     if(!byMonth[mk])byMonth[mk]={month:mk,entries:0,qty:0,taxable:0,gst:0,grand:0};
+     const a=Number(t.amount??(q*Number(t.saleRate??t.purchaseRate??t.inwardRate??t.rate??0)))||0;
+     const gst=Number(t.tax??0)||0;
+     const grand=isSales?Number(t.grandTotal??(a+gst))||0:a;
+     byMonth[mk].entries++;byMonth[mk].qty+=q;byMonth[mk].taxable+=a;byMonth[mk].gst+=gst;byMonth[mk].grand+=grand;
+   });
+   list=Object.values(byMonth).sort((a,b)=>String(b.month).localeCompare(String(a.month)));
+   title.textContent=isSales?'Sales Details - Month Wise':'Purchase Details - Month Wise';
+   table.parentElement.querySelector('thead').innerHTML=isSales
+     ? '<tr><th>Month</th><th>Entries</th><th>Qty</th><th>Taxable</th><th>GST</th><th>Grand Total</th></tr>'
+     : '<tr><th>Month</th><th>Entries</th><th>Qty</th><th>Purchase Amount</th></tr>';
+   table.innerHTML=list.length
+     ? list.map(x=>isSales
+       ? `<tr><td>${x.month}</td><td>${x.entries}</td><td>${x.qty.toFixed(3)}</td><td>₹${x.taxable.toFixed(2)}</td><td>₹${x.gst.toFixed(2)}</td><td><b>₹${x.grand.toFixed(2)}</b></td></tr>`
+       : `<tr><td>${x.month}</td><td>${x.entries}</td><td>${x.qty.toFixed(3)}</td><td><b>₹${x.taxable.toFixed(2)}</b></td></tr>`).join('')
+     : `<tr><td colspan="${isSales?6:4}">No ${isSales?'sales':'purchase'} data</td></tr>`;
+   box.style.display='block';
+   return;
+ }
  if(type==='raw'){list=rawMaterials.map(r=>({code:r.code,name:r.name,cat:'Raw Material',unit:r.unit,weight:'-',stock:r.stock,min:r.min}));label='Raw Material Stock';} else if(type==='vendor'){
  const by={};
  jobwork.filter(x=>Number(x.qty)>0.000001).forEach(x=>{
@@ -1602,7 +1639,8 @@ function showDashboardFilter(type){
  } else {
    list=items.map(i=>({code:i.code,name:i.name,cat:i.cat,unit:i.unit,weight:i.weight,stock:i.stock,min:i.min}));label='All Items';
  }
- title.textContent=label;table.innerHTML=list.length?list.map(i=>`<tr><td>${i.code}</td><td>${i.name}</td><td>${i.cat}</td><td>${i.unit}</td><td>${i.weight}</td><td>${i.stock}</td><td>${i.min}</td></tr>`).join(''):'<tr><td colspan="7">No data</td></tr>';
+ title.textContent=label;table.parentElement.querySelector('thead').innerHTML='<tr><th>Code</th><th>Name</th><th>Category</th><th>Unit</th><th>Weight g</th><th>Stock</th><th>Minimum</th></tr>';
+ table.innerHTML=list.length?list.map(i=>`<tr><td>${i.code}</td><td>${i.name}</td><td>${i.cat}</td><td>${i.unit}</td><td>${i.weight}</td><td>${i.stock}</td><td>${i.min}</td></tr>`).join(''):'<tr><td colspan="7">No data</td></tr>';
  box.style.display='block';
 }
 function setupDashboardCards(){
