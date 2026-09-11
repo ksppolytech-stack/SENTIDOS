@@ -374,6 +374,7 @@ tr.low-stock-row td * {
 
 <section id="dispatch" class="page"><div class="panel"><h2>🚚 Dispatch</h2>
 <div class="grid">
+<input id="dispatchDate" type="date" title="Dispatch Date">
 <div style="position:relative"><div style="position:relative"><input id="dispatchCustomer" placeholder="Type Customer Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearDispatchCustomer" aria-label="Clear Customer" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button></div><div id="dispatchCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:200px;overflow:auto"></div></div>
 <div class="autowrap"><div style="position:relative"><input id="dispatchCode" placeholder="Type Finish Product Name" style="padding-right:36px"><button type="button" id="clearDispatchItem" aria-label="Clear Finished Good" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button></div><div class="suggestbox" id="productSuggestDispatch"></div></div>
 <input id="dispatchQty" type="number" step="0.001" placeholder="Quantity">
@@ -1091,6 +1092,7 @@ function setupRawSale(){
 }
 
 function dispatch(){
+  const dispatchDate=$('dispatchDate')?.value || new Date().toISOString().slice(0,10);
  const customer=$('dispatchCustomer').value.trim();
  const input=$('dispatchCode').value.trim();
  const i=items.find(x=>x.code===($('dispatchCode').dataset.selectedCode||''))||items.find(x=>x.code===input)||items.find(x=>String(x.name||'').toLowerCase()===input.toLowerCase());
@@ -1104,7 +1106,7 @@ function dispatch(){
  if(!customer||!i||q<=0||q>i.stock)return alert('Customer, Finished Good અને valid Quantity નાખો.');
  const billNo=getNextDispatchBillNo();
  i.stock-=q;
- addTxn('DISPATCH','',i.code,-q,i.unit);
+ (function(){const tx=addTxn('DISPATCH','',i.code,-q,i.unit);; if(tx) tx.date=dispatchDate;})();
  const t=transactions[transactions.length-1];
  t.billNo=billNo;
  t.customer=customer;
@@ -1115,7 +1117,7 @@ function dispatch(){
  $('dispatchQty').value='';
  $('dispatchTaxRate').value='';$('dispatchTaxAmount').value='';$('dispatchAmount').value='';$('dispatchGrandTotal').value='';
  $('dispatchRemark').value='';
- showNextDispatchBillNo();
+ if($('dispatchDate') && !$('dispatchDate').value) $('dispatchDate').value=new Date().toISOString().slice(0,10);showNextDispatchBillNo();
 }
 function deleteTransaction(ref){
  const rows=transactions.filter(t=>t.ref===ref);
