@@ -719,8 +719,9 @@ function editItem(code){
  const i=items.find(x=>x.code===code);if(!i)return;
  const n=prompt('Item Name',i.name);if(n===null)return;
  const w=prompt('Weight in gram',i.weight);if(w===null)return;
+ const opening=prompt('Opening Stock',i.stock);if(opening===null)return;
  const m=prompt('Minimum Stock',i.min);if(m===null)return;
- i.name=n;i.weight=Number(w)||0;i.min=Number(m)||0;save();setupAllAutocomplete();
+ i.name=n;i.weight=Number(w)||0;i.stock=Math.max(0,Number(opening)||0);i.min=Number(m)||0;save();setupAllAutocomplete();
 }
 function deleteItem(code){
  const i=items.find(x=>x.code===code);if(!i)return;
