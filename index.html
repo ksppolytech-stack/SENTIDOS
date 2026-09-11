@@ -1106,8 +1106,9 @@ function dispatch(){
  if(!customer||!i||q<=0||q>i.stock)return alert('Customer, Finished Good અને valid Quantity નાખો.');
  const billNo=getNextDispatchBillNo();
  i.stock-=q;
- (function(){const tx=addTxn('DISPATCH','',i.code,-q,i.unit);; if(tx) tx.date=dispatchDate;})();
+ addTxn('DISPATCH','',i.code,-q,i.unit);
  const t=transactions[transactions.length-1];
+ t.date=dispatchDate;
  t.billNo=billNo;
  t.customer=customer;
  t.dispatchRate=r;
@@ -2027,7 +2028,8 @@ function renderDispatchEntries(){
  document.querySelectorAll('[data-dispatch-edit]').forEach(b=>b.onclick=()=>{
   const t=(transactions||[]).find((x,n)=>String(x.id||n)===String(b.dataset.dispatchEdit));if(!t)return;
   const it=items.find(i=>String(i.code||'')===String(t.item||''));
-  const newDate=prompt('Dispatch Date (YYYY-MM-DD):',t.date||new Date().toISOString().slice(0,10));if(newDate===null)return;
+  const currentDate=(t.date||'').slice(0,10);
+  const newDate=prompt('Dispatch Date (YYYY-MM-DD):',/^\d{4}-\d{2}-\d{2}$/.test(currentDate)?currentDate:new Date().toISOString().slice(0,10));if(newDate===null)return;
   const newCustomer=prompt('Customer:',t.customer||'');if(newCustomer===null)return;
   const newQty=Number(prompt('Quantity:',Math.abs(Number(t.qty)||0)));if(!Number.isFinite(newQty)||newQty<=0)return alert('Valid Quantity નાખો.');
   const newRate=Number(prompt('Rate:',Number(t.dispatchRate||0)));if(!Number.isFinite(newRate)||newRate<0)return alert('Valid Rate નાખો.');
@@ -2127,7 +2129,8 @@ function generateDispatchMainReport(){
   let q=0,a=0,s='';
   rows.slice().reverse().forEach(t=>{
    const it=(items||[]).find(x=>String(x.code||'')===String(t.item||'')),n=Math.abs(Number(t.qty)||0),r=Number(t.dispatchRate||0),amt=Number(t.amount??n*r);q+=n;a+=amt;
-   s+=`<tr><td>${t.billNo||''}</td><td>${t.date||''}</td><td>${t.customer||''}</td><td>${it?.name||t.itemName||t.item||''}</td><td>${n.toFixed(3)}</td><td>₹${r.toFixed(2)}</td><td>₹${amt.toFixed(2)}</td><td>${t.remark||''}</td></tr>`;
+   const reportDate=toISO(t.date||t.createdAt||t.timestamp)||String(t.date||'');
+   s+=`<tr><td>${t.billNo||''}</td><td>${reportDate}</td><td>${t.customer||''}</td><td>${it?.name||t.itemName||t.item||''}</td><td>${n.toFixed(3)}</td><td>₹${r.toFixed(2)}</td><td>₹${amt.toFixed(2)}</td><td>${t.remark||''}</td></tr>`;
   });
   $('dispatchReportMainTable').querySelector('tbody').innerHTML=s||'<tr><td colspan="8">No dispatch entries found</td></tr>';
   $('dispatchReportMainQty').textContent=q.toFixed(3);$('dispatchReportMainAmount').textContent='₹'+a.toFixed(2);
