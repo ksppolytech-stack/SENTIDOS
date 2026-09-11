@@ -379,7 +379,7 @@ tr.low-stock-row td * {
 <div class="autowrap"><div style="position:relative"><input id="dispatchCode" placeholder="Type Finish Product Name" style="padding-right:36px"><button type="button" id="clearDispatchItem" aria-label="Clear Finished Good" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button></div><div class="suggestbox" id="productSuggestDispatch"></div></div>
 <input id="dispatchQty" type="number" step="0.001" placeholder="Quantity">
 <input id="dispatchRate" type="number" step="0.01" placeholder="Rate ₹0.00">
-<input id="dispatchTaxRate" type="number" step="0.01" placeholder="GST %">
+<input id="dispatchTaxRate" type="number" step="0.01" value="18" placeholder="GST %">
 <input id="dispatchTaxAmount" type="number" step="0.01" placeholder="Tax Amount" readonly>
 <input id="dispatchBillNo" type="text" placeholder="Bill No." readonly>
 <input id="dispatchAmount" type="number" step="0.01" placeholder="Taxable Amount" readonly>
@@ -1095,6 +1095,8 @@ function setupRawSale(){
  $('rawSaleAddItem')?.addEventListener('click',addRawSaleItem);$('rawSaleSave')?.addEventListener('click',saveRawSaleInvoice);$('rawSalePrint')?.addEventListener('click',()=>printRawSaleInvoice(rawSaleLastInvoiceRows,$('rawSaleInvoiceNo').value,$('rawSaleCustomer').value,'Last Invoice'));
 }
 
+function getSystemDateISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
 let dispatchCart=[];
 
 function renderDispatchCart(){
@@ -1115,12 +1117,12 @@ function addDispatchItem(){
  if(!i||q<=0)return alert('Finished Good અને valid Quantity નાખો.');
  if(q>Number(i.stock||0))return alert('Insufficient stock. Available: '+Number(i.stock||0).toFixed(3)+' '+(i.unit||''));
  dispatchCart.push({code:i.code,name:i.name,unit:i.unit,qty:q,rate:r,taxRate,remark:$('dispatchRemark').value.trim()});
- $('dispatchCode').value='';$('dispatchCode').dataset.selectedCode='';$('dispatchQty').value='';$('dispatchRate').value='';$('dispatchTaxRate').value='';$('dispatchTaxAmount').value='';$('dispatchAmount').value='';$('dispatchGrandTotal').value='';$('dispatchRemark').value='';
+ $('dispatchCode').value='';$('dispatchCode').dataset.selectedCode='';$('dispatchQty').value='';$('dispatchRate').value='';$('dispatchTaxRate').value='18';$('dispatchTaxAmount').value='';$('dispatchAmount').value='';$('dispatchGrandTotal').value='';$('dispatchRemark').value='';
  renderDispatchCart();
 }
 
 function dispatch(){
- const dispatchDate=$('dispatchDate')?.value || new Date().toISOString().slice(0,10);
+ const dispatchDate=$('dispatchDate')?.value || getSystemDateISO();
  const customer=$('dispatchCustomer').value.trim();
  if(!customer)return alert('Customer Name નાખો.');
  if(!dispatchCart.length){
@@ -1147,7 +1149,7 @@ function dispatch(){
  save();renderDispatchEntries();msg('dispatchMsg','Dispatch saved. Bill No. '+billNo+' — '+dispatchCart.length+' item(s).');
  dispatchCart=[];renderDispatchCart();
  $('dispatchCustomer').value='';
- if($('dispatchDate') && !$('dispatchDate').value)$('dispatchDate').value=new Date().toISOString().slice(0,10);
+ if($('dispatchDate') && !$('dispatchDate').value)$('dispatchDate').value=getSystemDateISO();
  showNextDispatchBillNo();
 }
 
@@ -2079,7 +2081,7 @@ function renderDispatchEntries(){
   const t=(transactions||[]).find((x,n)=>String(x.id||n)===String(b.dataset.dispatchDel));if(!t)return;
   if(!confirm('Delete Dispatch and reverse stock?'))return;
   const it=items.find(i=>String(i.code||'')===String(t.item||''));if(it)it.stock+=Math.abs(Number(t.qty)||0);
-  const ix=transactions.indexOf(t);if(ix>=0)transactions.splice(ix,1);save();if($('dispatchDate') && !$('dispatchDate').value)$('dispatchDate').value=new Date().toISOString().slice(0,10);renderDispatchEntries();renderDispatchCart();showNextDispatchBillNo();
+  const ix=transactions.indexOf(t);if(ix>=0)transactions.splice(ix,1);save();if($('dispatchDate') && !$('dispatchDate').value)$('dispatchDate').value=getSystemDateISO();renderDispatchEntries();renderDispatchCart();showNextDispatchBillNo();
  });
 }
 function setupDispatchCustomerSuggest(){
@@ -3172,7 +3174,7 @@ if($('openProductionReport'))$('openProductionReport').onclick=()=>{document.que
 if($('printProductionReport'))$('printProductionReport').onclick=()=>printOnlyReport('productionReportPanel',generateProductionReport);
 if($('printJWReport'))$('printJWReport').onclick=()=>printOnlyReport('jobWorkMonthlyReportPanel',generateJWReport);if($('printDispatchReportMain'))$('printDispatchReportMain').onclick=()=>printOnlyReport('dispatchReportPanel',generateDispatchMainReport);$('addVendorBtn').onclick=addVendor;$('jwReceiveQty').addEventListener('input',updateJWConsumption);$('jwReceiveVendor').addEventListener('input',updateAutoJobRate);$('jwComponent').addEventListener('input',updateAutoJobRate);
 addBomRow();refreshDropdowns();
-if($('addCustomerBtn'))$('addCustomerBtn').onclick=addCustomerMaster;renderCustomerMaster();if($('addFgRateBtn'))$('addFgRateBtn').onclick=addFgRateMaster;setupFgRateItemSuggest();renderFgRateMaster();if($('dispatchBtn'))$('dispatchBtn').onclick=dispatch;setupDispatchClearButtonsV83();if($('dispatchTaxRate'))$('dispatchTaxRate').addEventListener('input',dispatchUpdateAmount);if($('accPaymentBtn'))$('accPaymentBtn').onclick=saveAccountingPayment;setupAccountingPaymentButtonsV133();setupAccountingPaymentCustomerSuggest();renderAccounting();setupAccountingPaymentClear();setupAccountingCustomerAndDateV94();setPaymentDateToday();if($('downloadCustomerLedgerPdf'))$('downloadCustomerLedgerPdf').onclick=downloadCustomerLedgerPDF;setupDueCustomerFilter();renderCustomerDueSummary();if($('dispatchReportMainBtn'))$('dispatchReportMainBtn').onclick=generateDispatchMainReport;setupDispatchMainReportSuggestions();setupDispatchReportClearButtons();setupAllReportClearButtons();if($('dispatchReportBtn'))$('dispatchReportBtn').onclick=generateDispatchReport;setupDispatchReportSuggestions();setupDispatchCustomerSuggest();if($('dispatchQty'))$('dispatchQty').addEventListener('input',dispatchUpdateAmount);if($('dispatchRate'))$('dispatchRate').addEventListener('input',dispatchUpdateAmount);renderDispatchEntries();showNextDispatchBillNo();if($('pmAddBtn')) $('pmAddBtn').onclick=pmAdd;if($('purchaseInlineReportBtn'))$('purchaseInlineReportBtn').onclick=generatePurchaseInlineReport;setupPurchaseInlineSupplierSuggest();
+if($('addCustomerBtn'))$('addCustomerBtn').onclick=addCustomerMaster;renderCustomerMaster();if($('addFgRateBtn'))$('addFgRateBtn').onclick=addFgRateMaster;setupFgRateItemSuggest();renderFgRateMaster();if($('dispatchBtn'))$('dispatchBtn').onclick=dispatch;setupDispatchClearButtonsV83();if($('dispatchTaxRate'))$('dispatchTaxRate').addEventListener('input',dispatchUpdateAmount);if($('accPaymentBtn'))$('accPaymentBtn').onclick=saveAccountingPayment;setupAccountingPaymentButtonsV133();setupAccountingPaymentCustomerSuggest();renderAccounting();setupAccountingPaymentClear();setupAccountingCustomerAndDateV94();setPaymentDateToday();if($('downloadCustomerLedgerPdf'))$('downloadCustomerLedgerPdf').onclick=downloadCustomerLedgerPDF;setupDueCustomerFilter();renderCustomerDueSummary();if($('dispatchReportMainBtn'))$('dispatchReportMainBtn').onclick=generateDispatchMainReport;setupDispatchMainReportSuggestions();setupDispatchReportClearButtons();setupAllReportClearButtons();if($('dispatchReportBtn'))$('dispatchReportBtn').onclick=generateDispatchReport;setupDispatchReportSuggestions();setupDispatchCustomerSuggest();if($('dispatchQty'))$('dispatchQty').addEventListener('input',dispatchUpdateAmount);if($('dispatchRate'))$('dispatchRate').addEventListener('input',dispatchUpdateAmount);if($('dispatchDate')&&!$('dispatchDate').value)$('dispatchDate').value=getSystemDateISO();if($('dispatchTaxRate')&&!$('dispatchTaxRate').value)$('dispatchTaxRate').value='18';dispatchUpdateAmount();renderDispatchEntries();showNextDispatchBillNo();if($('pmAddBtn')) $('pmAddBtn').onclick=pmAdd;if($('purchaseInlineReportBtn'))$('purchaseInlineReportBtn').onclick=generatePurchaseInlineReport;setupPurchaseInlineSupplierSuggest();
 window._generatePurchaseReport=generatePurchaseReport;window._generateProductionReport=generateProductionReport;
 pmInit();
 pmRender();
