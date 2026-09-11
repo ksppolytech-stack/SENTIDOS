@@ -324,7 +324,7 @@ tr.low-stock-row td * {
 </div>
 </section>
 <section id="production" class="page"><div class="panel"><h2>Production</h2><p>Finish Productનું નામ type કરો. નીચે <b>BOM Masterમાં બનાવેલા Product names</b>માંથી suggestion આવશે.</p>
-<div class="grid"><div class="autowrap"><div class="autowrap" style="position:relative"><input id="productionCode" placeholder="Type Finish Product Name"><div id="productionProductSuggestions" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><input id="productionQty" type="number" placeholder="Quantity"></div>
+<div class="grid"><input id="productionDate" type="date" title="Production Date"><div class="autowrap"><div class="autowrap" style="position:relative"><input id="productionCode" placeholder="Type Finish Product Name"><div id="productionProductSuggestions" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><input id="productionQty" type="number" placeholder="Quantity"></div>
 <p>Material/component quantities defined in BOM will be deducted automatically.</p><button class="primary" id="productionBtn">Save Production</button> <button id="openProductionReport">📄 Production Report</button><div class="msg" id="productionMsg"></div></div></section>
 
 
@@ -908,6 +908,7 @@ function production(){
  const productionInput=input.value.trim();
  const p=items.find(x=>x.code===input.dataset.selectedCode)||items.find(x=>x.code===productionInput)||items.find(x=>x.name.toLowerCase()===productionInput.toLowerCase());
  const q=Number($('productionQty').value)||0;
+ const productionDate=$('productionDate')?.value||new Date().toISOString().slice(0,10);
  if(!p||q<=0)return alert('Finish Product અને Quantity નાખો.');
 
  const rows=boms.filter(b=>b.product===p.code);
@@ -939,10 +940,13 @@ function production(){
    const n=requiredStock(x.b,x.i);
    x.i.stock-=n;
    addTxn('PRODUCTION',ref,x.i.code,-n,x.i.unit);
+   transactions[transactions.length-1].date=productionDate;
  });
  p.stock+=q;
  addTxn('PRODUCTION',ref,p.code,q,p.unit);
+ transactions[transactions.length-1].date=productionDate;
  input.value='';input.dataset.selectedCode='';$('productionQty').value='';
+ if($('productionDate'))$('productionDate').value=productionDate;
  save();
  msg('productionMsg','Production saved. BOM મુજબ stock deducted. Ref: '+ref);
 }
@@ -3107,7 +3111,9 @@ function printOnlyReport(panelId, generateFn){
  window.addEventListener('afterprint',cleanup);
  setTimeout(()=>window.print(),300);
 }
-renderPurchaseCart();$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>printOnlyReport('purchaseReportPanel',generatePurchaseReport);
+renderPurchaseCart();
+if($('productionDate')&&!$('productionDate').value)$('productionDate').value=new Date().toISOString().slice(0,10);
+$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>printOnlyReport('purchaseReportPanel',generatePurchaseReport);
 if($('openProductionReport'))$('openProductionReport').onclick=()=>{document.querySelector('[data-page="reports"]').click();};
 if($('printProductionReport'))$('printProductionReport').onclick=()=>printOnlyReport('productionReportPanel',generateProductionReport);
 if($('printJWReport'))$('printJWReport').onclick=()=>printOnlyReport('jobWorkMonthlyReportPanel',generateJWReport);if($('printDispatchReportMain'))$('printDispatchReportMain').onclick=()=>printOnlyReport('dispatchReportPanel',generateDispatchMainReport);$('addVendorBtn').onclick=addVendor;$('jwReceiveQty').addEventListener('input',updateJWConsumption);$('jwReceiveVendor').addEventListener('input',updateAutoJobRate);$('jwComponent').addEventListener('input',updateAutoJobRate);
