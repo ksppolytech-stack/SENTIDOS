@@ -2173,10 +2173,10 @@ function getAccountingPayments(){
 function saveAccountingPayments(a){localStorage.setItem('adr_accounting_payments_v1',JSON.stringify(a));}
 function renderAccounting(){
  const customer='',itemQ='';
- const sales=(transactions||[]).filter(t=>{if(String(t.type||'').toUpperCase()!=='DISPATCH')return false;const it=(items||[]).find(i=>String(i.code||'')===String(t.item||''));return (!customer||String(t.customer||'').toLowerCase().includes(customer))&&(!itemQ||String(it?.name||t.itemName||t.item||'').toLowerCase().includes(itemQ));});
+ const sales=(transactions||[]).filter(t=>{const type=String(t.type||'').toUpperCase();if(type!=='DISPATCH'&&type!=='RAW MATERIAL SALE')return false;const it=(items||[]).find(i=>String(i.code||'')===String(t.item||''));return (!customer||String(t.customer||'').toLowerCase().includes(customer))&&(!itemQ||String(it?.name||t.itemName||t.item||'').toLowerCase().includes(itemQ));});
  const payments=getAccountingPayments().filter(p=>!customer||String(p.customer||'').toLowerCase().includes(customer));
  let tax=0,grand=0,received=0,rows='';
- sales.forEach(t=>{const it=(items||[]).find(i=>String(i.code||'')===String(t.item||'')),q=Math.abs(Number(t.qty)||0),a=Number(t.amount??q*Number(t.dispatchRate||0))||0,x=Number(t.tax||0)||0,g=Number(t.grandTotal??a+x)||0;tax+=x;grand+=g;rows+=`<tr><td>${t.date||''}</td><td>Sales</td><td>${t.customer||''}</td><td>${t.billNo||t.ref||''}</td><td>${it?.name||t.itemName||t.item||''}</td><td>${q.toFixed(3)}</td><td>₹${a.toFixed(2)}</td><td>₹${x.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td></td><td>${t.remark||''}</td></tr>`});
+ sales.forEach(t=>{const type=String(t.type||'').toUpperCase(),it=(items||[]).find(i=>String(i.code||'')===String(t.item||'')),q=Math.abs(Number(t.qty)||0),a=Number(t.amount??q*Number(type==='RAW MATERIAL SALE'?t.saleRate:t.dispatchRate||0))||0,x=Number(t.tax||0)||0,g=Number(t.grandTotal??a+x)||0;tax+=x;grand+=g;const label=type==='RAW MATERIAL SALE'?'Raw Material Sale':'Sales';rows+=`<tr><td>${t.date||''}</td><td>${label}</td><td>${t.customer||''}</td><td>${t.invoiceNo||t.billNo||t.ref||''}</td><td>${it?.name||t.itemName||String(t.item||'').replace(/^RM:/,'')}</td><td>${q.toFixed(3)}</td><td>₹${a.toFixed(2)}</td><td>₹${x.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td></td><td>${t.remark||''}</td></tr>`});
  payments.forEach(p=>{const a=Number(p.amount)||0;received+=a;rows+=`<tr><td>${p.date||''}</td><td>Payment</td><td>${p.customer||''}</td><td>${p.ref||''}</td><td></td><td></td><td></td><td></td><td>₹${a.toFixed(2)}</td><td>${p.mode||''}</td><td>${p.remark||''}</td></tr>`});
  $('accSales').textContent='₹'+grand.toFixed(2);$('accTax').textContent='₹'+tax.toFixed(2);$('accReceived').textContent='₹'+received.toFixed(2);$('accDue').textContent='₹'+(grand-received).toFixed(2);$('accTable').querySelector('tbody').innerHTML=rows||'<tr><td colspan="11">No accounting entries</td></tr>';;renderCustomerDueSummary();renderPartyLedgers();renderMergedPartyLedger()
 }
@@ -2277,13 +2277,13 @@ function setupAccountingPaymentClear(){
 
 function renderCustomerDueSummary(){
  const selected=String($('dueCustomerFilter')?.value||'').trim().toLowerCase();
- const sales=(transactions||[]).filter(t=>String(t.type||'').toUpperCase()==='DISPATCH' && (!selected||String(t.customer||'').toLowerCase().includes(selected)));
+ const sales=(transactions||[]).filter(t=>['DISPATCH','RAW MATERIAL SALE'].includes(String(t.type||'').toUpperCase()) && (!selected||String(t.customer||'').toLowerCase().includes(selected)));
  const payments=getAccountingPayments().filter(p=>!selected||String(p.customer||'').toLowerCase().includes(selected));
  let taxable=0,tax=0,grand=0,received=0,rows='';
  sales.forEach(t=>{
-  const it=(items||[]).find(i=>String(i.code||'')===String(t.item||'')),a=Number(t.amount??(Math.abs(Number(t.qty)||0)*Number(t.dispatchRate||0)))||0,x=Number(t.tax||0)||0,g=Number(t.grandTotal??a+x)||0;
+  const type=String(t.type||'').toUpperCase(),it=(items||[]).find(i=>String(i.code||'')===String(t.item||'')),a=Number(t.amount??(Math.abs(Number(t.qty)||0)*Number(type==='RAW MATERIAL SALE'?t.saleRate:t.dispatchRate||0)))||0,x=Number(t.tax||0)||0,g=Number(t.grandTotal??a+x)||0;
   taxable+=a;tax+=x;grand+=g;
-  rows+=`<tr><td>${t.date||''}</td><td>Sales</td><td>${t.customer||''}</td><td>${t.billNo||''}</td><td>${it?.name||t.itemName||t.item||''}</td><td>₹${a.toFixed(2)}</td><td>₹${x.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td></td><td></td><td>${t.remark||''}</td></tr>`;
+  rows+=`<tr><td>${t.date||''}</td><td>${type==='RAW MATERIAL SALE'?'Raw Material Sale':'Sales'}</td><td>${t.customer||''}</td><td>${t.billNo||''}</td><td>${it?.name||t.itemName||t.item||''}</td><td>₹${a.toFixed(2)}</td><td>₹${x.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td></td><td></td><td>${t.remark||''}</td></tr>`;
  });
  payments.forEach(p=>{
   const a=Number(p.amount)||0;received+=a;
@@ -2571,7 +2571,7 @@ function renderMergedPartyLedger(){
  (transactions||[]).forEach(t=>{
   const type=String(t.type||'').toUpperCase(),c=String(t.customer||t.supplier||t.vendor||'').trim();if(!c)return;ensure(c);
   const sign=isReturn(t)?-1:1;
-  if(type==='DISPATCH')map[c].sales+=sign*(Number(t.grandTotal??t.amount??0)||0);
+  if(type==='DISPATCH'||type==='RAW MATERIAL SALE')map[c].sales+=sign*(Number(t.grandTotal??t.amount??0)||0);
   if(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD')map[c].purchase+=Number(t.amount??(Number(t.qty)||0)*Number(t.purchaseRate??t.inwardRate??0))||0;
   if(type==='JOB WORK RECEIVE')map[c].job+=Number(t.jobAmount)||0;
  });
@@ -2591,7 +2591,7 @@ function renderMergedPartyDetailV96(party){
  (transactions||[]).forEach(t=>{
   const c=String(t.customer||t.supplier||t.vendor||'').trim();if(c.toLowerCase()!==target)return;
   const type=String(t.type||'').toUpperCase(),ret=isReturnMergedV96(t);let debit=0,credit=0,label=type;
-  if(type==='DISPATCH'){debit=(ret?-1:1)*(Number(t.grandTotal??t.amount??0)||0);label=ret?'Sales Return':'Sales'}
+  if(type==='DISPATCH'||type==='RAW MATERIAL SALE'){debit=(ret?-1:1)*(Number(t.grandTotal??t.amount??0)||0);label=type==='RAW MATERIAL SALE'?'Raw Material Sale':(ret?'Sales Return':'Sales')}
   else if(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD'){credit=Number(t.amount??(Number(t.qty)||0)*Number(t.purchaseRate??t.inwardRate??0))||0;label=type==='PURCHASE'?'Purchase':'Raw Material Inward'}
   else if(type==='JOB WORK RECEIVE'){credit=Number(t.jobAmount)||0;label='Job Work'} else return;
   events.push({date:t.date||'',label,ref:t.billNo||t.ref||'',debit,credit,remark:t.remark||''});
@@ -2776,7 +2776,7 @@ function renderPartyMergedDetailV95(party){
   if(n.toLowerCase()!==target)return;
   const type=String(t.type||'').toUpperCase(),ret=t.isReturn===true||String(t.entryType||'').toUpperCase()==='RETURN';
   let debit=0,credit=0,label=type;
-  if(type==='DISPATCH'){debit=(ret?-1:1)*(Number(t.grandTotal??t.amount??0)||0);label=ret?'Sales Return':'Sales'}
+  if(type==='DISPATCH'||type==='RAW MATERIAL SALE'){debit=(ret?-1:1)*(Number(t.grandTotal??t.amount??0)||0);label=type==='RAW MATERIAL SALE'?'Raw Material Sale':(ret?'Sales Return':'Sales')}
   else if(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD'){credit=Number(t.amount??(Number(t.qty)||0)*Number(t.purchaseRate??t.inwardRate??0))||0;label=type==='PURCHASE'?'Purchase':'Raw Material Inward'}
   else if(type==='JOB WORK RECEIVE'){credit=Number(t.jobAmount)||0;label='Job Work'}
   else return;
@@ -3468,42 +3468,3 @@ onAuthStateChanged(auth, user => {
 })();
 </script>
 </body></html>
-<script>
-/* V141: Combined Party Ledger party-name suggestions + X clear */
-(function(){
- function init(){
-  const input=document.getElementById('mergedPartyFilter');
-  const box=document.getElementById('mergedPartySuggest');
-  const clear=document.getElementById('clearMergedPartyFilter');
-  if(!input||!box||!clear||input.dataset.v141Bound==='1') return;
-  input.dataset.v141Bound='1';
-  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-  function names(){
-   const m=new Map();
-   const add=(n,t)=>{n=String(n||'').trim();if(!n)return;const k=n.toLowerCase();if(!m.has(k))m.set(k,{name:n,type:t||'Party'});};
-   const read=(key,fields,t)=>{try{const a=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(a))a.forEach(x=>{for(const f of fields){if(String(x?.[f]??'').trim()){add(x[f],t);break;}}});}catch(e){}};
-   read('adr_customer_master_v1',['name','customer','customerName'],'Customer');
-   read('adr_supplier_master_v1',['name','supplier','supplierName'],'Supplier');
-   read('adr_vendors_v2',['name','vendor','vendorName'],'Job Work Vendor');
-   try{(window.transactions||transactions||[]).forEach(t=>{const n=t?.customer||t?.supplier||t?.vendor; if(n)add(n,'Party');});}catch(e){}
-   try{if(typeof getAccountingPayments==='function')getAccountingPayments().forEach(p=>add(p?.customer,'Customer'));}catch(e){}
-   try{if(typeof getSupplierPayments==='function')getSupplierPayments().forEach(p=>add(p?.party,'Supplier / Vendor'));}catch(e){}
-   return [...m.values()].sort((a,b)=>a.name.localeCompare(b.name));
-  }
-  function hide(){box.innerHTML='';box.style.display='none';}
-  function show(){
-   const q=input.value.trim().toLowerCase();
-   const list=names().filter(x=>!q||x.name.toLowerCase().includes(q)).slice(0,100);
-   box.innerHTML='';
-   list.forEach(x=>{const d=document.createElement('div');d.innerHTML='<b>'+esc(x.name)+'</b><span style="float:right;font-size:12px;color:#666">'+esc(x.type)+'</span>';d.style.cssText='padding:9px 12px;min-height:38px;box-sizing:border-box;background:#fff;color:#111;border-bottom:1px solid #ddd;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';d.onmousedown=function(e){e.preventDefault();input.value=x.name;input.dataset.selectedParty=x.name;hide();if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger();};box.appendChild(d);});
-   box.style.display=list.length?'block':'none';
-  }
-  input.addEventListener('focus',show);input.addEventListener('click',show);input.addEventListener('input',show);
-  clear.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();input.value='';input.dataset.selectedParty='';hide();if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger();});
-  clear.addEventListener('mousedown',function(e){e.preventDefault();});
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
- window.addEventListener('load',init);
- setTimeout(init,1000);setTimeout(init,3000);
-})();
-</script>
