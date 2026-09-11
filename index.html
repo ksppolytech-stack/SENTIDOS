@@ -2607,50 +2607,51 @@ function isReturnMergedV96(t){return t.isReturn===true||String(t.entryType||'').
 
 function setupMergedPartyLedgerV87(){
  const i=$('mergedPartyFilter'),b=$('mergedPartySuggest'),c=$('clearMergedPartyFilter');
- if(!i||!b||i.dataset.mergedPartySuggestBound==='1')return;
- i.dataset.mergedPartySuggestBound='1';
+ if(!i||!b)return;
  const partyMap=()=>{
   const map=new Map();
   const add=(name,type='Party')=>{
    name=String(name||'').trim(); if(!name)return;
    const key=name.toLowerCase();
    if(!map.has(key))map.set(key,{name,type});
-   else if(map.get(key).type==='Party'&&type!=='Party')map.get(key).type=type;
+   else if(map.get(key).type==='Party' && type!=='Party')map.get(key).type=type;
   };
-  const read=(keys,fields,type)=>keys.forEach(k=>{try{const a=JSON.parse(localStorage.getItem(k)||'[]');if(Array.isArray(a))a.forEach(x=>{const v=fields.map(f=>x?.[f]).find(v=>String(v??'').trim()!=='');add(v,type)});}catch(e){}});
-  read(['adr_customer_master_v1'],['name','customer','customerName'],'Customer');
-  read(['adr_supplier_master_v1','adr_purchase_master_v4','adr_purchase_master_v3','adr_purchase_master_v2','adr_suppliers_v1'],['name','supplier','supplierName'],'Supplier');
-  read(['adr_vendors_v2'],['name','vendor','vendorName'],'Job Work Vendor');
-  (transactions||[]).forEach(t=>{const n=String(t.customer||t.supplier||t.vendor||'').trim();if(!n)return;const ty=String(t.type||'').toUpperCase();add(n,(ty==='DISPATCH'||ty==='RAW MATERIAL SALE'||ty.includes('RETURN'))?'Customer':(ty==='PURCHASE'||ty==='RAW MATERIAL COMPANY INWARD')?'Supplier':ty.includes('JOB WORK')?'Job Work Vendor':'Party')});
+  // All three masters are included so the combined ledger can select any party.
+  try{const a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]');if(Array.isArray(a))a.forEach(x=>add(x.customer||x.customerName||x.name,'Customer'))}catch(e){}
+  try{const a=JSON.parse(localStorage.getItem('adr_supplier_master_v1')||'[]');if(Array.isArray(a))a.forEach(x=>add(x.supplier||x.supplierName||x.name,'Supplier'))}catch(e){}
+  try{const a=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]');if(Array.isArray(a))a.forEach(x=>add(x.vendor||x.vendorName||x.name,'Job Work Vendor'))}catch(e){}
+  // Also include every party that has actually participated in money transactions.
+  (transactions||[]).forEach(t=>{
+   const type=String(t.type||'').toUpperCase();
+   const n=String(t.customer||t.supplier||t.vendor||'').trim();
+   if(!n)return;
+   if(type==='DISPATCH'||type==='RAW MATERIAL SALE'||type==='SALES RETURN'||type==='CUSTOMER RETURN'||type==='DISPATCH RETURN') add(n,'Customer');
+   else if(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD') add(n,'Supplier');
+   else if(type==='JOB WORK RECEIVE'||type==='JOB WORK') add(n,'Job Work Vendor');
+   else add(n,'Party');
+  });
   if(typeof getAccountingPayments==='function')getAccountingPayments().forEach(p=>add(p.customer,'Customer'));
   if(typeof getSupplierPayments==='function')getSupplierPayments().forEach(p=>add(p.party,'Supplier / Vendor'));
   return [...map.values()].sort((a,z)=>a.name.localeCompare(z.name));
  };
- const hide=()=>{b.innerHTML='';b.style.display='none';};
- const position=()=>{const r=i.getBoundingClientRect();b.style.position='fixed';b.style.left=r.left+'px';b.style.top=(r.bottom+2)+'px';b.style.width=r.width+'px';};
+ const hide=()=>{b.innerHTML='';b.style.display='none'};
  const show=()=>{
-  const q=String(i.value||'').trim().toLowerCase();b.innerHTML='';
-  const list=partyMap().filter(x=>!q||x.name.toLowerCase().includes(q)).slice(0,100);
+  const q=i.value.trim().toLowerCase();b.innerHTML='';
+  const list=partyMap().filter(x=>!q||x.name.toLowerCase().includes(q)).slice(0,40);
   list.forEach(x=>{
    const d=document.createElement('div');
-   d.textContent=x.name+'  —  '+x.type;
-   d.style.cssText='display:block;width:100%;box-sizing:border-box;padding:10px 12px;min-height:40px;color:#111;background:#fff;border-bottom:1px solid #ddd;cursor:pointer;font-size:15px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-   d.onmousedown=e=>{e.preventDefault();e.stopPropagation();i.value=x.name;i.dataset.selectedParty=x.name;hide();renderMergedPartyLedger();};
+   d.innerHTML='<b>'+x.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</b><span style="float:right;font-size:12px;color:#666">'+x.type+'</span>';
+   d.style.cssText='display:block;width:100%;box-sizing:border-box;padding:10px 12px;min-height:42px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#111;background:#fff;border-bottom:1px solid #ddd;cursor:pointer;font-size:15px;line-height:20px';
+   d.onmousedown=e=>{e.preventDefault();i.value=x.name;i.dataset.selectedParty=x.name;hide();if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger()};
    b.appendChild(d);
   });
-  if(list.length){position();b.style.display='block';}else hide();
+  b.style.display=list.length?'block':'none';
  };
- // Move the suggestion box to BODY so no panel/table overflow can hide it.
- if(b.parentElement!==document.body)document.body.appendChild(b);
- i.addEventListener('focus',show);
- i.addEventListener('click',e=>{e.stopPropagation();show();});
  i.addEventListener('input',show);
- i.addEventListener('keyup',show);
- i.addEventListener('keydown',e=>{if(e.key==='Escape')hide();if(e.key==='Enter'){e.preventDefault();hide();renderMergedPartyLedger();}});
- window.addEventListener('resize',()=>{if(b.style.display==='block')position();});
- window.addEventListener('scroll',()=>{if(b.style.display==='block')position();},true);
- if(c)c.onclick=e=>{e.stopPropagation();i.value='';i.dataset.selectedParty='';hide();if($('mergedPartySummaryWrap'))$('mergedPartySummaryWrap').style.display='none';if($('mergedPartyLedgerWrap'))$('mergedPartyLedgerWrap').style.display='none';};
- document.addEventListener('click',e=>{if(e.target!==i&&!b.contains(e.target))hide();});
+ i.addEventListener('focus',show);
+ i.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();hide();if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger()}});
+ if(c)c.onclick=()=>{i.value='';i.dataset.selectedParty='';hide();if($('mergedPartySummaryWrap'))$('mergedPartySummaryWrap').style.display='none';if($('mergedPartyLedgerWrap'))$('mergedPartyLedgerWrap').style.display='none'};
+ document.addEventListener('click',e=>{if(e.target!==i&&!b.contains(e.target))hide()});
 }
 
 function setupAllMasterSuggestionsV92(){
@@ -3467,3 +3468,42 @@ onAuthStateChanged(auth, user => {
 })();
 </script>
 </body></html>
+<script>
+/* V141: Combined Party Ledger party-name suggestions + X clear */
+(function(){
+ function init(){
+  const input=document.getElementById('mergedPartyFilter');
+  const box=document.getElementById('mergedPartySuggest');
+  const clear=document.getElementById('clearMergedPartyFilter');
+  if(!input||!box||!clear||input.dataset.v141Bound==='1') return;
+  input.dataset.v141Bound='1';
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function names(){
+   const m=new Map();
+   const add=(n,t)=>{n=String(n||'').trim();if(!n)return;const k=n.toLowerCase();if(!m.has(k))m.set(k,{name:n,type:t||'Party'});};
+   const read=(key,fields,t)=>{try{const a=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(a))a.forEach(x=>{for(const f of fields){if(String(x?.[f]??'').trim()){add(x[f],t);break;}}});}catch(e){}};
+   read('adr_customer_master_v1',['name','customer','customerName'],'Customer');
+   read('adr_supplier_master_v1',['name','supplier','supplierName'],'Supplier');
+   read('adr_vendors_v2',['name','vendor','vendorName'],'Job Work Vendor');
+   try{(window.transactions||transactions||[]).forEach(t=>{const n=t?.customer||t?.supplier||t?.vendor; if(n)add(n,'Party');});}catch(e){}
+   try{if(typeof getAccountingPayments==='function')getAccountingPayments().forEach(p=>add(p?.customer,'Customer'));}catch(e){}
+   try{if(typeof getSupplierPayments==='function')getSupplierPayments().forEach(p=>add(p?.party,'Supplier / Vendor'));}catch(e){}
+   return [...m.values()].sort((a,b)=>a.name.localeCompare(b.name));
+  }
+  function hide(){box.innerHTML='';box.style.display='none';}
+  function show(){
+   const q=input.value.trim().toLowerCase();
+   const list=names().filter(x=>!q||x.name.toLowerCase().includes(q)).slice(0,100);
+   box.innerHTML='';
+   list.forEach(x=>{const d=document.createElement('div');d.innerHTML='<b>'+esc(x.name)+'</b><span style="float:right;font-size:12px;color:#666">'+esc(x.type)+'</span>';d.style.cssText='padding:9px 12px;min-height:38px;box-sizing:border-box;background:#fff;color:#111;border-bottom:1px solid #ddd;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';d.onmousedown=function(e){e.preventDefault();input.value=x.name;input.dataset.selectedParty=x.name;hide();if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger();};box.appendChild(d);});
+   box.style.display=list.length?'block':'none';
+  }
+  input.addEventListener('focus',show);input.addEventListener('click',show);input.addEventListener('input',show);
+  clear.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();input.value='';input.dataset.selectedParty='';hide();if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger();});
+  clear.addEventListener('mousedown',function(e){e.preventDefault();});
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+ window.addEventListener('load',init);
+ setTimeout(init,1000);setTimeout(init,3000);
+})();
+</script>
