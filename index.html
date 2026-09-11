@@ -2022,8 +2022,26 @@ function renderDispatchEntries(){
  const rows=(transactions||[]).filter(t=>String(t.type||'').toUpperCase()==='DISPATCH').slice().reverse();
  body.innerHTML=rows.map((t,n)=>{
   const it=items.find(i=>String(i.code||'')===String(t.item||'')),q=Math.abs(Number(t.qty)||0),r=Number(t.dispatchRate||0),tr=Number(t.taxRate||0),tax=Number(t.tax??q*r*tr/100),a=Number(t.amount??q*r),g=Number(t.grandTotal??a+tax);
-  return `<tr><td>${t.date||''}</td><td>${t.billNo||''}</td><td>${t.customer||''}</td><td>${it?it.name:(t.itemName||t.item||'')}</td><td>${q.toFixed(3)}</td><td>₹${r.toFixed(2)}</td><td>₹${a.toFixed(2)}</td><td>${tr.toFixed(2)}%</td><td>₹${tax.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td>${t.remark||''}</td><td><button type="button" data-dispatch-del="${t.id||n}">🗑 Delete</button></td></tr>`;
+  return `<tr><td>${t.date||''}</td><td>${t.billNo||''}</td><td>${t.customer||''}</td><td>${it?it.name:(t.itemName||t.item||'')}</td><td>${q.toFixed(3)}</td><td>₹${r.toFixed(2)}</td><td>₹${a.toFixed(2)}</td><td>${tr.toFixed(2)}%</td><td>₹${tax.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td>${t.remark||''}</td><td><button type="button" data-dispatch-edit="${t.id||n}">✏️ Edit</button> <button type="button" data-dispatch-del="${t.id||n}">🗑 Delete</button></td></tr>`;
  }).join('')||'<tr><td colspan="12">No dispatch entries</td></tr>';
+ document.querySelectorAll('[data-dispatch-edit]').forEach(b=>b.onclick=()=>{
+  const t=(transactions||[]).find((x,n)=>String(x.id||n)===String(b.dataset.dispatchEdit));if(!t)return;
+  const it=items.find(i=>String(i.code||'')===String(t.item||''));
+  const newDate=prompt('Dispatch Date (YYYY-MM-DD):',t.date||new Date().toISOString().slice(0,10));if(newDate===null)return;
+  const newCustomer=prompt('Customer:',t.customer||'');if(newCustomer===null)return;
+  const newQty=Number(prompt('Quantity:',Math.abs(Number(t.qty)||0)));if(!Number.isFinite(newQty)||newQty<=0)return alert('Valid Quantity નાખો.');
+  const newRate=Number(prompt('Rate:',Number(t.dispatchRate||0)));if(!Number.isFinite(newRate)||newRate<0)return alert('Valid Rate નાખો.');
+  const newTaxRate=Number(prompt('GST %:',Number(t.taxRate||0)));if(!Number.isFinite(newTaxRate)||newTaxRate<0)return alert('Valid GST % નાખો.');
+  const newRemark=prompt('Remark:',t.remark||'');if(newRemark===null)return;
+  if(!newCustomer||!it)return alert('Customer અથવા Finished Good મળ્યું નથી.');
+  const oldQty=Math.abs(Number(t.qty)||0);
+  const available=Number(it.stock||0)+oldQty;
+  if(newQty>available)return alert('Insufficient stock. Available for edit: '+available.toFixed(3)+' '+(it.unit||''));
+  it.stock=available-newQty;
+  const amount=newQty*newRate,tax=amount*newTaxRate/100;
+  t.date=newDate;t.customer=newCustomer;t.qty=-newQty;t.dispatchRate=newRate;t.amount=amount;t.taxRate=newTaxRate;t.tax=tax;t.grandTotal=amount+tax;t.remark=newRemark;
+  save();renderDispatchEntries();msg('dispatchMsg','Dispatch updated successfully.');
+ });
  document.querySelectorAll('[data-dispatch-del]').forEach(b=>b.onclick=()=>{
   const t=(transactions||[]).find((x,n)=>String(x.id||n)===String(b.dataset.dispatchDel));if(!t)return;
   if(!confirm('Delete Dispatch and reverse stock?'))return;
