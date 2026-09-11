@@ -386,7 +386,10 @@ tr.low-stock-row td * {
 <input id="dispatchGrandTotal" type="number" step="0.01" placeholder="Grand Total" readonly>
 <input id="dispatchRemark" placeholder="Remark (Optional)">
 </div><br>
-<button class="primary" id="dispatchBtn">Save Dispatch</button><div class="msg" id="dispatchMsg"></div>
+<button type="button" id="dispatchAddItem">➕ Add Item</button>
+<table id="dispatchCartTable" style="margin-top:12px"><thead><tr><th>Finished Good</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Taxable</th><th>GST</th><th>Grand Total</th><th>Action</th></tr></thead><tbody></tbody></table>
+<div style="margin-top:10px;text-align:right"><b>Taxable: ₹<span id="dispatchCartTotal">0.00</span> &nbsp; GST: ₹<span id="dispatchCartTaxTotal">0.00</span> &nbsp; Grand Total: ₹<span id="dispatchCartGrandTotal">0.00</span></b></div>
+<br><button class="primary" id="dispatchBtn">Save Dispatch</button><div class="msg" id="dispatchMsg"></div>
 <hr><h3>📋 Dispatch Entries</h3>
 <div style="overflow:auto"><table id="dispatchTable"><thead><tr><th>Date</th><th>Bill No.</th><th>Customer</th><th>Finished Good</th><th>Qty</th><th>Rate</th><th>Taxable Amount</th><th>GST %</th><th>Tax</th><th>Grand Total</th><th>Remark</th><th>Action</th></tr></thead><tbody></tbody></table></div>
 </div></section>
@@ -1091,35 +1094,62 @@ function setupRawSale(){
  $('rawSaleAddItem')?.addEventListener('click',addRawSaleItem);$('rawSaleSave')?.addEventListener('click',saveRawSaleInvoice);$('rawSalePrint')?.addEventListener('click',()=>printRawSaleInvoice(rawSaleLastInvoiceRows,$('rawSaleInvoiceNo').value,$('rawSaleCustomer').value,'Last Invoice'));
 }
 
-function dispatch(){
-  const dispatchDate=$('dispatchDate')?.value || new Date().toISOString().slice(0,10);
- const customer=$('dispatchCustomer').value.trim();
- const input=$('dispatchCode').value.trim();
- const i=items.find(x=>x.code===($('dispatchCode').dataset.selectedCode||''))||items.find(x=>x.code===input)||items.find(x=>String(x.name||'').toLowerCase()===input.toLowerCase());
- const q=Number($('dispatchQty').value)||0;
- const r=Number($('dispatchRate').value)||0;
- const taxRate=Number($('dispatchTaxRate').value)||0;
- const amount=q*r;
- const tax=amount*taxRate/100;
- const grandTotal=amount+tax;
- const remark=$('dispatchRemark').value.trim();
- if(!customer||!i||q<=0||q>i.stock)return alert('Customer, Finished Good અને valid Quantity નાખો.');
- const billNo=getNextDispatchBillNo();
- i.stock-=q;
- addTxn('DISPATCH','',i.code,-q,i.unit);
- const t=transactions[transactions.length-1];
- t.date=dispatchDate;
- t.billNo=billNo;
- t.customer=customer;
- t.dispatchRate=r;
- t.amount=amount;t.taxRate=taxRate;t.tax=tax;t.grandTotal=grandTotal;
- t.remark=remark;
- save();renderDispatchEntries();msg('dispatchMsg','Dispatch saved. Bill No. '+billNo);
- $('dispatchQty').value='';
- $('dispatchTaxRate').value='';$('dispatchTaxAmount').value='';$('dispatchAmount').value='';$('dispatchGrandTotal').value='';
- $('dispatchRemark').value='';
- if($('dispatchDate') && !$('dispatchDate').value) $('dispatchDate').value=new Date().toISOString().slice(0,10);showNextDispatchBillNo();
+let dispatchCart=[];
+
+function renderDispatchCart(){
+ const body=$('dispatchCartTable')?.querySelector('tbody');if(!body)return;
+ let taxable=0,tax=0,grand=0;
+ body.innerHTML=dispatchCart.map((x,n)=>{
+  const a=x.qty*x.rate,t=a*x.taxRate/100,g=a+t;taxable+=a;tax+=t;grand+=g;
+  return `<tr><td>${x.name}</td><td>${x.qty.toFixed(3)}</td><td>${x.unit}</td><td>₹${x.rate.toFixed(2)}</td><td>₹${a.toFixed(2)}</td><td>₹${t.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td><button type="button" data-dc-del="${n}">🗑</button></td></tr>`;
+ }).join('')||'<tr><td colspan="8">No items added</td></tr>';
+ $('dispatchCartTotal').textContent=taxable.toFixed(2);$('dispatchCartTaxTotal').textContent=tax.toFixed(2);$('dispatchCartGrandTotal').textContent=grand.toFixed(2);
+ document.querySelectorAll('[data-dc-del]').forEach(b=>b.onclick=()=>{dispatchCart.splice(Number(b.dataset.dcDel),1);renderDispatchCart();});
 }
+
+function addDispatchItem(){
+ const input=$('dispatchCode'),code=input?.dataset.selectedCode||input?.value.trim();
+ const i=items.find(x=>String(x.code)===String(code))||items.find(x=>String(x.name||'').toLowerCase()===String(input?.value||'').trim().toLowerCase());
+ const q=Number($('dispatchQty').value)||0,r=Number($('dispatchRate').value)||0,taxRate=Number($('dispatchTaxRate').value)||0;
+ if(!i||q<=0)return alert('Finished Good અને valid Quantity નાખો.');
+ if(q>Number(i.stock||0))return alert('Insufficient stock. Available: '+Number(i.stock||0).toFixed(3)+' '+(i.unit||''));
+ dispatchCart.push({code:i.code,name:i.name,unit:i.unit,qty:q,rate:r,taxRate,remark:$('dispatchRemark').value.trim()});
+ $('dispatchCode').value='';$('dispatchCode').dataset.selectedCode='';$('dispatchQty').value='';$('dispatchRate').value='';$('dispatchTaxRate').value='';$('dispatchTaxAmount').value='';$('dispatchAmount').value='';$('dispatchGrandTotal').value='';$('dispatchRemark').value='';
+ renderDispatchCart();
+}
+
+function dispatch(){
+ const dispatchDate=$('dispatchDate')?.value || new Date().toISOString().slice(0,10);
+ const customer=$('dispatchCustomer').value.trim();
+ if(!customer)return alert('Customer Name નાખો.');
+ if(!dispatchCart.length){
+   // Backward-compatible: if user has filled the item fields, add it automatically.
+   const code=$('dispatchCode')?.dataset.selectedCode||$('dispatchCode')?.value.trim();
+   if(code && Number($('dispatchQty')?.value)>0)addDispatchItem();
+ }
+ if(!dispatchCart.length)return alert('ઓછામાં ઓછો એક Finished Good Item Add કરો.');
+ const stockNeed={};
+ for(const x of dispatchCart)stockNeed[x.code]=(stockNeed[x.code]||0)+Number(x.qty||0);
+ for(const code in stockNeed){
+   const it=items.find(i=>String(i.code)===String(code));
+   if(!it||stockNeed[code]>Number(it.stock||0))return alert('Insufficient stock: '+(it?.name||code)+' — Required '+stockNeed[code].toFixed(3)+' '+(it?.unit||'')+', Available '+Number(it?.stock||0).toFixed(3)+' '+(it?.unit||''));
+ }
+ const billNo=getNextDispatchBillNo();
+ dispatchCart.forEach(x=>{
+   const i=items.find(it=>String(it.code)===String(x.code));
+   const q=Number(x.qty)||0,r=Number(x.rate)||0,taxRate=Number(x.taxRate)||0,amount=q*r,tax=amount*taxRate/100;
+   i.stock-=q;
+   addTxn('DISPATCH','',i.code,-q,i.unit);
+   const tr=transactions[transactions.length-1];
+   tr.date=dispatchDate;tr.billNo=billNo;tr.customer=customer;tr.dispatchRate=r;tr.amount=amount;tr.taxRate=taxRate;tr.tax=tax;tr.grandTotal=amount+tax;tr.remark=x.remark||'';tr.itemName=i.name;
+ });
+ save();renderDispatchEntries();msg('dispatchMsg','Dispatch saved. Bill No. '+billNo+' — '+dispatchCart.length+' item(s).');
+ dispatchCart=[];renderDispatchCart();
+ $('dispatchCustomer').value='';
+ if($('dispatchDate') && !$('dispatchDate').value)$('dispatchDate').value=new Date().toISOString().slice(0,10);
+ showNextDispatchBillNo();
+}
+
 function deleteTransaction(ref){
  const rows=transactions.filter(t=>t.ref===ref);
  if(!rows.length)return;
@@ -2048,7 +2078,7 @@ function renderDispatchEntries(){
   const t=(transactions||[]).find((x,n)=>String(x.id||n)===String(b.dataset.dispatchDel));if(!t)return;
   if(!confirm('Delete Dispatch and reverse stock?'))return;
   const it=items.find(i=>String(i.code||'')===String(t.item||''));if(it)it.stock+=Math.abs(Number(t.qty)||0);
-  const ix=transactions.indexOf(t);if(ix>=0)transactions.splice(ix,1);save();renderDispatchEntries();showNextDispatchBillNo();
+  const ix=transactions.indexOf(t);if(ix>=0)transactions.splice(ix,1);save();if($('dispatchDate') && !$('dispatchDate').value)$('dispatchDate').value=new Date().toISOString().slice(0,10);renderDispatchEntries();renderDispatchCart();showNextDispatchBillNo();
  });
 }
 function setupDispatchCustomerSuggest(){
@@ -3136,7 +3166,7 @@ function printOnlyReport(panelId, generateFn){
 }
 renderPurchaseCart();
 if($('productionDate')&&!$('productionDate').value)$('productionDate').value=new Date().toISOString().slice(0,10);
-$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>printOnlyReport('purchaseReportPanel',generatePurchaseReport);
+$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;if($('dispatchAddItem'))$('dispatchAddItem').onclick=addDispatchItem;renderDispatchCart();$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>printOnlyReport('purchaseReportPanel',generatePurchaseReport);
 if($('openProductionReport'))$('openProductionReport').onclick=()=>{document.querySelector('[data-page="reports"]').click();};
 if($('printProductionReport'))$('printProductionReport').onclick=()=>printOnlyReport('productionReportPanel',generateProductionReport);
 if($('printJWReport'))$('printJWReport').onclick=()=>printOnlyReport('jobWorkMonthlyReportPanel',generateJWReport);if($('printDispatchReportMain'))$('printDispatchReportMain').onclick=()=>printOnlyReport('dispatchReportPanel',generateDispatchMainReport);$('addVendorBtn').onclick=addVendor;$('jwReceiveQty').addEventListener('input',updateJWConsumption);$('jwReceiveVendor').addEventListener('input',updateAutoJobRate);$('jwComponent').addEventListener('input',updateAutoJobRate);
