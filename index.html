@@ -992,32 +992,7 @@ function addRawSaleItem(){
 function printRawSaleInvoice(rows,invoiceNo,customer,date){
  const totals=rows.reduce((a,x)=>{a.taxable+=x.amount;a.tax+=x.tax;a.grand+=x.grandTotal;return a},{taxable:0,tax:0,grand:0});
  const w=window.open('','_blank','width=900,height=700');if(!w)return alert('Popup blocked. Browserમાં popup allow કરો.');
- w.document.write(`<!doctype html><html><head><title>Raw Material Invoice ${invoiceNo}</title><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #333;padding:8px;text-align:left}td.num,th.num{text-align:right}.tot{margin-top:20px;text-align:right;font-size:18px}</style></head><body><h1>RAW MATERIAL SALES INVOICE</h1><p><b>Invoice No:</b> ${invoiceNo}<br><b>Date:</b> ${date}<br><b>Customer:</b> ${customer}</p><table><thead><tr><th>Raw Material</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate</th><th class="num">Taxable</th><th class="num">GST</th><th class="num">Total</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.name}</td><td class="num">${x.qty.toFixed(3)}</td><td>${x.unit}</td><td class="num">₹${x.rate.toFixed(2)}</td><td class="num">₹${x.amount.toFixed(2)}</td><td class="num">₹${x.tax.toFixed(2)}</td><td class="num">₹${x.grandTotal.toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="tot">Taxable: ₹${totals.taxable.toFixed(2)}<br>GST: ₹${totals.tax.toFixed(2)}<br><b>Grand Total: ₹${totals.grand.toFixed(2)}</b></div><script>window.onload=()=>window.print()<\/script><script>
-/* V151: Total Sales -> Month Wise -> Customer Wise */
-(function(){
-const M=n=>Number(n||0).toFixed(2),E=s=>String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
-function mk(v){let s=String(v||''),m=s.match(/^(\d{4})[-\/](\d{1,2})/);if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);if(m){let a=+m[1],b=+m[2];return m[3]+'-'+String(a>12?b:a).padStart(2,'0')}return''}
-function ml(k){let p=k.split('-');return new Date(+p[0],+p[1]-1,1).toLocaleString(undefined,{month:'long',year:'numeric'})}
-function tx(){return Array.isArray(window.transactions)?window.transactions:[]}
-function sales(t){return String(t.type||'').toUpperCase()==='DISPATCH'}
-function amt(t){return t.grandTotal!=null?+t.grandTotal||0:(+t.amount||0)+(+t.tax||0)}
-function show(){
- let b=document.getElementById('v151sales');if(!b){b=document.createElement('div');b.id='v151sales';(document.getElementById('dashboard')||document.body).appendChild(b)}
- let a={};tx().filter(sales).forEach(t=>{let k=mk(t.date);if(!k)return;(a[k]??={e:0,q:0,x:0,g:0,tot:0});a[k].e++;a[k].q+=Math.abs(+t.qty||0);a[k].x+=+t.amount||0;a[k].g+=+t.tax||0;a[k].tot+=amt(t)});
- let ks=Object.keys(a).sort().reverse(),T=ks.reduce((z,k)=>({e:z.e+a[k].e,q:z.q+a[k].q,x:z.x+a[k].x,g:z.g+a[k].g,tot:z.tot+a[k].tot}),{e:0,q:0,x:0,g:0,tot:0});
- b.innerHTML=`<div class="panel"><button id="v151close" style="float:right">✖ Close</button><h3>📈 Sales – Month Wise History</h3><table><thead><tr><th>Month</th><th>Entries</th><th>Qty</th><th>Taxable</th><th>GST</th><th>Grand Total</th></tr></thead><tbody>${ks.map(k=>`<tr><td><button class="v151m" data-k="${k}">${E(ml(k))}</button></td><td>${a[k].e}</td><td>${a[k].q}</td><td>${M(a[k].x)}</td><td>${M(a[k].g)}</td><td>${M(a[k].tot)}</td></tr>`).join('')||'<tr><td colspan="6">No sales found</td></tr>'}</tbody><tfoot><tr><th>Total</th><th>${T.e}</th><th>${T.q}</th><th>${M(T.x)}</th><th>${M(T.g)}</th><th>${M(T.tot)}</th></tr></tfoot></table><div id="v151cust"></div></div>`;
- b.querySelector('#v151close').onclick=()=>b.remove();b.querySelectorAll('.v151m').forEach(x=>x.onclick=()=>cust(x.dataset.k));b.scrollIntoView({behavior:'smooth'});
-}
-function cust(k){
- let d=document.getElementById('v151cust');if(!d)return;let r=tx().filter(t=>sales(t)&&mk(t.date)===k),c={};
- r.forEach(t=>{let n=String(t.customer||'Unknown Customer').trim();(c[n]??={e:0,q:0,x:0,g:0,tot:0});c[n].e++;c[n].q+=Math.abs(+t.qty||0);c[n].x+=+t.amount||0;c[n].g+=+t.tax||0;c[n].tot+=amt(t)});
- let ns=Object.keys(c).sort(),q=r.reduce((s,t)=>s+Math.abs(+t.qty||0),0),x=r.reduce((s,t)=>s+(+t.amount||0),0),g=r.reduce((s,t)=>s+(+t.tax||0),0),tt=r.reduce((s,t)=>s+amt(t),0);
- d.innerHTML=`<hr><h3>👤 Customer Wise Sales – ${E(ml(k))}</h3><table><thead><tr><th>Customer</th><th>Entries</th><th>Qty</th><th>Taxable</th><th>GST</th><th>Grand Total</th></tr></thead><tbody>${ns.map(n=>`<tr><td>${E(n)}</td><td>${c[n].e}</td><td>${c[n].q}</td><td>${M(c[n].x)}</td><td>${M(c[n].g)}</td><td>${M(c[n].tot)}</td></tr>`).join('')}</tbody><tfoot><tr><th>Total</th><th>${r.length}</th><th>${q}</th><th>${M(x)}</th><th>${M(g)}</th><th>${M(tt)}</th></tr></tfoot></table><h4>📋 Transaction History</h4><table><thead><tr><th>Date</th><th>Customer</th><th>Bill No.</th><th>Item</th><th>Qty</th><th>Rate</th><th>Taxable</th><th>GST</th><th>Grand Total</th></tr></thead><tbody>${r.map(t=>`<tr><td>${E(t.date)}</td><td>${E(t.customer)}</td><td>${E(t.billNo||t.ref||'')}</td><td>${E(t.itemName||t.item||'')}</td><td>${Math.abs(+t.qty||0)}</td><td>${M(t.dispatchRate)}</td><td>${M(t.amount)}</td><td>${M(t.tax)}</td><td>${M(amt(t))}</td></tr>`).join('')}</tbody></table>`;
-}
-function install(){let d=document.getElementById('dashboard');if(!d)return;[...d.querySelectorAll('*')].forEach(e=>{if(e.children.length<=4&&/^Total Sales$/i.test((e.textContent||'').trim())){e.style.cursor='pointer';e.addEventListener('click',show,true)}})}
-setTimeout(install,500);
-})();
-</script></body></html>`);w.document.close();
+ w.document.write(`<!doctype html><html><head><title>Raw Material Invoice ${invoiceNo}</title><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #333;padding:8px;text-align:left}td.num,th.num{text-align:right}.tot{margin-top:20px;text-align:right;font-size:18px}</style></head><body><h1>RAW MATERIAL SALES INVOICE</h1><p><b>Invoice No:</b> ${invoiceNo}<br><b>Date:</b> ${date}<br><b>Customer:</b> ${customer}</p><table><thead><tr><th>Raw Material</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate</th><th class="num">Taxable</th><th class="num">GST</th><th class="num">Total</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.name}</td><td class="num">${x.qty.toFixed(3)}</td><td>${x.unit}</td><td class="num">₹${x.rate.toFixed(2)}</td><td class="num">₹${x.amount.toFixed(2)}</td><td class="num">₹${x.tax.toFixed(2)}</td><td class="num">₹${x.grandTotal.toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="tot">Taxable: ₹${totals.taxable.toFixed(2)}<br>GST: ₹${totals.tax.toFixed(2)}<br><b>Grand Total: ₹${totals.grand.toFixed(2)}</b></div><script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close();
 }
 function saveRawSaleInvoice(){
  const date=$('rawSaleDate').value||new Date().toISOString().slice(0,10),customer=$('rawSaleCustomer').value.trim(),remark=$('rawSaleRemark').value.trim();
@@ -3554,6 +3529,69 @@ onAuthStateChanged(auth, user => {
   function addPanel(){const host=document.querySelector("main");if(!host||document.getElementById("sentidosBackupBox"))return;const box=document.createElement("div");box.id="sentidosBackupBox";box.className="panel";box.style.marginBottom="12px";box.innerHTML='<h3>💾 Backup / Restore</h3><button type="button" onclick="downloadSentidosBackup()">💾 Download Backup (PC)</button> <label style="display:inline-block;padding:8px 12px;border:1px solid #ccc;border-radius:6px;cursor:pointer;background:#fff">♻️ Restore Backup<input type="file" accept=".json" style="display:none" onchange="restoreSentidosBackup(this)"></label> <button type="button" onclick="saveSentidosToDrive()">☁️ Save to Google Drive</button><div style="margin-top:8px;font-size:12px;color:#666">Google Drive OAuth Client ID ERP માં પહેલેથી set છે.</div>';host.insertBefore(box,host.firstChild);}
   function loadGoogle(){if(document.getElementById("googleGsiScript"))return;const sc=document.createElement("script");sc.id="googleGsiScript";sc.src="https://accounts.google.com/gsi/client";sc.async=true;sc.defer=true;document.head.appendChild(sc);}
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){addPanel();loadGoogle();});else{addPanel();loadGoogle();}
+})();
+</script>
+<script>
+/* V151: Dashboard Total Sales -> Month Wise -> Customer Wise */
+(function(){
+function money(n){return Number(n||0).toFixed(2)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function monthKey(v){
+ const s=String(v||'').trim();let m=s.match(/^(\d{4})[-\/](\d{1,2})/);
+ if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');
+ m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+ if(m){let a=+m[1],b=+m[2];return m[3]+'-'+String(a>12?b:a).padStart(2,'0')}
+ return ''
+}
+function monthName(k){let p=k.split('-');return new Date(+p[0],+p[1]-1,1).toLocaleString(undefined,{month:'long',year:'numeric'})}
+function transactionsList(){return Array.isArray(window.transactions)?window.transactions:[]}
+function isDispatch(t){return String(t.type||'').toUpperCase()==='DISPATCH'}
+function total(t){return t.grandTotal!=null?Number(t.grandTotal)||0:(Number(t.amount)||0)+(Number(t.tax)||0)}
+
+function showSalesMonths(){
+ let box=document.getElementById('v151SalesBox');
+ if(!box){box=document.createElement('div');box.id='v151SalesBox';(document.getElementById('dashboard')||document.body).appendChild(box)}
+ let map={};
+ transactionsList().filter(isDispatch).forEach(t=>{
+  let k=monthKey(t.date);if(!k)return;
+  if(!map[k])map[k]={e:0,q:0,a:0,g:0,t:0};
+  map[k].e++;map[k].q+=Math.abs(Number(t.qty)||0);map[k].a+=Number(t.amount)||0;map[k].g+=Number(t.tax)||0;map[k].t+=total(t)
+ });
+ let keys=Object.keys(map).sort().reverse();
+ let T=keys.reduce((x,k)=>({e:x.e+map[k].e,q:x.q+map[k].q,a:x.a+map[k].a,g:x.g+map[k].g,t:x.t+map[k].t}),{e:0,q:0,a:0,g:0,t:0});
+ box.innerHTML='<div class="panel"><button id="v151Close" type="button" style="float:right">✖ Close</button><h3>📈 Sales - Month Wise History</h3><table><thead><tr><th>Month</th><th>Entries</th><th>Qty</th><th>Taxable</th><th>GST</th><th>Grand Total</th></tr></thead><tbody>'+
+ (keys.map(k=>'<tr><td><button type="button" class="v151Month" data-k="'+k+'">'+esc(monthName(k))+'</button></td><td>'+map[k].e+'</td><td>'+map[k].q+'</td><td>'+money(map[k].a)+'</td><td>'+money(map[k].g)+'</td><td>'+money(map[k].t)+'</td></tr>').join('')||'<tr><td colspan="6">No sales found</td></tr>')+
+ '</tbody><tfoot><tr><th>Total</th><th>'+T.e+'</th><th>'+T.q+'</th><th>'+money(T.a)+'</th><th>'+money(T.g)+'</th><th>'+money(T.t)+'</th></tr></tfoot></table><div id="v151CustomerBox"></div></div>';
+ box.querySelector('#v151Close').onclick=()=>box.remove();
+ box.querySelectorAll('.v151Month').forEach(b=>b.onclick=()=>showCustomers(b.dataset.k));
+ box.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function showCustomers(k){
+ let d=document.getElementById('v151CustomerBox');if(!d)return;
+ let rows=transactionsList().filter(t=>isDispatch(t)&&monthKey(t.date)===k), map={};
+ rows.forEach(t=>{
+  let n=String(t.customer||'').trim()||'Unknown Customer';
+  if(!map[n])map[n]={e:0,q:0,a:0,g:0,t:0};
+  map[n].e++;map[n].q+=Math.abs(Number(t.qty)||0);map[n].a+=Number(t.amount)||0;map[n].g+=Number(t.tax)||0;map[n].t+=total(t)
+ });
+ let names=Object.keys(map).sort();
+ let q=rows.reduce((s,t)=>s+Math.abs(Number(t.qty)||0),0),a=rows.reduce((s,t)=>s+(Number(t.amount)||0),0),g=rows.reduce((s,t)=>s+(Number(t.tax)||0),0),tt=rows.reduce((s,t)=>s+total(t),0);
+ d.innerHTML='<hr><h3>👤 Customer Wise Sales - '+esc(monthName(k))+'</h3><table><thead><tr><th>Customer</th><th>Entries</th><th>Qty</th><th>Taxable</th><th>GST</th><th>Grand Total</th></tr></thead><tbody>'+
+ names.map(n=>'<tr><td>'+esc(n)+'</td><td>'+map[n].e+'</td><td>'+map[n].q+'</td><td>'+money(map[n].a)+'</td><td>'+money(map[n].g)+'</td><td>'+money(map[n].t)+'</td></tr>').join('')+
+ '</tbody><tfoot><tr><th>Total</th><th>'+rows.length+'</th><th>'+q+'</th><th>'+money(a)+'</th><th>'+money(g)+'</th><th>'+money(tt)+'</th></tr></tfoot></table><h4>📋 Transaction History</h4><table><thead><tr><th>Date</th><th>Customer</th><th>Bill No.</th><th>Item</th><th>Qty</th><th>Rate</th><th>Taxable</th><th>GST</th><th>Grand Total</th></tr></thead><tbody>'+
+ (rows.map(t=>'<tr><td>'+esc(t.date||'')+'</td><td>'+esc(t.customer||'')+'</td><td>'+esc(t.billNo||t.ref||'')+'</td><td>'+esc(t.itemName||t.item||'')+'</td><td>'+Math.abs(Number(t.qty)||0)+'</td><td>'+money(t.dispatchRate)+'</td><td>'+money(t.amount)+'</td><td>'+money(t.tax)+'</td><td>'+money(total(t))+'</td></tr>').join('')||'<tr><td colspan="9">No transactions found</td></tr>')+
+ '</tbody></table>';
+ d.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function install(){
+ let d=document.getElementById('dashboard');if(!d)return;
+ [...d.querySelectorAll('*')].forEach(e=>{
+  if(e.children.length<=4&&/^Total Sales$/i.test((e.textContent||'').trim())){
+   e.style.cursor='pointer';e.title='Click for month-wise sales history';e.addEventListener('click',showSalesMonths,true)
+  }
+ })
+}
+setTimeout(install,800);
 })();
 </script>
 </body></html>
