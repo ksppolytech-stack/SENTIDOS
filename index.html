@@ -3654,4 +3654,84 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  setTimeout(bind,6000);
 })();
 </script>
+<script>
+/* V156: Force Combined Party Ledger suggestions to open on click */
+(function(){
+  function names(){
+    const out=[];
+    const add=v=>{
+      const n=String(v??'').trim();
+      if(n&&!out.some(x=>x.toLowerCase()===n.toLowerCase()))out.push(n);
+    };
+    const read=(keys,fields)=>{
+      keys.forEach(k=>{
+        try{
+          const a=JSON.parse(localStorage.getItem(k)||'[]');
+          if(Array.isArray(a))a.forEach(x=>fields.forEach(f=>add(x&&x[f])));
+        }catch(e){}
+      });
+    };
+    read(['adr_customer_master_v1','customer_master','customerMaster'],['name','customer','customerName']);
+    read(['adr_supplier_master_v1','adr_purchase_master_v4','adr_purchase_master_v3','adr_purchase_master_v2','adr_suppliers_v1'],['name','supplier','supplierName']);
+    read(['adr_vendors_v2'],['name','vendor','vendorName']);
+    try{
+      const a=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]');
+      if(Array.isArray(a))a.forEach(t=>['customer','supplier','vendor','customerName','supplierName','vendorName'].forEach(f=>add(t&&t[f])));
+    }catch(e){}
+    ['adr_accounting_payments_v1','adr_supplier_payments_v1'].forEach(k=>{
+      try{
+        const a=JSON.parse(localStorage.getItem(k)||'[]');
+        if(Array.isArray(a))a.forEach(x=>['customer','party','supplier','vendor','name'].forEach(f=>add(x&&x[f])));
+      }catch(e){}
+    });
+    return out.sort((a,b)=>a.localeCompare(b));
+  }
+  function show(){
+    const i=document.getElementById('mergedPartyFilter'),b=document.getElementById('mergedPartySuggest');
+    if(!i||!b)return;
+    const q=String(i.value||'').trim().toLowerCase();
+    const list=names().filter(n=>!q||n.toLowerCase().includes(q)).slice(0,100);
+    b.innerHTML='';
+    list.forEach(n=>{
+      const d=document.createElement('div');
+      d.textContent=n;
+      d.style.cssText='padding:11px 12px;background:#fff;color:#111;border-bottom:1px solid #ddd;cursor:pointer;font-size:15px;display:block;box-sizing:border-box;';
+      d.onmousedown=function(e){
+        e.preventDefault();
+        i.value=n;i.dataset.selectedParty=n;
+        b.style.display='none';
+        if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger();
+      };
+      d.onclick=function(e){e.preventDefault()};
+      b.appendChild(d);
+    });
+    b.style.display=list.length?'block':'none';
+  }
+  function clear(){
+    const i=document.getElementById('mergedPartyFilter'),b=document.getElementById('mergedPartySuggest');
+    if(i)i.value='',i.dataset.selectedParty='';
+    if(b)b.style.display='none';
+    if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger();
+  }
+  function bind(){
+    const i=document.getElementById('mergedPartyFilter'),c=document.getElementById('clearMergedPartyFilter');
+    if(!i)return;
+    if(i.dataset.v156Bound!=='1'){
+      i.dataset.v156Bound='1';
+      i.addEventListener('focus',show,true);
+      i.addEventListener('click',show,true);
+      i.addEventListener('input',show,true);
+      i.addEventListener('pointerdown',function(){setTimeout(show,0)},true);
+      if(c)c.addEventListener('click',clear,true);
+    }
+  }
+  function start(){bind();showIfAccountingVisible()}
+  function showIfAccountingVisible(){
+    const i=document.getElementById('mergedPartyFilter');
+    if(i&&i.offsetParent!==null){}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{setTimeout(start,500);setTimeout(bind,1500);setTimeout(bind,3000)});
+  else {setTimeout(start,500);setTimeout(bind,1500);setTimeout(bind,3000);}
+})();
+</script>
 </body></html>
