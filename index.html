@@ -1582,43 +1582,6 @@ function receiveFromVendor(){
 function showDashboardFilter(type){
  const box=$('dashboardDetails'),title=$('dashboardDetailsTitle'),table=$('dashboardDetailsTable');
  let list=[],label='';
- if(type==='sales' || type==='purchase'){
-   const isSales=type==='sales';
-   const source=(transactions||[]).filter(t=>{
-     const tt=String(t.type||'').toUpperCase();
-     return isSales ? tt==='DISPATCH' : ['RAW MATERIAL PURCHASE','RAW MATERIAL COMPANY INWARD','PURCHASE'].includes(tt);
-   });
-   const byMonth={};
-   const monthKey=v=>{
-     const s=String(v||'').trim();
-     let m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
-     if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');
-     m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
-     if(m)return m[3]+'-'+String(m[2]).padStart(2,'0');
-     const d=new Date(s);if(!isNaN(d))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-     return 'Unknown';
-   };
-   source.forEach(t=>{
-     const mk=monthKey(t.date),q=Math.abs(Number(t.qty)||0);
-     if(!byMonth[mk])byMonth[mk]={month:mk,entries:0,qty:0,taxable:0,gst:0,grand:0};
-     const a=Number(t.amount??(q*Number(t.saleRate??t.purchaseRate??t.inwardRate??t.rate??0)))||0;
-     const gst=Number(t.tax??0)||0;
-     const grand=isSales?Number(t.grandTotal??(a+gst))||0:a;
-     byMonth[mk].entries++;byMonth[mk].qty+=q;byMonth[mk].taxable+=a;byMonth[mk].gst+=gst;byMonth[mk].grand+=grand;
-   });
-   list=Object.values(byMonth).sort((a,b)=>String(b.month).localeCompare(String(a.month)));
-   title.textContent=isSales?'Sales Details - Month Wise':'Purchase Details - Month Wise';
-   table.parentElement.querySelector('thead').innerHTML=isSales
-     ? '<tr><th>Month</th><th>Entries</th><th>Qty</th><th>Taxable</th><th>GST</th><th>Grand Total</th></tr>'
-     : '<tr><th>Month</th><th>Entries</th><th>Qty</th><th>Purchase Amount</th></tr>';
-   table.innerHTML=list.length
-     ? list.map(x=>isSales
-       ? `<tr><td>${x.month}</td><td>${x.entries}</td><td>${x.qty.toFixed(3)}</td><td>₹${x.taxable.toFixed(2)}</td><td>₹${x.gst.toFixed(2)}</td><td><b>₹${x.grand.toFixed(2)}</b></td></tr>`
-       : `<tr><td>${x.month}</td><td>${x.entries}</td><td>${x.qty.toFixed(3)}</td><td><b>₹${x.taxable.toFixed(2)}</b></td></tr>`).join('')
-     : `<tr><td colspan="${isSales?6:4}">No ${isSales?'sales':'purchase'} data</td></tr>`;
-   box.style.display='block';
-   return;
- }
  if(type==='raw'){list=rawMaterials.map(r=>({code:r.code,name:r.name,cat:'Raw Material',unit:r.unit,weight:'-',stock:r.stock,min:r.min}));label='Raw Material Stock';} else if(type==='vendor'){
  const by={};
  jobwork.filter(x=>Number(x.qty)>0.000001).forEach(x=>{
@@ -1639,54 +1602,11 @@ function showDashboardFilter(type){
  } else {
    list=items.map(i=>({code:i.code,name:i.name,cat:i.cat,unit:i.unit,weight:i.weight,stock:i.stock,min:i.min}));label='All Items';
  }
- title.textContent=label;table.parentElement.querySelector('thead').innerHTML='<tr><th>Code</th><th>Name</th><th>Category</th><th>Unit</th><th>Weight g</th><th>Stock</th><th>Minimum</th></tr>';
- table.innerHTML=list.length?list.map(i=>`<tr><td>${i.code}</td><td>${i.name}</td><td>${i.cat}</td><td>${i.unit}</td><td>${i.weight}</td><td>${i.stock}</td><td>${i.min}</td></tr>`).join(''):'<tr><td colspan="7">No data</td></tr>';
+ title.textContent=label;table.innerHTML=list.length?list.map(i=>`<tr><td>${i.code}</td><td>${i.name}</td><td>${i.cat}</td><td>${i.unit}</td><td>${i.weight}</td><td>${i.stock}</td><td>${i.min}</td></tr>`).join(''):'<tr><td colspan="7">No data</td></tr>';
  box.style.display='block';
-}
-function dashboardMonthKey(v){
- const s=String(v||'').trim();
- let m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
- if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');
- m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
- if(m){const a=+m[1],b=+m[2];return m[3]+'-'+String(a>12?b:a).padStart(2,'0');}
- return '';
-}
-function dashboardMonthName(k){
- const p=String(k||'').split('-');
- return p.length===2?new Date(+p[0],+p[1]-1,1).toLocaleString(undefined,{month:'long',year:'numeric'}):k;
-}
-function showDashboardMonthly(type){
- const box=$('dashboardDetails'),title=$('dashboardDetailsTitle'),table=$('dashboardDetailsTable');
- const isSales=type==='sales';
- const valid=t=>isSales ? String(t.type||'').toUpperCase()==='DISPATCH' : ['RAW MATERIAL PURCHASE','RAW MATERIAL COMPANY INWARD','PURCHASE'].includes(String(t.type||'').toUpperCase());
- const amount=t=>isSales ? Number(t.grandTotal??t.amount??0)||0 : Number(t.amount??((Number(t.qty)||0)*Number(t.purchaseRate??t.inwardRate??t.rate??0)))||0;
- const map={};
- transactions.filter(valid).forEach(t=>{const k=dashboardMonthKey(t.date);if(!k)return;if(!map[k])map[k]={entries:0,qty:0,amount:0,tax:0};map[k].entries++;map[k].qty+=Math.abs(Number(t.qty)||0);map[k].amount+=amount(t);map[k].tax+=Number(t.tax)||0;});
- const keys=Object.keys(map).sort().reverse();
- let totalEntries=0,totalQty=0,totalAmount=0,totalTax=0;
- keys.forEach(k=>{totalEntries+=map[k].entries;totalQty+=map[k].qty;totalAmount+=map[k].amount;totalTax+=map[k].tax;});
- title.textContent=isSales?'📈 Sales - Month Wise Detail':'🛒 Purchase - Month Wise Detail';
- table.innerHTML=(keys.length?keys.map(k=>`<tr><td><button type="button" class="dashMonthBtn" data-month="${k}" data-kind="${type}">${dashboardMonthName(k)}</button></td><td>${map[k].entries}</td><td>${map[k].qty}</td><td>₹${map[k].amount.toFixed(2)}</td>${isSales?`<td>₹${map[k].tax.toFixed(2)}</td><td>₹${(map[k].amount+map[k].tax).toFixed(2)}</td>`:''}</tr>`).join(''):'<tr><td colspan="6">No data found</td></tr>')+`<tr style="font-weight:bold;border-top:2px solid #333"><td>Total</td><td>${totalEntries}</td><td>${totalQty}</td><td>₹${totalAmount.toFixed(2)}</td>${isSales?`<td>₹${totalTax.toFixed(2)}</td><td>₹${(totalAmount+totalTax).toFixed(2)}</td>`:''}</tr>`;
- box.style.display='block';
- document.querySelectorAll('.dashMonthBtn').forEach(b=>b.onclick=()=>showDashboardMonthHistory(b.dataset.kind,b.dataset.month));
- box.scrollIntoView({behavior:'smooth',block:'start'});
-}
-function showDashboardMonthHistory(type,month){
- const isSales=type==='sales';
- const valid=t=>isSales ? String(t.type||'').toUpperCase()==='DISPATCH' : ['RAW MATERIAL PURCHASE','RAW MATERIAL COMPANY INWARD','PURCHASE'].includes(String(t.type||'').toUpperCase());
- const amount=t=>isSales ? Number(t.grandTotal??t.amount??0)||0 : Number(t.amount??((Number(t.qty)||0)*Number(t.purchaseRate??t.inwardRate??t.rate??0)))||0;
- const rows=transactions.filter(t=>valid(t)&&dashboardMonthKey(t.date)===month);
- const wrap=document.createElement('div');
- wrap.style.marginTop='18px';
- let total=0;rows.forEach(t=>total+=amount(t));
- wrap.innerHTML=`<h3>${isSales?'Sales':'Purchase'} History - ${dashboardMonthName(month)}</h3><table><thead><tr><th>Date</th><th>Type</th><th>Reference</th><th>Party</th><th>Item</th><th>Qty</th><th>Amount</th>${isSales?'<th>GST</th><th>Grand Total</th>':''}</tr></thead><tbody>${rows.map(t=>{const a=amount(t),gst=Number(t.tax)||0,g=Number(t.grandTotal??(a+gst))||0;return `<tr><td>${t.date||''}</td><td>${t.type||''}</td><td>${t.billNo||t.invoiceNo||t.ref||''}</td><td>${t.customer||t.supplier||t.vendor||''}</td><td>${t.itemName||t.item||''}</td><td>${Math.abs(Number(t.qty)||0)}</td><td>₹${a.toFixed(2)}</td>${isSales?`<td>₹${gst.toFixed(2)}</td><td>₹${g.toFixed(2)}</td>`:''}</tr>`}).join('')||'<tr><td colspan="9">No history found</td></tr>'}</tbody><tfoot><tr style="font-weight:bold"><td colspan="6">Month Total</td><td>₹${total.toFixed(2)}</td>${isSales?`<td>₹${rows.reduce((a,t)=>a+(Number(t.tax)||0),0).toFixed(2)}</td><td>₹${rows.reduce((a,t)=>a+(Number(t.grandTotal??((Number(t.amount)||0)+(Number(t.tax)||0)))||0,0).toFixed(2)}</td>`:''}</tr></tfoot></table>`;
- const old=document.getElementById('dashboardMonthHistory');if(old)old.remove();wrap.id='dashboardMonthHistory';$('dashboardDetails').appendChild(wrap);wrap.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function setupDashboardCards(){
- document.querySelectorAll('.dashCard').forEach(c=>{
-   const type=c.dataset.filter;
-   c.onclick=()=> type==='sales'||type==='purchase' ? showDashboardMonthly(type) : showDashboardFilter(type);
- });
+ document.querySelectorAll('.dashCard').forEach(c=>c.onclick=()=>showDashboardFilter(c.dataset.filter));
 }
 function editPurchase(id){
  const t=transactions.find(x=>String(x.id)===String(id));
