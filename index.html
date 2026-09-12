@@ -3531,67 +3531,38 @@ onAuthStateChanged(auth, user => {
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){addPanel();loadGoogle();});else{addPanel();loadGoogle();}
 })();
 </script>
+
 <script>
-/* V151: Dashboard Total Sales -> Month Wise -> Customer Wise */
+/* V152: Dashboard Total Sales -> Month Wise -> Customer Wise */
 (function(){
 function money(n){return Number(n||0).toFixed(2)}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function monthKey(v){
- const s=String(v||'').trim();let m=s.match(/^(\d{4})[-\/](\d{1,2})/);
- if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');
- m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
- if(m){let a=+m[1],b=+m[2];return m[3]+'-'+String(a>12?b:a).padStart(2,'0')}
- return ''
+function getTx(){try{let a=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function mk(v){let s=String(v||'').trim(),m=s.match(/^(\d{4})[-\/](\d{1,2})/);if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);if(m){let a=+m[1],b=+m[2];return m[3]+'-'+String(a>12?b:a).padStart(2,'0')}return''}
+function mn(k){let p=k.split('-');return new Date(+p[0],+p[1]-1,1).toLocaleString(undefined,{month:'long',year:'numeric'})}
+function sale(t){return String(t.type||'').toUpperCase()==='DISPATCH'}
+function grand(t){return t.grandTotal!=null?Number(t.grandTotal)||0:(Number(t.amount)||0)+(Number(t.tax)||0)}
+function openSales(){
+ let b=document.getElementById('v152SalesBox');if(!b){b=document.createElement('div');b.id='v152SalesBox';(document.getElementById('dashboard')||document.body).appendChild(b)}
+ let m={};getTx().filter(sale).forEach(t=>{let k=mk(t.date);if(!k)return;(m[k]??={e:0,q:0,a:0,g:0,t:0});m[k].e++;m[k].q+=Math.abs(+t.qty||0);m[k].a+=+t.amount||0;m[k].g+=+t.tax||0;m[k].t+=grand(t)});
+ let ks=Object.keys(m).sort().reverse(),T=ks.reduce((z,k)=>{z.e+=m[k].e;z.q+=m[k].q;z.a+=m[k].a;z.g+=m[k].g;z.t+=m[k].t;return z},{e:0,q:0,a:0,g:0,t:0});
+ b.innerHTML='<div class="panel"><button id="v152Close" type="button" style="float:right">✖ Close</button><h3>📈 Sales - Month Wise History</h3><table><thead><tr><th>Month</th><th>Entries</th><th>Qty</th><th>Taxable</th><th>GST</th><th>Grand Total</th></tr></thead><tbody>'+
+ (ks.map(k=>'<tr><td><button type="button" class="v152Month" data-k="'+k+'">'+esc(mn(k))+'</button></td><td>'+m[k].e+'</td><td>'+m[k].q+'</td><td>'+money(m[k].a)+'</td><td>'+money(m[k].g)+'</td><td>'+money(m[k].t)+'</td></tr>').join('')||'<tr><td colspan="6">No sales data found</td></tr>')+
+ '</tbody><tfoot><tr><th>Total</th><th>'+T.e+'</th><th>'+T.q+'</th><th>'+money(T.a)+'</th><th>'+money(T.g)+'</th><th>'+money(T.t)+'</th></tr></tfoot></table><div id="v152Customers"></div></div>';
+ b.querySelector('#v152Close').onclick=()=>b.remove();b.querySelectorAll('.v152Month').forEach(x=>x.onclick=()=>openCustomers(x.dataset.k));b.scrollIntoView({behavior:'smooth',block:'start'})
 }
-function monthName(k){let p=k.split('-');return new Date(+p[0],+p[1]-1,1).toLocaleString(undefined,{month:'long',year:'numeric'})}
-function transactionsList(){return Array.isArray(window.transactions)?window.transactions:[]}
-function isDispatch(t){return String(t.type||'').toUpperCase()==='DISPATCH'}
-function total(t){return t.grandTotal!=null?Number(t.grandTotal)||0:(Number(t.amount)||0)+(Number(t.tax)||0)}
-
-function showSalesMonths(){
- let box=document.getElementById('v151SalesBox');
- if(!box){box=document.createElement('div');box.id='v151SalesBox';(document.getElementById('dashboard')||document.body).appendChild(box)}
- let map={};
- transactionsList().filter(isDispatch).forEach(t=>{
-  let k=monthKey(t.date);if(!k)return;
-  if(!map[k])map[k]={e:0,q:0,a:0,g:0,t:0};
-  map[k].e++;map[k].q+=Math.abs(Number(t.qty)||0);map[k].a+=Number(t.amount)||0;map[k].g+=Number(t.tax)||0;map[k].t+=total(t)
- });
- let keys=Object.keys(map).sort().reverse();
- let T=keys.reduce((x,k)=>({e:x.e+map[k].e,q:x.q+map[k].q,a:x.a+map[k].a,g:x.g+map[k].g,t:x.t+map[k].t}),{e:0,q:0,a:0,g:0,t:0});
- box.innerHTML='<div class="panel"><button id="v151Close" type="button" style="float:right">✖ Close</button><h3>📈 Sales - Month Wise History</h3><table><thead><tr><th>Month</th><th>Entries</th><th>Qty</th><th>Taxable</th><th>GST</th><th>Grand Total</th></tr></thead><tbody>'+
- (keys.map(k=>'<tr><td><button type="button" class="v151Month" data-k="'+k+'">'+esc(monthName(k))+'</button></td><td>'+map[k].e+'</td><td>'+map[k].q+'</td><td>'+money(map[k].a)+'</td><td>'+money(map[k].g)+'</td><td>'+money(map[k].t)+'</td></tr>').join('')||'<tr><td colspan="6">No sales found</td></tr>')+
- '</tbody><tfoot><tr><th>Total</th><th>'+T.e+'</th><th>'+T.q+'</th><th>'+money(T.a)+'</th><th>'+money(T.g)+'</th><th>'+money(T.t)+'</th></tr></tfoot></table><div id="v151CustomerBox"></div></div>';
- box.querySelector('#v151Close').onclick=()=>box.remove();
- box.querySelectorAll('.v151Month').forEach(b=>b.onclick=()=>showCustomers(b.dataset.k));
- box.scrollIntoView({behavior:'smooth',block:'start'});
+function openCustomers(k){
+ let d=document.getElementById('v152Customers');if(!d)return;let r=getTx().filter(t=>sale(t)&&mk(t.date)===k),c={};
+ r.forEach(t=>{let n=String(t.customer||'').trim()||'Unknown Customer';(c[n]??={e:0,q:0,a:0,g:0,t:0});c[n].e++;c[n].q+=Math.abs(+t.qty||0);c[n].a+=+t.amount||0;c[n].g+=+t.tax||0;c[n].t+=grand(t)});
+ let ns=Object.keys(c).sort(),Q=r.reduce((s,t)=>s+Math.abs(+t.qty||0),0),A=r.reduce((s,t)=>s+(+t.amount||0),0),G=r.reduce((s,t)=>s+(+t.tax||0),0),T=r.reduce((s,t)=>s+grand(t),0);
+ d.innerHTML='<hr><h3>👤 Customer Wise Sales - '+esc(mn(k))+'</h3><table><thead><tr><th>Customer</th><th>Entries</th><th>Qty</th><th>Taxable</th><th>GST</th><th>Grand Total</th></tr></thead><tbody>'+
+ (ns.map(n=>'<tr><td>'+esc(n)+'</td><td>'+c[n].e+'</td><td>'+c[n].q+'</td><td>'+money(c[n].a)+'</td><td>'+money(c[n].g)+'</td><td>'+money(c[n].t)+'</td></tr>').join('')||'<tr><td colspan="6">No customer sales found</td></tr>')+
+ '</tbody><tfoot><tr><th>Total</th><th>'+r.length+'</th><th>'+Q+'</th><th>'+money(A)+'</th><th>'+money(G)+'</th><th>'+money(T)+'</th></tr></tfoot></table><h4>📋 Sales Transaction History</h4><table><thead><tr><th>Date</th><th>Customer</th><th>Bill No.</th><th>Item</th><th>Qty</th><th>Rate</th><th>Taxable</th><th>GST</th><th>Grand Total</th></tr></thead><tbody>'+
+ (r.map(t=>'<tr><td>'+esc(t.date||'')+'</td><td>'+esc(t.customer||'')+'</td><td>'+esc(t.billNo||t.ref||'')+'</td><td>'+esc(t.itemName||t.item||'')+'</td><td>'+Math.abs(+t.qty||0)+'</td><td>'+money(t.dispatchRate)+'</td><td>'+money(t.amount)+'</td><td>'+money(t.tax)+'</td><td>'+money(grand(t))+'</td></tr>').join('')||'<tr><td colspan="9">No transactions found</td></tr>')+
+ '</tbody></table>';d.scrollIntoView({behavior:'smooth',block:'start'})
 }
-function showCustomers(k){
- let d=document.getElementById('v151CustomerBox');if(!d)return;
- let rows=transactionsList().filter(t=>isDispatch(t)&&monthKey(t.date)===k), map={};
- rows.forEach(t=>{
-  let n=String(t.customer||'').trim()||'Unknown Customer';
-  if(!map[n])map[n]={e:0,q:0,a:0,g:0,t:0};
-  map[n].e++;map[n].q+=Math.abs(Number(t.qty)||0);map[n].a+=Number(t.amount)||0;map[n].g+=Number(t.tax)||0;map[n].t+=total(t)
- });
- let names=Object.keys(map).sort();
- let q=rows.reduce((s,t)=>s+Math.abs(Number(t.qty)||0),0),a=rows.reduce((s,t)=>s+(Number(t.amount)||0),0),g=rows.reduce((s,t)=>s+(Number(t.tax)||0),0),tt=rows.reduce((s,t)=>s+total(t),0);
- d.innerHTML='<hr><h3>👤 Customer Wise Sales - '+esc(monthName(k))+'</h3><table><thead><tr><th>Customer</th><th>Entries</th><th>Qty</th><th>Taxable</th><th>GST</th><th>Grand Total</th></tr></thead><tbody>'+
- names.map(n=>'<tr><td>'+esc(n)+'</td><td>'+map[n].e+'</td><td>'+map[n].q+'</td><td>'+money(map[n].a)+'</td><td>'+money(map[n].g)+'</td><td>'+money(map[n].t)+'</td></tr>').join('')+
- '</tbody><tfoot><tr><th>Total</th><th>'+rows.length+'</th><th>'+q+'</th><th>'+money(a)+'</th><th>'+money(g)+'</th><th>'+money(tt)+'</th></tr></tfoot></table><h4>📋 Transaction History</h4><table><thead><tr><th>Date</th><th>Customer</th><th>Bill No.</th><th>Item</th><th>Qty</th><th>Rate</th><th>Taxable</th><th>GST</th><th>Grand Total</th></tr></thead><tbody>'+
- (rows.map(t=>'<tr><td>'+esc(t.date||'')+'</td><td>'+esc(t.customer||'')+'</td><td>'+esc(t.billNo||t.ref||'')+'</td><td>'+esc(t.itemName||t.item||'')+'</td><td>'+Math.abs(Number(t.qty)||0)+'</td><td>'+money(t.dispatchRate)+'</td><td>'+money(t.amount)+'</td><td>'+money(t.tax)+'</td><td>'+money(total(t))+'</td></tr>').join('')||'<tr><td colspan="9">No transactions found</td></tr>')+
- '</tbody></table>';
- d.scrollIntoView({behavior:'smooth',block:'start'});
-}
-function install(){
- let d=document.getElementById('dashboard');if(!d)return;
- [...d.querySelectorAll('*')].forEach(e=>{
-  if(e.children.length<=4&&/^Total Sales$/i.test((e.textContent||'').trim())){
-   e.style.cursor='pointer';e.title='Click for month-wise sales history';e.addEventListener('click',showSalesMonths,true)
-  }
- })
-}
-setTimeout(install,800);
+function install(){let card=document.querySelector('#dashboard .dashCard[data-filter="sales"]');if(!card)return;card.onclick=openSales;card.style.cursor='pointer';card.title='Click for month-wise sales history'}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(install,1000));else setTimeout(install,1000);
 })();
 </script>
 </body></html>
