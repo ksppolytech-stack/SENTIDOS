@@ -2668,52 +2668,95 @@ function renderMergedPartyDetailV96(party){
 function isReturnMergedV96(t){return t.isReturn===true||String(t.entryType||'').toUpperCase()==='RETURN'||['RETURN','SALES RETURN','CUSTOMER RETURN','DISPATCH RETURN'].includes(String(t.type||'').toUpperCase())}
 
 function setupMergedPartyLedgerV87(){
- const i=$('mergedPartyFilter'),b=$('mergedPartySuggest'),c=$('clearMergedPartyFilter');
- if(!i||!b)return;
- const partyMap=()=>{
-  const map=new Map();
-  const add=(name,type='Party')=>{
-   name=String(name||'').trim(); if(!name)return;
-   const key=name.toLowerCase();
-   if(!map.has(key))map.set(key,{name,type});
-   else if(map.get(key).type==='Party' && type!=='Party')map.get(key).type=type;
+ const input=$('mergedPartyFilter'),box=$('mergedPartySuggest'),clear=$('clearMergedPartyFilter');
+ if(!input||!box)return;
+ if(input.dataset.mergedSuggestV154==='1')return;
+ input.dataset.mergedSuggestV154='1';
+
+ const addUnique=(arr,name)=>{
+  name=String(name||'').trim();
+  if(name&&!arr.some(x=>x.toLowerCase()===name.toLowerCase()))arr.push(name);
+ };
+ const getNames=()=>{
+  const out=[];
+  const read=(keys,fields)=>{
+   keys.forEach(key=>{
+    try{
+     const a=JSON.parse(localStorage.getItem(key)||'[]');
+     if(Array.isArray(a))a.forEach(x=>{
+      const v=fields.map(f=>x?.[f]).find(v=>String(v??'').trim()!=='');
+      addUnique(out,v);
+     });
+    }catch(e){}
+   });
   };
-  // All three masters are included so the combined ledger can select any party.
-  try{const a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]');if(Array.isArray(a))a.forEach(x=>add(x.customer||x.customerName||x.name,'Customer'))}catch(e){}
-  try{const a=JSON.parse(localStorage.getItem('adr_supplier_master_v1')||'[]');if(Array.isArray(a))a.forEach(x=>add(x.supplier||x.supplierName||x.name,'Supplier'))}catch(e){}
-  try{const a=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]');if(Array.isArray(a))a.forEach(x=>add(x.vendor||x.vendorName||x.name,'Job Work Vendor'))}catch(e){}
-  // Also include every party that has actually participated in money transactions.
-  (transactions||[]).forEach(t=>{
-   const type=String(t.type||'').toUpperCase();
-   const n=String(t.customer||t.supplier||t.vendor||'').trim();
-   if(!n)return;
-   if(type==='DISPATCH'||type==='RAW MATERIAL SALE'||type==='SALES RETURN'||type==='CUSTOMER RETURN'||type==='DISPATCH RETURN') add(n,'Customer');
-   else if(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD') add(n,'Supplier');
-   else if(type==='JOB WORK RECEIVE'||type==='JOB WORK') add(n,'Job Work Vendor');
-   else add(n,'Party');
+  // Customer + Supplier + Job Work Vendor masters
+  read(['adr_customer_master_v1','customer_master','customerMaster'],['customer','customerName','name']);
+  read(['adr_supplier_master_v1'],['supplier','supplierName','name']);
+  read(['adr_vendors_v2'],['vendor','vendorName','name']);
+
+  // Also include parties already used in ERP transactions/payments.
+  (Array.isArray(window.transactions)?window.transactions:[]).forEach(t=>{
+   addUnique(out,t.customer); addUnique(out,t.supplier); addUnique(out,t.vendor);
   });
-  if(typeof getAccountingPayments==='function')getAccountingPayments().forEach(p=>add(p.customer,'Customer'));
-  if(typeof getSupplierPayments==='function')getSupplierPayments().forEach(p=>add(p.party,'Supplier / Vendor'));
-  return [...map.values()].sort((a,z)=>a.name.localeCompare(z.name));
+  try{
+   if(typeof getAccountingPayments==='function')
+    getAccountingPayments().forEach(p=>addUnique(out,p.customer));
+  }catch(e){}
+  try{
+   if(typeof getSupplierPayments==='function')
+    getSupplierPayments().forEach(p=>addUnique(out,p.party));
+  }catch(e){}
+  return out.sort((a,b)=>a.localeCompare(b));
  };
- const hide=()=>{b.innerHTML='';b.style.display='none'};
+
+ const hide=()=>{box.innerHTML='';box.style.display='none';};
+
  const show=()=>{
-  const q=i.value.trim().toLowerCase();b.innerHTML='';
-  const list=partyMap().filter(x=>!q||x.name.toLowerCase().includes(q)).slice(0,40);
-  list.forEach(x=>{
-   const d=document.createElement('div');
-   d.innerHTML='<b>'+x.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</b><span style="float:right;font-size:12px;color:#666">'+x.type+'</span>';
-   d.style.cssText='display:block;width:100%;box-sizing:border-box;padding:10px 12px;min-height:42px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#111;background:#fff;border-bottom:1px solid #ddd;cursor:pointer;font-size:15px;line-height:20px';
-   d.onmousedown=e=>{e.preventDefault();i.value=x.name;i.dataset.selectedParty=x.name;hide();if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger()};
-   b.appendChild(d);
+  const q=String(input.value||'').trim().toLowerCase();
+  box.innerHTML='';
+  const list=getNames().filter(n=>!q||n.toLowerCase().includes(q)).slice(0,50);
+  list.forEach(name=>{
+   const row=document.createElement('div');
+   row.textContent=name;
+   row.style.cssText='display:block;width:100%;box-sizing:border-box;padding:10px 12px;min-height:42px;color:#111;background:#fff;border-bottom:1px solid #ddd;cursor:pointer;font-size:15px;line-height:20px';
+   row.onmousedown=e=>{
+    e.preventDefault(); e.stopPropagation();
+    input.value=name;
+    input.dataset.selectedParty=name;
+    hide();
+    if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger();
+   };
+   box.appendChild(row);
   });
-  b.style.display=list.length?'block':'none';
+  box.style.display=list.length?'block':'none';
  };
- i.addEventListener('input',()=>{i.dataset.selectedParty='';show();});
- i.addEventListener('focus',show);
- i.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();hide();if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger()}});
- if(c)c.onclick=()=>{i.value='';i.dataset.selectedParty='';hide();if($('mergedPartySummaryWrap'))$('mergedPartySummaryWrap').style.display='none';if($('mergedPartyLedgerWrap'))$('mergedPartyLedgerWrap').style.display='none'};
- document.addEventListener('click',e=>{if(e.target!==i&&!b.contains(e.target))hide()});
+
+ input.addEventListener('focus',show);
+ input.addEventListener('click',show);
+ input.addEventListener('input',()=>{
+  input.dataset.selectedParty='';
+  show();
+ });
+ input.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){hide();return;}
+  if(e.key==='Enter'){
+   e.preventDefault();
+   const first=box.querySelector('div');
+   if(first)first.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+  }
+ });
+ if(clear)clear.onclick=e=>{
+  e.preventDefault();e.stopPropagation();
+  input.value='';input.dataset.selectedParty='';
+  hide();
+  if($('mergedPartySummaryWrap'))$('mergedPartySummaryWrap').style.display='none';
+  if($('mergedPartyLedgerWrap'))$('mergedPartyLedgerWrap').style.display='none';
+  input.focus();
+ };
+ document.addEventListener('click',e=>{
+  if(e.target!==input&&!box.contains(e.target))hide();
+ });
 }
 
 function setupAllMasterSuggestionsV92(){
@@ -3598,4 +3641,19 @@ d.innerHTML='<hr><h3>🏭 Supplier Wise Purchase - '+esc(mn(k))+'</h3><table><th
 function install(){const d=document.getElementById('dashboard');if(!d)return;[...d.querySelectorAll('*')].forEach(e=>{if(e.children.length<=4&&/^Total Purchase$/i.test((e.textContent||'').trim())){e.style.cursor='pointer';e.title='Click for month-wise purchase history';e.addEventListener('click',openPurchase,true)}})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(install,1000));else setTimeout(install,1000);
 })();
-</script></body></html>
+</script>
+<script>
+/* V154: rebind Combined Party Ledger suggestions after cloud data is loaded */
+(function(){
+ function run(){
+  try{
+   if(typeof setupMergedPartyLedgerV87==='function')setupMergedPartyLedgerV87();
+  }catch(e){}
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(run,1200));
+ else setTimeout(run,1200);
+ setTimeout(run,3000);
+ setTimeout(run,6000);
+})();
+</script>
+</body></html>
