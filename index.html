@@ -2657,9 +2657,8 @@ function renderMergedPartyDetailV96(party){
  const money=n=>'₹'+Math.abs(Number(n)||0).toFixed(2);
  const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const pushTxn=(t)=>{
-  const partyFields=[t.customer,t.supplier,t.vendor,t.customerName,t.supplierName,t.vendorName]
-    .map(v=>String(v||'').trim().toLowerCase()).filter(Boolean);
-  if(!partyFields.includes(target))return;
+  const c=String(t.customer||t.supplier||t.vendor||'').trim();
+  if(c.toLowerCase()!==target)return;
   const type=String(t.type||'').toUpperCase(),ret=isReturnMergedV96(t);
   const qty=Math.abs(Number(t.qty??t.quantity)||0);
   const item=String(t.itemName||t.item||'').replace(/^RM:/,'');
@@ -2691,13 +2690,7 @@ function renderMergedPartyDetailV96(party){
    remark:t.remark||''
   });
  };
- let mergedTx=[];
- try{
-   mergedTx=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]');
-   if(!Array.isArray(mergedTx))mergedTx=[];
- }catch(e){mergedTx=[];}
- if(!mergedTx.length && Array.isArray(window.transactions))mergedTx=window.transactions;
- mergedTx.forEach(pushTxn);
+ (transactions||[]).forEach(pushTxn);
  getAccountingPayments().filter(p=>String(p.customer||'').trim().toLowerCase()===target).forEach(p=>{
   const a=Number(p.amount)||0;
   events.push({date:p.date||'',label:'Payment Received',ref:p.ref||'',item:'',component:'',qty:0,unit:'',rate:0,amount:a,gst:0,total:a,debit:0,credit:a,remark:p.remark||''});
@@ -3777,8 +3770,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         e.preventDefault();
         i.value=n;i.dataset.selectedParty=n;
         b.style.display='none';
-        if(typeof renderMergedPartyDetailV96==='function')renderMergedPartyDetailV96(n);
-        else if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger();
+        if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger();
       };
       d.onclick=function(e){e.preventDefault()};
       b.appendChild(d);
@@ -3840,4 +3832,77 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  else setTimeout(run,700);
 })();
 </script>
-</body></html>
+<script>
+/* V159: Reliable Combined Party Ledger detail panel */
+(function(){
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const money=n=>'₹'+Number(n||0).toFixed(2);
+ function read(k){try{const a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+ function tx(){return read('adr_tx_v2')}
+ function payments(){return read('adr_accounting_payments_v1')}
+ function supplierPayments(){return read('adr_supplier_payments_v1')}
+ function itemName(t){
+   if(t.itemName)return t.itemName;
+   const code=String(t.item||'').replace(/^RM:/,'');
+   try{
+     const rms=JSON.parse(localStorage.getItem('adr_rawmaterials_v2')||'[]');
+     const r=Array.isArray(rms)?rms.find(x=>String(x.code)===code):null;
+     if(r)return r.name||r.code;
+   }catch(e){}
+   try{
+     const its=JSON.parse(localStorage.getItem('adr_items_v2')||'[]');
+     const i=Array.isArray(its)?its.find(x=>String(x.code)===code):null;
+     if(i)return i.name||i.code;
+   }catch(e){}
+   return code;
+ }
+ function partyOf(t){return String(t.customer||t.supplier||t.vendor||'').trim()}
+ function show(party){
+   party=String(party||'').trim(); if(!party)return;
+   const key=party.toLowerCase(), rows=[];
+   tx().forEach(t=>{
+     if(partyOf(t).toLowerCase()!==key)return;
+     const type=String(t.type||'').toUpperCase(),q=Math.abs(Number(t.qty)||0);
+     let label=type,rate=0,amount=0,gst=Number(t.tax)||0,total=0,debit=0,credit=0;
+     if(type==='DISPATCH'){
+       label='Sales';rate=Number(t.dispatchRate)||0;amount=Number(t.amount)||(q*rate);total=Number(t.grandTotal)||(amount+gst);debit=total;
+     }else if(type==='RAW MATERIAL SALE'){
+       label='Raw Material Sale';rate=Number(t.saleRate)||0;amount=Number(t.amount)||(q*rate);total=Number(t.grandTotal)||(amount+gst);debit=total;
+     }else if(type==='PURCHASE'){
+       label='Purchase';rate=Number(t.purchaseRate)||0;amount=Number(t.amount)||(q*rate);total=Number(t.grandTotal)||(amount+gst);credit=total;
+     }else if(type==='RAW MATERIAL COMPANY INWARD'){
+       label='Raw Material Inward';rate=Number(t.inwardRate)||0;amount=Number(t.amount)||(q*rate);total=Number(t.grandTotal)||(amount+gst);credit=total;
+     }else if(type==='JOB WORK RECEIVE'){
+       label='Job Work Receive';rate=Number(t.jobRate)||0;amount=Number(t.jobAmount)||(q*rate);total=amount;credit=total;
+     }else if(type==='JOB WORK ISSUE'){
+       label='Job Work Issue';rate=Number(t.issueRate)||0;amount=Number(t.issueAmount)||(q*rate);total=amount;
+     }else return;
+     rows.push({date:t.date||'',label,ref:t.billNo||t.invoiceNo||t.inwardRef||t.ref||'',item:itemName(t),q,unit:t.unit||'',rate,amount,gst,total,debit,credit,remark:t.remark||''});
+   });
+   payments().forEach(p=>{if(String(p.customer||'').trim().toLowerCase()===key){let a=Number(p.amount)||0;rows.push({date:p.date||'',label:'Payment Received',ref:p.ref||'',item:'-',q:0,unit:'',rate:0,amount:a,gst:0,total:a,debit:0,credit:a,remark:p.remark||''})}});
+   supplierPayments().forEach(p=>{if(String(p.party||'').trim().toLowerCase()===key){let a=Number(p.amount)||0;rows.push({date:p.date||'',label:'Payment Given',ref:p.ref||'',item:'-',q:0,unit:'',rate:0,amount:a,gst:0,total:a,debit:a,credit:0,remark:p.remark||''})}});
+   rows.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+   let bal=0,ta=0,tg=0,tt=0,td=0,tc=0;
+   const body=rows.map(r=>{bal+=r.debit-r.credit;ta+=r.amount;tg+=r.gst;tt+=r.total;td+=r.debit;tc+=r.credit;
+     return `<tr><td>${esc(r.date)}</td><td>${esc(r.label)}</td><td>${esc(r.ref)}</td><td>${esc(r.item)}</td><td>${r.q?esc(r.q+' '+r.unit):'-'}</td><td>${r.rate?money(r.rate):'-'}</td><td>${r.amount?money(r.amount):'-'}</td><td>${r.gst?money(r.gst):'-'}</td><td>${r.total?money(r.total):'-'}</td><td>${r.debit?money(r.debit):'-'}</td><td>${r.credit?money(r.credit):'-'}</td><td>${money(bal)}</td><td>${esc(r.remark)}</td></tr>`;
+   }).join('');
+   let panel=document.getElementById('v159PartyLedger');
+   if(!panel){panel=document.createElement('div');panel.id='v159PartyLedger';document.getElementById('mergedPartyLedger').appendChild(panel)}
+   panel.innerHTML=`<div style="margin-top:16px;overflow:auto"><h3>📒 ${esc(party)} — Complete Ledger Detail</h3><table style="min-width:1250px"><thead><tr><th>Date</th><th>Type</th><th>Reference</th><th>Item / Component</th><th>Qty</th><th>Rate</th><th>Amount</th><th>GST</th><th>Total</th><th>Debit</th><th>Credit</th><th>Balance</th><th>Remark</th></tr></thead><tbody>${body||'<tr><td colspan="13">આ Party માટે amount વાળી transaction મળી નથી.</td></tr>'}</tbody><tfoot><tr><th colspan="6">TOTAL</th><th>${money(ta)}</th><th>${money(tg)}</th><th>${money(tt)}</th><th>${money(td)}</th><th>${money(tc)}</th><th>${money(bal)}</th><th></th></tr></tfoot></table></div>`;
+   panel.scrollIntoView({behavior:'smooth',block:'start'});
+ }
+ function bind(){
+   const box=document.getElementById('mergedPartySuggest'),input=document.getElementById('mergedPartyFilter');
+   if(!box||!input||box.dataset.v159==='1')return;
+   box.dataset.v159='1';
+   box.addEventListener('mousedown',e=>{
+     const row=e.target.closest('div'); if(!row||row===box)return;
+     const name=String(row.textContent||'').trim();
+     if(name)setTimeout(()=>show(name),80);
+   },true);
+   input.addEventListener('change',()=>show(input.value));
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(bind,800));else setTimeout(bind,800);
+ setTimeout(bind,2500);
+})();
+</script></body></html>
