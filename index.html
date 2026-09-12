@@ -2716,12 +2716,19 @@ function renderMergedPartyDetailV96(party){
   </tr>`;
  }).join('');
  const table=$('mergedPartyLedgerTable');
- table.querySelector('thead').innerHTML=`<tr>
+ if(!table)return;
+ let thead=table.querySelector('thead');
+ if(!thead){thead=document.createElement('thead');table.insertBefore(thead,table.firstChild);}
+ let tbody=table.querySelector('tbody');
+ if(!tbody){tbody=document.createElement('tbody');table.appendChild(tbody);}
+ let tfoot=table.querySelector('tfoot');
+ if(!tfoot){tfoot=document.createElement('tfoot');table.appendChild(tfoot);}
+ thead.innerHTML=`<tr>
   <th>Date</th><th>Type</th><th>Reference</th><th>Item / Component</th><th>Qty</th><th>Rate</th>
   <th>Amount</th><th>GST</th><th>Total</th><th>Debit</th><th>Credit</th><th>Balance</th><th>Remark</th>
  </tr>`;
- table.querySelector('tbody').innerHTML=body||'<tr><td colspan="13">No transactions found</td></tr>';
- table.querySelector('tfoot').innerHTML=`<tr>
+ tbody.innerHTML=body||'<tr><td colspan="13">No transactions found</td></tr>';
+ tfoot.innerHTML=`<tr>
   <th colspan="6">Total</th><th>${money(totalAmount)}</th><th>${money(totalGST)}</th><th>${money(totalGrand)}</th>
   <th>${money(totalDebit)}</th><th>${money(totalCredit)}</th><th>${money(bal)}</th><th></th>
  </tr>`;
@@ -3795,6 +3802,34 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{setTimeout(start,500);setTimeout(bind,1500);setTimeout(bind,3000)});
   else {setTimeout(start,500);setTimeout(bind,1500);setTimeout(bind,3000);}
+})();
+</script>
+<script>
+/* V158: Combined Party Ledger selected party -> always open complete ledger */
+(function(){
+ function run(){
+  const i=document.getElementById('mergedPartyFilter');
+  if(!i||i.dataset.v158Watch==='1')return;
+  i.dataset.v158Watch='1';
+  const open=()=>{
+   const p=String(i.dataset.selectedParty||'').trim();
+   if(p&&typeof renderMergedPartyDetailV96==='function'){
+    try{renderMergedPartyDetailV96(p)}catch(e){}
+   }
+  };
+  i.addEventListener('change',open);
+  i.addEventListener('blur',()=>setTimeout(open,50));
+  const old=Object.getOwnPropertyDescriptor(HTMLElement.prototype,'dataset');
+  // Poll only the selectedParty value; this is intentionally lightweight.
+  let last='';
+  setInterval(()=>{
+   const p=String(i.dataset.selectedParty||'').trim();
+   if(p&&p!==last){last=p;open();}
+   if(!p)last='';
+  },150);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(run,700));
+ else setTimeout(run,700);
 })();
 </script>
 </body></html>
