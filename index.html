@@ -2670,76 +2670,67 @@ function isReturnMergedV96(t){return t.isReturn===true||String(t.entryType||'').
 function setupMergedPartyLedgerV87(){
  const input=$('mergedPartyFilter'),box=$('mergedPartySuggest'),clear=$('clearMergedPartyFilter');
  if(!input||!box)return;
- if(input.dataset.mergedSuggestV154==='1')return;
- input.dataset.mergedSuggestV154='1';
+ if(input.dataset.mergedSuggestV155==='1')return;
+ input.dataset.mergedSuggestV155='1';
 
- const addUnique=(arr,name)=>{
-  name=String(name||'').trim();
-  if(name&&!arr.some(x=>x.toLowerCase()===name.toLowerCase()))arr.push(name);
+ const add=(out,v)=>{
+  const n=String(v??'').trim();
+  if(n&&!out.some(x=>x.toLowerCase()===n.toLowerCase()))out.push(n);
+ };
+ const read=(out,keys,fields)=>{
+  keys.forEach(key=>{
+   try{
+    const a=JSON.parse(localStorage.getItem(key)||'[]');
+    if(Array.isArray(a))a.forEach(x=>{
+     fields.forEach(f=>add(out,x?.[f]));
+    });
+   }catch(e){}
+  });
  };
  const getNames=()=>{
   const out=[];
-  const read=(keys,fields)=>{
-   keys.forEach(key=>{
-    try{
-     const a=JSON.parse(localStorage.getItem(key)||'[]');
-     if(Array.isArray(a))a.forEach(x=>{
-      const v=fields.map(f=>x?.[f]).find(v=>String(v??'').trim()!=='');
-      addUnique(out,v);
-     });
-    }catch(e){}
-   });
-  };
-  // Customer + Supplier + Job Work Vendor masters
-  read(['adr_customer_master_v1','customer_master','customerMaster'],['customer','customerName','name']);
-  read(['adr_supplier_master_v1'],['supplier','supplierName','name']);
-  read(['adr_vendors_v2'],['vendor','vendorName','name']);
+  // All party masters, including older supplier-master keys used by this ERP.
+  read(out,['adr_customer_master_v1','customer_master','customerMaster'],['name','customer','customerName']);
+  read(out,['adr_supplier_master_v1','adr_purchase_master_v4','adr_purchase_master_v3','adr_purchase_master_v2','adr_suppliers_v1'],['name','supplier','supplierName']);
+  read(out,['adr_vendors_v2'],['name','vendor','vendorName']);
 
-  // Also include parties already used in ERP transactions/payments.
-  (Array.isArray(window.transactions)?window.transactions:[]).forEach(t=>{
-   addUnique(out,t.customer); addUnique(out,t.supplier); addUnique(out,t.vendor);
+  // Any party already present in transactions must also be selectable.
+  let a=[];
+  try{a=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]')}catch(e){}
+  if(Array.isArray(a))a.forEach(t=>{add(out,t.customer);add(out,t.supplier);add(out,t.vendor);add(out,t.supplierName);add(out,t.vendorName)});
+
+  // Payment records are also parties.
+  ['adr_accounting_payments_v1','adr_supplier_payments_v1'].forEach(key=>{
+   try{
+    const x=JSON.parse(localStorage.getItem(key)||'[]');
+    if(Array.isArray(x))x.forEach(p=>{add(out,p.customer);add(out,p.party);add(out,p.supplier);add(out,p.vendor);add(out,p.vendorName)});
+   }catch(e){}
   });
-  try{
-   if(typeof getAccountingPayments==='function')
-    getAccountingPayments().forEach(p=>addUnique(out,p.customer));
-  }catch(e){}
-  try{
-   if(typeof getSupplierPayments==='function')
-    getSupplierPayments().forEach(p=>addUnique(out,p.party));
-  }catch(e){}
   return out.sort((a,b)=>a.localeCompare(b));
  };
-
- const hide=()=>{box.innerHTML='';box.style.display='none';};
-
+ const hide=()=>{box.innerHTML='';box.style.display='none'};
  const show=()=>{
   const q=String(input.value||'').trim().toLowerCase();
   box.innerHTML='';
-  const list=getNames().filter(n=>!q||n.toLowerCase().includes(q)).slice(0,50);
+  const list=getNames().filter(n=>!q||n.toLowerCase().includes(q)).slice(0,100);
   list.forEach(name=>{
-   const row=document.createElement('div');
-   row.textContent=name;
-   row.style.cssText='display:block;width:100%;box-sizing:border-box;padding:10px 12px;min-height:42px;color:#111;background:#fff;border-bottom:1px solid #ddd;cursor:pointer;font-size:15px;line-height:20px';
-   row.onmousedown=e=>{
-    e.preventDefault(); e.stopPropagation();
-    input.value=name;
-    input.dataset.selectedParty=name;
-    hide();
+   const d=document.createElement('div');
+   d.textContent=name;
+   d.style.cssText='display:block;width:100%;box-sizing:border-box;padding:10px 12px;min-height:40px;color:#111;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';
+   d.onmousedown=e=>{
+    e.preventDefault();e.stopPropagation();
+    input.value=name;input.dataset.selectedParty=name;hide();
     if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger();
    };
-   box.appendChild(row);
+   box.appendChild(d);
   });
   box.style.display=list.length?'block':'none';
  };
-
  input.addEventListener('focus',show);
  input.addEventListener('click',show);
- input.addEventListener('input',()=>{
-  input.dataset.selectedParty='';
-  show();
- });
+ input.addEventListener('input',()=>{input.dataset.selectedParty='';show()});
  input.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){hide();return;}
+  if(e.key==='Escape'){hide();return}
   if(e.key==='Enter'){
    e.preventDefault();
    const first=box.querySelector('div');
@@ -2748,15 +2739,12 @@ function setupMergedPartyLedgerV87(){
  });
  if(clear)clear.onclick=e=>{
   e.preventDefault();e.stopPropagation();
-  input.value='';input.dataset.selectedParty='';
-  hide();
-  if($('mergedPartySummaryWrap'))$('mergedPartySummaryWrap').style.display='none';
+  input.value='';input.dataset.selectedParty='';hide();input.focus();
+  if($('mergedPartySummaryWrap'))$('mergedPartySummaryWrap').style.display='';
   if($('mergedPartyLedgerWrap'))$('mergedPartyLedgerWrap').style.display='none';
-  input.focus();
+  if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger();
  };
- document.addEventListener('click',e=>{
-  if(e.target!==input&&!box.contains(e.target))hide();
- });
+ document.addEventListener('click',e=>{if(e.target!==input&&!box.contains(e.target))hide()});
 }
 
 function setupAllMasterSuggestionsV92(){
@@ -3654,6 +3642,16 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  else setTimeout(run,1200);
  setTimeout(run,3000);
  setTimeout(run,6000);
+})();
+</script>
+<script>
+/* V155: Combined Party Ledger - load every Customer/Supplier/Vendor name */
+(function(){
+ function bind(){try{if(typeof setupMergedPartyLedgerV87==='function')setupMergedPartyLedgerV87()}catch(e){}}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(bind,1200));
+ else setTimeout(bind,1200);
+ setTimeout(bind,3000);
+ setTimeout(bind,6000);
 })();
 </script>
 </body></html>
