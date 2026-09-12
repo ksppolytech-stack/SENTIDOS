@@ -3565,4 +3565,37 @@ function install(){let card=document.querySelector('#dashboard .dashCard[data-fi
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(install,1000));else setTimeout(install,1000);
 })();
 </script>
-</body></html>
+<script>
+/* V153: Dashboard Total Purchase -> Month Wise -> Supplier Wise */
+(function(){
+const money=n=>Number(n||0).toFixed(2);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function tx(){try{const a=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function mk(v){let s=String(v||'').trim(),m=s.match(/^(\d{4})[-\/](\d{1,2})/);if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);if(m){let a=+m[1],b=+m[2];return m[3]+'-'+String(a>12?b:a).padStart(2,'0')}return''}
+function mn(k){let p=k.split('-');return new Date(+p[0],+p[1]-1,1).toLocaleString(undefined,{month:'long',year:'numeric'})}
+function pur(t){return String(t.type||'').toUpperCase()==='PURCHASE'}
+function pa(t){return t.amount!=null?Number(t.amount)||0:Math.abs(Number(t.qty)||0)*Number(t.unit)||0}
+function pg(t){return t.grandTotal!=null?Number(t.grandTotal)||0:pa(t)+(Number(t.tax)||0)}
+function openPurchase(){
+let b=document.getElementById('v153PurchaseBox');if(!b){b=document.createElement('div');b.id='v153PurchaseBox';(document.getElementById('dashboard')||document.body).appendChild(b)}
+let m={};tx().filter(pur).forEach(t=>{let k=mk(t.date);if(!k)return;(m[k]??={e:0,q:0,a:0,g:0,t:0});m[k].e++;m[k].q+=Math.abs(+t.qty||0);m[k].a+=pa(t);m[k].g+=+t.tax||0;m[k].t+=pg(t)});
+let ks=Object.keys(m).sort().reverse(),T=ks.reduce((z,k)=>{z.e+=m[k].e;z.q+=m[k].q;z.a+=m[k].a;z.g+=m[k].g;z.t+=m[k].t;return z},{e:0,q:0,a:0,g:0,t:0});
+b.innerHTML='<div class="panel" style="margin-top:16px"><button id="v153Close" type="button" style="float:right">✖ Close</button><h3>🛒 Purchase - Month Wise History</h3><table><thead><tr><th>Month</th><th>Entries</th><th>Qty</th><th>Purchase Amount</th><th>GST</th><th>Grand Total</th></tr></thead><tbody>'+
+(ks.map(k=>'<tr><td><button type="button" class="v153Month" data-k="'+k+'">'+esc(mn(k))+'</button></td><td>'+m[k].e+'</td><td>'+m[k].q+'</td><td>'+money(m[k].a)+'</td><td>'+money(m[k].g)+'</td><td>'+money(m[k].t)+'</td></tr>').join('')||'<tr><td colspan="6">No purchase data found</td></tr>')+
+'</tbody><tfoot><tr><th>Total</th><th>'+T.e+'</th><th>'+T.q+'</th><th>'+money(T.a)+'</th><th>'+money(T.g)+'</th><th>'+money(T.t)+'</th></tr></tfoot></table><div id="v153Suppliers"></div></div>';
+b.querySelector('#v153Close').onclick=()=>b.remove();b.querySelectorAll('.v153Month').forEach(x=>x.onclick=()=>openSuppliers(x.dataset.k));b.scrollIntoView({behavior:'smooth',block:'start'})
+}
+function openSuppliers(k){
+let d=document.getElementById('v153Suppliers');if(!d)return;let r=tx().filter(t=>pur(t)&&mk(t.date)===k),s={};
+r.forEach(t=>{let n=String(t.supplier||t.vendor||'').trim()||'Unknown Supplier';(s[n]??={e:0,q:0,a:0,g:0,t:0});s[n].e++;s[n].q+=Math.abs(+t.qty||0);s[n].a+=pa(t);s[n].g+=+t.tax||0;s[n].t+=pg(t)});
+let ns=Object.keys(s).sort(),Q=r.reduce((z,t)=>z+Math.abs(+t.qty||0),0),A=r.reduce((z,t)=>z+pa(t),0),G=r.reduce((z,t)=>z+(+t.tax||0),0),T=r.reduce((z,t)=>z+pg(t),0);
+d.innerHTML='<hr><h3>🏭 Supplier Wise Purchase - '+esc(mn(k))+'</h3><table><thead><tr><th>Supplier</th><th>Entries</th><th>Qty</th><th>Purchase Amount</th><th>GST</th><th>Grand Total</th></tr></thead><tbody>'+
+(ns.map(n=>'<tr><td>'+esc(n)+'</td><td>'+s[n].e+'</td><td>'+s[n].q+'</td><td>'+money(s[n].a)+'</td><td>'+money(s[n].g)+'</td><td>'+money(s[n].t)+'</td></tr>').join('')||'<tr><td colspan="6">No supplier purchase found</td></tr>')+
+'</tbody><tfoot><tr><th>Total</th><th>'+r.length+'</th><th>'+Q+'</th><th>'+money(A)+'</th><th>'+money(G)+'</th><th>'+money(T)+'</th></tr></tfoot></table><h4>📋 Purchase Transaction History</h4><table><thead><tr><th>Date</th><th>Supplier</th><th>Bill / Ref</th><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th><th>GST</th><th>Grand Total</th></tr></thead><tbody>'+
+(r.map(t=>'<tr><td>'+esc(t.date||'')+'</td><td>'+esc(t.supplier||t.vendor||'')+'</td><td>'+esc(t.invoiceRef||t.billNo||t.ref||'')+'</td><td>'+esc(t.itemName||t.item||'')+'</td><td>'+Math.abs(+t.qty||0)+'</td><td>'+money(t.rate||t.purchaseRate||t.unit)+'</td><td>'+money(pa(t))+'</td><td>'+money(t.tax)+'</td><td>'+money(pg(t))+'</td></tr>').join('')||'<tr><td colspan="9">No transactions found</td></tr>')+
+'</tbody></table>';d.scrollIntoView({behavior:'smooth',block:'start'})
+}
+function install(){const d=document.getElementById('dashboard');if(!d)return;[...d.querySelectorAll('*')].forEach(e=>{if(e.children.length<=4&&/^Total Purchase$/i.test((e.textContent||'').trim())){e.style.cursor='pointer';e.title='Click for month-wise purchase history';e.addEventListener('click',openPurchase,true)}})}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(install,1000));else setTimeout(install,1000);
+})();
+</script></body></html>
