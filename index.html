@@ -3905,4 +3905,86 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(bind,800));else setTimeout(bind,800);
  setTimeout(bind,2500);
 })();
+</script><script>
+/* V160: Combined Party Ledger -> Summary first, complete detail below */
+(function(){
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const money=n=>'₹'+Number(n||0).toFixed(2);
+ const read=k=>{try{const a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}};
+ const getTx=()=>read('adr_tx_v2');
+ const getPay=()=>read('adr_accounting_payments_v1');
+ const getSPay=()=>read('adr_supplier_payments_v1');
+ function party(t){return String(t.customer||t.supplier||t.vendor||'').trim()}
+ function item(t){
+  if(t.itemName)return t.itemName;
+  const code=String(t.item||'').replace(/^RM:/,'');
+  const r=read('adr_rawmaterials_v2').find(x=>String(x.code)===code);
+  if(r)return r.name||r.code;
+  const i=read('adr_items_v2').find(x=>String(x.code)===code);
+  return i?(i.name||i.code):code;
+ }
+ function data(p){
+  const k=p.toLowerCase(),d={rawSale:0,component:0,jobwork:0,fgSales:0,purchase:0,received:0,given:0,details:[]};
+  getTx().forEach(t=>{
+   if(party(t).toLowerCase()!==k)return;
+   const type=String(t.type||'').toUpperCase(),q=Math.abs(Number(t.qty)||0);
+   let amount=0,total=0,gst=Number(t.tax)||0,rate=0,label='';
+   if(type==='RAW MATERIAL SALE'){
+    rate=Number(t.saleRate)||0;amount=Number(t.amount)||(q*rate);total=Number(t.grandTotal)||(amount+gst);d.rawSale+=total;label='Raw Material Sale';
+   }else if(type==='JOB WORK RECEIVE'){
+    rate=Number(t.jobRate)||0;amount=Number(t.jobAmount)||(q*rate);total=amount;d.component+=total;d.jobwork+=amount;label='Component Receive / Job Work';
+   }else if(type==='DISPATCH'){
+    rate=Number(t.dispatchRate)||0;amount=Number(t.amount)||(q*rate);total=Number(t.grandTotal)||(amount+gst);d.fgSales+=total;label='Finished Product Sales';
+   }else if(type==='PURCHASE'){
+    rate=Number(t.purchaseRate)||0;amount=Number(t.amount)||(q*rate);total=Number(t.grandTotal)||(amount+gst);d.purchase+=total;label='Purchase';
+   }else if(type==='RAW MATERIAL COMPANY INWARD'){
+    rate=Number(t.inwardRate)||0;amount=Number(t.amount)||(q*rate);total=Number(t.grandTotal)||(amount+gst);d.purchase+=total;label='Raw Material Inward';
+   }else return;
+   d.details.push({date:t.date||'',label,ref:t.billNo||t.invoiceNo||t.inwardRef||t.ref||'',item:item(t),qty:q,unit:t.unit||'',rate,amount,gst,total,debit:(type==='DISPATCH'||type==='RAW MATERIAL SALE')?total:0,credit:(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD'||type==='JOB WORK RECEIVE')?total:0,remark:t.remark||''});
+  });
+  getPay().forEach(x=>{if(String(x.customer||'').trim().toLowerCase()===k){const a=Number(x.amount)||0;d.received+=a;d.details.push({date:x.date||'',label:'Payment Received',ref:x.ref||'',item:'-',qty:0,unit:'',rate:0,amount:a,gst:0,total:a,debit:0,credit:a,remark:x.remark||''})}});
+  getSPay().forEach(x=>{if(String(x.party||'').trim().toLowerCase()===k){const a=Number(x.amount)||0;d.given+=a;d.details.push({date:x.date||'',label:'Payment Given',ref:x.ref||'',item:'-',qty:0,unit:'',rate:0,amount:a,gst:0,total:a,debit:a,credit:0,remark:x.remark||''})}});
+  return d;
+ }
+ function open(p){
+  const d=data(p),net=d.fgSales+d.rawSale+d.given-d.purchase-d.component-d.received;
+  const host=document.getElementById('mergedPartyLedger');
+  if(!host)return;
+  let sum=document.getElementById('v160PartySummary');
+  if(!sum){sum=document.createElement('div');sum.id='v160PartySummary';host.insertBefore(sum,host.querySelector('#mergedPartyLedgerWrap')||null)}
+  sum.innerHTML=`<h3 style="margin-top:16px">📊 ${esc(p)} — Party Summary</h3>
+   <div style="overflow:auto"><table style="min-width:1200px">
+   <thead><tr><th>Raw Material Sale</th><th>Component Receive</th><th>Job Work</th><th>Finished Product Sales</th><th>Purchase / Inward</th><th>Payment Received</th><th>Payment Given</th><th>Net Balance</th></tr></thead>
+   <tbody><tr>
+   <td>${money(d.rawSale)}</td><td>${money(d.component)}</td><td>${money(d.jobwork)}</td><td>${money(d.fgSales)}</td><td>${money(d.purchase)}</td><td>${money(d.received)}</td><td>${money(d.given)}</td>
+   <td class="${net>=0?'payment-due':'payment-received'}"><b>${money(net)} ${net>0?'Dr':net<0?'Cr':'-'}</b></td>
+   </tr></tbody>
+   </table></div>`;
+  d.details.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  let bal=0,amt=0,gst=0,total=0,dr=0,cr=0;
+  const rows=d.details.map(x=>{
+   bal+=x.debit-x.credit;amt+=x.amount;gst+=x.gst;total+=x.total;dr+=x.debit;cr+=x.credit;
+   return `<tr><td>${esc(x.date)}</td><td>${esc(x.label)}</td><td>${esc(x.ref)}</td><td>${esc(x.item)}</td><td>${x.qty?esc(x.qty+' '+x.unit):'-'}</td><td>${x.rate?money(x.rate):'-'}</td><td>${x.amount?money(x.amount):'-'}</td><td>${x.gst?money(x.gst):'-'}</td><td>${x.total?money(x.total):'-'}</td><td>${x.debit?money(x.debit):'-'}</td><td>${x.credit?money(x.credit):'-'}</td><td>${money(bal)}</td><td>${esc(x.remark)}</td></tr>`;
+  }).join('');
+  let wrap=document.getElementById('mergedPartyLedgerWrap');
+  if(!wrap){wrap=document.createElement('div');wrap.id='mergedPartyLedgerWrap';host.appendChild(wrap)}
+  wrap.style.display='block';wrap.style.overflow='auto';wrap.innerHTML=`<h4>📒 ${esc(p)} — Complete Transaction Detail</h4>
+   <table style="min-width:1350px"><thead><tr><th>Date</th><th>Type</th><th>Reference</th><th>Item / Component</th><th>Qty</th><th>Rate</th><th>Amount</th><th>GST</th><th>Total</th><th>Debit</th><th>Credit</th><th>Balance</th><th>Remark</th></tr></thead>
+   <tbody>${rows||'<tr><td colspan="13">No transaction detail found.</td></tr>'}</tbody>
+   <tfoot><tr><th colspan="6">TOTAL</th><th>${money(amt)}</th><th>${money(gst)}</th><th>${money(total)}</th><th>${money(dr)}</th><th>${money(cr)}</th><th>${money(bal)}</th><th></th></tr></tfoot></table>`;
+  sum.scrollIntoView({behavior:'smooth',block:'start'});
+ }
+ function bind(){
+  const input=document.getElementById('mergedPartyFilter'),box=document.getElementById('mergedPartySuggest');
+  if(!input||!box||box.dataset.v160==='1')return;
+  box.dataset.v160='1';
+  box.addEventListener('mousedown',e=>{
+   const row=e.target.closest('div');if(!row||row===box)return;
+   const n=String(row.textContent||'').trim();
+   if(n)setTimeout(()=>open(n),100);
+  },true);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(bind,700));else setTimeout(bind,700);
+ setTimeout(bind,2000);setTimeout(bind,4000);
+})();
 </script></body></html>
