@@ -2657,8 +2657,9 @@ function renderMergedPartyDetailV96(party){
  const money=n=>'₹'+Math.abs(Number(n)||0).toFixed(2);
  const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const pushTxn=(t)=>{
-  const c=String(t.customer||t.supplier||t.vendor||'').trim();
-  if(c.toLowerCase()!==target)return;
+  const partyFields=[t.customer,t.supplier,t.vendor,t.customerName,t.supplierName,t.vendorName]
+    .map(v=>String(v||'').trim().toLowerCase()).filter(Boolean);
+  if(!partyFields.includes(target))return;
   const type=String(t.type||'').toUpperCase(),ret=isReturnMergedV96(t);
   const qty=Math.abs(Number(t.qty??t.quantity)||0);
   const item=String(t.itemName||t.item||'').replace(/^RM:/,'');
@@ -2690,7 +2691,13 @@ function renderMergedPartyDetailV96(party){
    remark:t.remark||''
   });
  };
- (transactions||[]).forEach(pushTxn);
+ let mergedTx=[];
+ try{
+   mergedTx=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]');
+   if(!Array.isArray(mergedTx))mergedTx=[];
+ }catch(e){mergedTx=[];}
+ if(!mergedTx.length && Array.isArray(window.transactions))mergedTx=window.transactions;
+ mergedTx.forEach(pushTxn);
  getAccountingPayments().filter(p=>String(p.customer||'').trim().toLowerCase()===target).forEach(p=>{
   const a=Number(p.amount)||0;
   events.push({date:p.date||'',label:'Payment Received',ref:p.ref||'',item:'',component:'',qty:0,unit:'',rate:0,amount:a,gst:0,total:a,debit:0,credit:a,remark:p.remark||''});
@@ -3770,7 +3777,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         e.preventDefault();
         i.value=n;i.dataset.selectedParty=n;
         b.style.display='none';
-        if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger();
+        if(typeof renderMergedPartyDetailV96==='function')renderMergedPartyDetailV96(n);
+        else if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger();
       };
       d.onclick=function(e){e.preventDefault()};
       b.appendChild(d);
