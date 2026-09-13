@@ -4808,6 +4808,19 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 }
 </style>
+
+<style id="v178-inward-close">
+@media (min-width:900px){
+  #rawmaterials #v177InwardWrap{display:none!important;}
+  #rawmaterials.v178-show-inward #v177InwardWrap{display:block!important;}
+  #rawmaterials.v178-show-name #v177InwardWrap{display:none!important;}
+}
+.v178-field-close{
+  float:right;border:0;background:transparent;font-size:20px;line-height:1;
+  cursor:pointer;padding:0 4px;color:#555;
+}
+.v178-field-close:hover{color:#c00}
+</style>
 </head><body>'+clone.innerHTML+'</body></html>');
     w.document.close();
     w.focus();
@@ -5193,6 +5206,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* V173: Item Master submenu toggles open/closed on repeated Item Master clicks. */
 </script>
 <script>
+/* V178: Material Inward fields open on submenu click and close with X. */
+</script>
+<script>
 /* V177: Raw Material Master right-side fields are shown only on submenu click. */
 </script>
 <script>
@@ -5254,6 +5270,72 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   else start();
 
   new MutationObserver(bind).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<script>
+/* V178: Material Inward gets its own right-side field area and X closes it. */
+(function(){
+  let inwardOpen=false;
+
+  function setup(){
+    const sec=document.getElementById('rawmaterials');
+    if(!sec)return;
+
+    // Locate the existing Material Inward area by the rmPurchaseDate field.
+    const date=document.getElementById('rmPurchaseDate');
+    if(date){
+      let area=date.closest('.panel') || date.parentElement;
+      // Prefer the nearest block that contains the inward controls, without
+      // disturbing the existing HTML/data logic.
+      while(area && area.parentElement && area.parentElement!==sec &&
+            !area.querySelector('#rmPurchaseTaxRate')) area=area.parentElement;
+
+      if(area && !area.id) area.id='v177InwardWrap';
+      else if(area && area.id!=='rawMaterialMasterAddBox' &&
+              !area.id.startsWith('v177')) area.id='v177InwardWrap';
+
+      if(area && !area.querySelector('.v178-field-close')){
+        const close=document.createElement('button');
+        close.type='button';
+        close.className='v178-field-close';
+        close.textContent='×';
+        close.title='Close';
+        close.addEventListener('click',function(e){
+          e.preventDefault(); e.stopPropagation();
+          inwardOpen=false;
+          sec.classList.remove('v178-show-inward');
+          sec.classList.remove('v177-show-inward');
+        });
+        area.insertBefore(close,area.firstChild);
+      }
+    }
+
+    const inward=document.getElementById('v174AddRawStock');
+    if(inward && !inward.dataset.v178){
+      inward.dataset.v178='1';
+      inward.addEventListener('click',function(e){
+        e.stopPropagation();
+        inwardOpen=true;
+        sec.classList.remove('v177-show-name');
+        sec.classList.add('v178-show-inward');
+        const el=document.getElementById('rmPurchaseDate') || document.getElementById('rmPurchase');
+        if(el)setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'center'}),80);
+      });
+    }
+
+    // Keep Material Inward closed when Raw Material Master itself is first opened.
+    if(!sec.classList.contains('active')){
+      inwardOpen=false;
+      sec.classList.remove('v178-show-inward');
+    }
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
+  else setup();
+  setTimeout(setup,300);
+  setTimeout(setup,1000);
+  setTimeout(setup,2000);
 })();
 </script>
 </body></html>
