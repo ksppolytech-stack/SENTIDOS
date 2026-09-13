@@ -184,7 +184,7 @@ tr.low-stock-row td * {
 <input id="rmMin" type="number" step="0.001" placeholder="Minimum Stock">
 </div><br><button class="primary" id="addRM">➕ Save Raw Material</button>
 </div>
-<button type="button" id="showRawMaterialMasterBtn" class="primary" style="margin-bottom:12px">➕ Add Raw Material</button>
+<button type="button" id="showRawMaterialMasterBtn" class="primary" style="display:none;margin-bottom:12px">➕ Add Raw Material</button>
 <table><thead><tr><th>Material Name</th><th>Total Stock</th><th>Action</th></tr></thead><tbody id="rmTable"></tbody></table><div id="rawLotDetails" class="small"></div>
 <hr>
 <h3>Company Raw Material Inward / Stock Add</h3><p class="small">ઉપરની listમાં માત્ર Material Name અને Total Stock દેખાશે. નીચેની Inward listમાં દરેક batchનો Rate અલગ દેખાશે.</p>
@@ -5109,7 +5109,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     if(!menu){
       menu=document.createElement('div');
       menu.id='v174RawSubmenu';
-      menu.innerHTML='<button type="button" id="v174AddRaw">➕ Add Raw Material</button><button type="button" id="v174AddRawStock">➕ Add Stock</button>';
+      menu.innerHTML='<button type="button" id="v174AddRaw">🧱 Raw Material Name</button><button type="button" id="v174AddRawStock">➕ Add Stock</button>';
       rawBtn.insertAdjacentElement('afterend',menu);
 
       const addRaw=document.getElementById('v174AddRaw');
@@ -5121,7 +5121,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           if(box)box.style.display='block';
           if(btn)btn.style.display='none';
           const code=document.getElementById('rmCode');
-          if(code)code.focus();
+          if(code){
+            code.focus();
+            code.scrollIntoView({behavior:'smooth',block:'center'});
+          }
         };
       }
 
@@ -5163,6 +5166,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
   new MutationObserver(rawSetup).observe(document.body,{childList:true,subtree:true});
 })();
+</script>
+<script>
+/* V175: Raw Material submenu renamed to Raw Material Name; fields open only from submenu click. */
 </script>
 <script>
 /* V173: Item Master submenu toggles open/closed on repeated Item Master clicks. */
