@@ -4789,7 +4789,26 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     </style>`;
     const w=window.open('','_blank','width=1200,height=800');
     if(!w)return;
-    w.document.write('<!doctype html><html><head><title>GST Report</title>'+style+'</head><body>'+clone.innerHTML+'</body></html>');
+    w.document.write('<!doctype html><html><head><title>GST Report</title>'+style+'
+<style id="v177-raw-submenu-fields">
+@media (min-width:900px){
+  #rawmaterials .panel > .grid,
+  #rawmaterials #showRawMaterialMasterBtn,
+  #rawmaterials #rawMaterialMasterAddBox,
+  #rawmaterials #rmPurchasePanel,
+  #rawmaterials #rawMaterialInwardPanel{
+    display:none!important;
+  }
+  #rawmaterials.v177-show-name .panel > .grid,
+  #rawmaterials.v177-show-name #rawMaterialMasterAddBox{
+    display:block!important;
+  }
+  #rawmaterials.v177-show-inward #rawMaterialInwardPanel{
+    display:block!important;
+  }
+}
+</style>
+</head><body>'+clone.innerHTML+'</body></html>');
     w.document.close();
     w.focus();
     setTimeout(()=>{w.print();w.close()},400);
@@ -5174,6 +5193,67 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* V173: Item Master submenu toggles open/closed on repeated Item Master clicks. */
 </script>
 <script>
+/* V177: Raw Material Master right-side fields are shown only on submenu click. */
+</script>
+<script>
 /* V176: Add Stock submenu label changed to Material Inward. */
+</script>
+
+<script>
+/* V177: Raw Material Master fields open only after its submenu selection. */
+(function(){
+  let mode='none';
+
+  function apply(){
+    const sec=document.getElementById('rawmaterials');
+    const active=sec && sec.classList.contains('active');
+    if(!sec)return;
+    sec.classList.toggle('v177-show-name',active && mode==='name');
+    sec.classList.toggle('v177-show-inward',active && mode==='inward');
+
+    const menu=document.getElementById('v174RawSubmenu');
+    if(menu) menu.style.display=active ? 'flex' : 'none';
+
+    if(!active)mode='none';
+  }
+
+  function bind(){
+    const sec=document.getElementById('rawmaterials');
+    const nameBtn=document.getElementById('v174AddRaw');
+    const inwardBtn=document.getElementById('v174AddRawStock');
+    if(!sec || !nameBtn || !inwardBtn)return;
+
+    if(!nameBtn.dataset.v177){
+      nameBtn.dataset.v177='1';
+      nameBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        mode='name';
+        apply();
+      });
+    }
+    if(!inwardBtn.dataset.v177){
+      inwardBtn.dataset.v177='1';
+      inwardBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        mode='inward';
+        apply();
+        const el=document.getElementById('rmPurchaseDate') || document.getElementById('rmPurchase');
+        if(el)setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'center'}),80);
+      });
+    }
+    apply();
+  }
+
+  function start(){
+    bind();
+    setTimeout(bind,300);
+    setTimeout(bind,1000);
+    setTimeout(bind,2000);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);
+  else start();
+
+  new MutationObserver(bind).observe(document.body,{childList:true,subtree:true});
+})();
 </script>
 </body></html>
