@@ -4213,4 +4213,44 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  setTimeout(bind,4500);
 })();
 </script>
+
+<script>
+/* V162: Hide old Complete Transaction Detail in Combined Party Ledger */
+(function(){
+  function hideOldTransactionDetail(){
+    const host=document.getElementById('mergedPartyLedger');
+    if(!host)return;
+    const els=host.querySelectorAll('h3,h4,div');
+    els.forEach(el=>{
+      const txt=String(el.textContent||'').replace(/\s+/g,' ').trim();
+      if(/Complete Transaction Detail/i.test(txt) && el.querySelector('table')===null){
+        let target=el;
+        let p=el.parentElement;
+        // Hide the heading plus its following table/container when this is the old block.
+        for(let i=0;i<4 && p;i++,p=p.parentElement){
+          if(p.querySelector && p.querySelector('table')){
+            target=p;
+            break;
+          }
+        }
+        target.style.display='none';
+      }
+    });
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>{
+      hideOldTransactionDetail();
+      setTimeout(hideOldTransactionDetail,500);
+      setTimeout(hideOldTransactionDetail,1500);
+      setTimeout(hideOldTransactionDetail,3000);
+    });
+  }else{
+    hideOldTransactionDetail();
+    setTimeout(hideOldTransactionDetail,500);
+    setTimeout(hideOldTransactionDetail,1500);
+    setTimeout(hideOldTransactionDetail,3000);
+  }
+  new MutationObserver(hideOldTransactionDetail).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body></html>
