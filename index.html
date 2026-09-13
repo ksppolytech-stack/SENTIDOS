@@ -4885,4 +4885,92 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 }
 </style>
+
+<style id="v171-sidebar">
+/* V171: Real left sidebar; selected module opens in the main area to its right. */
+@media (min-width:900px){
+  body{padding-left:0!important;overflow-x:hidden}
+  header{margin-left:0!important}
+  main{
+    margin:0 0 0 225px!important;
+    max-width:none!important;
+    width:calc(100% - 225px)!important;
+    box-sizing:border-box!important;
+    padding:14px!important;
+  }
+  .tabs{
+    position:fixed!important;
+    left:0!important;
+    top:54px!important;
+    bottom:0!important;
+    width:210px!important;
+    max-width:210px!important;
+    height:auto!important;
+    box-sizing:border-box!important;
+    display:flex!important;
+    flex-direction:column!important;
+    flex-wrap:nowrap!important;
+    gap:4px!important;
+    margin:0!important;
+    padding:10px 8px!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    background:#e9eef3!important;
+    border-right:1px solid #cbd3db!important;
+    z-index:10000!important;
+  }
+  .tabs button{
+    width:100%!important;
+    min-height:42px!important;
+    flex:0 0 auto!important;
+    box-sizing:border-box!important;
+    text-align:left!important;
+    white-space:normal!important;
+    margin:0!important;
+    border-radius:7px!important;
+  }
+  .tabs button.active{
+    background:#17324d!important;
+    color:#fff!important;
+  }
+  .page{
+    width:100%!important;
+    box-sizing:border-box!important;
+  }
+}
+
+/* Hide V170's generic sidebar rules if present and keep print layout unchanged. */
+@media print{
+  body{padding-left:0!important}
+  main{margin:0!important;width:auto!important}
+  .tabs{display:none!important}
+}
+</style>
+
+<script>
+/* V171: module navigation */
+(function(){
+  function bindModules(){
+    document.querySelectorAll('.tabs button').forEach(btn=>{
+      if(btn.dataset.v171Bound==='1')return;
+      btn.dataset.v171Bound='1';
+      btn.addEventListener('click',function(){
+        const page=this.dataset.page;
+        if(!page)return;
+        try{sessionStorage.setItem('sentidosLastPage',page)}catch(e){}
+        // Existing ERP handler activates the requested .page.
+        // This keeps the clicked module's content immediately beside the sidebar.
+        setTimeout(()=>{
+          const target=document.getElementById(page);
+          if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
+        },20);
+      });
+    });
+  }
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(bindModules,200));
+  else setTimeout(bindModules,200);
+  new MutationObserver(bindModules).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body></html>
