@@ -194,12 +194,13 @@ tr.low-stock-row td * {
 <div class="autowrap" style="position:relative"><input id="rmPurchase" placeholder="Type Material Name"><div id="rmPurchaseSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
 <input id="rmPurchaseQty" type="number" step="0.001" placeholder="Quantity">
 <input id="rmPurchaseRate" type="number" step="0.001" placeholder="Rate / KG">
+<input id="rmPurchaseTaxRate" type="number" step="0.01" value="18" placeholder="GST %">
 <input id="rmPurchaseRef" placeholder="Invoice / Ref">
 </div><br>
 <button class="primary" id="rmPurchaseBtn">➕ Add Stock</button>
 <div class="msg" id="rmPurchaseMsg"></div>
 <hr><h3>Company Raw Material Inward Entries</h3>
-<table><thead><tr><th>Date</th><th>Inward No.</th><th>Supplier</th><th>Material</th><th>Qty</th><th>Rate</th><th>Unit</th><th>Action</th></tr></thead>
+<table><thead><tr><th>Date</th><th>Inward No.</th><th>Supplier</th><th>Material</th><th>Qty</th><th>Rate</th><th>Taxable</th><th>GST %</th><th>GST</th><th>Total</th><th>Unit</th><th>Action</th></tr></thead>
 <tbody id="rmPurchaseTable"></tbody></table>
 
 
@@ -240,20 +241,21 @@ tr.low-stock-row td * {
 <input id="purchaseQty" type="number" step="0.001" placeholder="Quantity">
 <select id="purchaseUnit"><option value="KG">KG</option><option value="PCS">PCS</option></select>
 <input id="purchaseRate" type="number" step="0.01" placeholder="Rate ₹0.00 (Editable)">
+<input id="purchaseTaxRate" type="number" step="0.01" value="18" placeholder="GST %">
 </div><br>
 <button type="button" id="addPurchaseItem">➕ Add Item</button>
 <button type="button" id="openPurchaseMaster">🏢 Supplier Master</button>
 <button class="primary" id="purchaseBtn">💾 Save Purchase</button>
 <div class="small" style="margin-top:8px">એક જ Supplier અને એક જ Bill/Invoiceમાં ઘણી Items હોય તો દરેક Item <b>Add Item</b> કરો અને અંતે એક વખત <b>Save Purchase</b> કરો.</div>
 <div style="overflow:auto;margin-top:12px">
-<table id="purchaseCartTable"><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Amount</th><th>Action</th></tr></thead><tbody><tr><td colspan="6">No items added</td></tr></tbody></table>
+<table id="purchaseCartTable"><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Taxable</th><th>GST %</th><th>GST</th><th>Total</th><th>Action</th></tr></thead><tbody><tr><td colspan="9">No items added</td></tr></tbody></table>
 </div>
 <div class="msg" id="purchaseMsg"></div>
 <hr>
 <h3>📋 Purchase Entries</h3>
 <div style="overflow:auto">
 <table id="purchaseEntryTable">
-<thead><tr><th>Date</th><th>Supplier</th><th>Item</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Amount</th><th>Invoice / Ref</th><th>Action</th></tr></thead>
+<thead><tr><th>Date</th><th>Supplier</th><th>Item</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Taxable</th><th>GST %</th><th>GST</th><th>Total</th><th>Invoice / Ref</th><th>Action</th></tr></thead>
 <tbody><tr><td colspan="9">No purchase entries</td></tr></tbody>
 </table>
 </div>
@@ -421,6 +423,7 @@ tr.low-stock-row td * {
 <div class="autowrap" style="position:relative"><input id="jwComponent" placeholder="Type Component Name"><div id="componentSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
 <input id="jwComponentWeight" readonly placeholder="Weight / PCS (gram)">
 <input id="jwReceiveQty" type="number" step="0.001" placeholder="Receive Qty"><input id="jwJobRate" type="text" readonly placeholder="Auto Rate / PCS" title="Vendor + Component rate; component-only fallback if uniquely saved">
+<input id="jwTaxRate" type="number" step="0.01" value="18" placeholder="GST %">
 
 </div>
 <p class="small">Raw Material Consumption = Component Weight × Receive Qty. Vendor પાસે issue થયેલા Raw Materialમાંથી આ quantity automatic deduct થશે.</p>
@@ -809,10 +812,12 @@ function getPurchaseItemFromFields(){
 }
 function renderPurchaseCart(){
  const body=$('purchaseCartTable')?.querySelector('tbody');if(!body)return;
+ const gstRate=Number($('purchaseTaxRate')?.value||18);
  body.innerHTML=purchaseCart.map((x,idx)=>{
    const amount=(Number(x.qty)||0)*(Number(x.rate)||0);
-   return `<tr><td>${x.name||x.code}</td><td>${Number(x.qty||0).toFixed(3)}</td><td>${x.unit}</td><td>₹${fmtRate2(Number(x.rate)||0)}</td><td>₹${amount.toFixed(2)}</td><td><button type="button" data-purchase-cart-delete="${idx}">🗑</button></td></tr>`;
- }).join('')||'<tr><td colspan="6">No items added</td></tr>';
+   const gst=amount*gstRate/100, total=amount+gst;
+   return `<tr><td>${x.name||x.code}</td><td>${Number(x.qty||0).toFixed(3)}</td><td>${x.unit}</td><td>₹${fmtRate2(Number(x.rate)||0)}</td><td>₹${amount.toFixed(2)}</td><td>${gstRate.toFixed(2)}%</td><td>₹${gst.toFixed(2)}</td><td>₹${total.toFixed(2)}</td><td><button type="button" data-purchase-cart-delete="${idx}">🗑</button></td></tr>`;
+ }).join('')||'<tr><td colspan="9">No items added</td></tr>';
  document.querySelectorAll('[data-purchase-cart-delete]').forEach(btn=>btn.onclick=()=>{purchaseCart.splice(Number(btn.dataset.purchaseCartDelete),1);renderPurchaseCart();});
 }
 function addPurchaseItem(){
@@ -833,7 +838,9 @@ function purchase(){
  const purchaseDate=$('purchaseDate').value || new Date().toISOString().slice(0,10);
  const supplier=$('purchaseSupplier').value.trim();
  const ref=$('purchaseRef').value.trim();
+ const gstRate=Math.max(0,Number($('purchaseTaxRate').value||18));
  if(!supplier||!ref)return alert('Supplier અને Invoice / Bill No. / Ref નાખો.');
+ if(!Number.isFinite(gstRate))return alert('GST % ખોટો છે.');
  // If current item is filled but not added, add it automatically before saving.
  const currentItem=getPurchaseItemFromFields();
  if(currentItem && (Number($('purchaseQty').value)||0)>0){ addPurchaseItem(); }
@@ -841,6 +848,8 @@ function purchase(){
  purchaseCart.forEach(x=>{
    const i=items.find(y=>y.code===x.code);
    if(!i)return;
+   const amount=(Number(x.qty)||0)*(Number(x.rate)||0);
+   const tax=amount*gstRate/100;
    i.stock+=Number(x.qty)||0;
    addTxn('PURCHASE',ref,i.code,Number(x.qty)||0,x.unit);
    const t=transactions[transactions.length-1];
@@ -848,9 +857,13 @@ function purchase(){
    t.supplier=supplier;
    t.purchaseRate=Number(x.rate)||0;
    t.purchaseUnit=x.unit;
+   t.amount=amount;
+   t.taxRate=gstRate;
+   t.tax=tax;
+   t.grandTotal=amount+tax;
  });
  save();
- msg('purchaseMsg',purchaseCart.length+' Purchase item(s) saved under Bill/Invoice '+ref+'.');
+ msg('purchaseMsg',purchaseCart.length+' Purchase item(s) saved under Bill/Invoice '+ref+'. GST '+gstRate.toFixed(2)+'%.');
  purchaseCart=[];
  renderPurchaseCart();
  $('purchaseCode').value='';
@@ -858,6 +871,7 @@ function purchase(){
  $('purchaseQty').value='';
  $('purchaseRate').value='';
  $('purchaseRef').value='';
+ $('purchaseTaxRate').value='18';
  renderPurchaseEntries();
 }
 function setupProductionSuggestions(){
@@ -1422,9 +1436,12 @@ function purchaseRawMaterial(){
  tr.inwardRate=rate;
  tr.inwardRef=$('rmPurchaseRef').value.trim();
  tr.amount=qty*rate;
+ tr.taxRate=Math.max(0,Number($('rmPurchaseTaxRate').value||18));
+ tr.tax=tr.amount*tr.taxRate/100;
+ tr.grandTotal=tr.amount+tr.tax;
  save();
  msg('rmPurchaseMsg','Raw Material Stock add થયું. No: '+ref+' | '+r.name+' | '+qty.toFixed(3)+' '+r.unit+' | Rate ₹'+rate.toFixed(3)+' | Total Stock '+Number(r.stock).toFixed(3));
- $('rmPurchaseDate').value=new Date().toISOString().slice(0,10);$('rmPurchaseSupplier').value='';$('rmPurchaseSupplier').dataset.selectedSupplier='';$('rmPurchase').value='';$('rmPurchase').dataset.selectedCode='';$('rmPurchaseQty').value='';$('rmPurchaseRate').value='';$('rmPurchaseRef').value='';
+ $('rmPurchaseDate').value=new Date().toISOString().slice(0,10);$('rmPurchaseTaxRate').value='18';$('rmPurchaseSupplier').value='';$('rmPurchaseSupplier').dataset.selectedSupplier='';$('rmPurchase').value='';$('rmPurchase').dataset.selectedCode='';$('rmPurchaseQty').value='';$('rmPurchaseRate').value='';$('rmPurchaseRef').value='';
 }
 function addRawMaterial(){
  const code=$('rmCode').value.trim(),name=$('rmName').value.trim();
@@ -1575,9 +1592,12 @@ function receiveFromVendor(){
  tr.date=receiveDate;
  tr.jobRate=rate;tr.jobAmount=amount;tr.vendor=vendor;tr.rmConsumed=consumptionKG;
  tr.rawMaterialCost=rawCost;tr.componentCost=(rawCost/qty)||0;tr.rmConsumptionDetails=details;
+ tr.taxRate=Math.max(0,Number($('jwTaxRate').value||18));
+ tr.tax=amount*tr.taxRate/100;
+ tr.grandTotal=amount+tr.tax;
  save();
  msg('jwReceiveMsg','Component received. Challan No: '+ref+' | Rate ₹'+rate.toFixed(2)+' | Job Work ₹'+amount.toFixed(2)+' | Material Cost ₹'+rawCost.toFixed(2)+' | ADR stock unchanged.');
- $('jwReceiveDate').value=new Date().toISOString().slice(0,10);$('jwReceiveVendor').value='';$('jwComponent').value='';$('jwComponentWeight').value='';$('jwReceiveQty').value='';$('jwJobRate').value='';$('jwConsumption').textContent='';$('jwJobAmount').textContent='';
+ $('jwReceiveDate').value=new Date().toISOString().slice(0,10);$('jwTaxRate').value='18';$('jwReceiveVendor').value='';$('jwComponent').value='';$('jwComponentWeight').value='';$('jwReceiveQty').value='';$('jwJobRate').value='';$('jwConsumption').textContent='';$('jwJobAmount').textContent='';
 }
 function showDashboardFilter(type){
  const box=$('dashboardDetails'),title=$('dashboardDetailsTitle'),table=$('dashboardDetailsTable');
@@ -1622,7 +1642,8 @@ function editPurchase(id){
  const q=prompt('Quantity',oldQty); if(q===null)return;
  const rate=prompt('Rate',oldRate); if(rate===null)return;
  const ref=prompt('Invoice / Ref',t.inwardRef||''); if(ref===null)return;
- const qty=Number(q),newRate=Number(rate);
+ const gst=prompt('GST %',Number(t.taxRate??18)); if(gst===null)return;
+ const qty=Number(q),newRate=Number(rate),newGst=Number(gst);
  const newR=rawMaterials.find(x=>x.code===material.trim())||rawMaterials.find(x=>x.name.toLowerCase()===material.trim().toLowerCase())||rawMaterials.find(x=>(x.name+' — '+x.code).toLowerCase()===material.trim().toLowerCase());
  if(!supplier.trim())return alert('Supplier જરૂરી છે.');
  if(!newR)return alert('Raw Material મળ્યું નથી.');
@@ -1645,6 +1666,8 @@ function editPurchase(id){
  t.inwardRate=newRate;
  t.inwardRef=ref.trim();
  t.amount=qty*newRate;
+ if(!Number.isFinite(newGst)||newGst<0)return alert('GST % ખોટો છે.');
+ t.taxRate=newGst;t.tax=t.amount*newGst/100;t.grandTotal=t.amount+t.tax;
  save();render();
 }
 function deletePurchase(id){
@@ -1824,7 +1847,7 @@ function renderPurchaseEntries(){
  const rows=transactions.filter(t=>t.type==='PURCHASE').slice().reverse();
  body.innerHTML=rows.map((t,idx)=>{
    const it=items.find(i=>i.code===t.item);
-   const qty=Math.abs(Number(t.qty)||0),rate=Number(t.purchaseRate||0),amount=qty*rate;
+   const qty=Math.abs(Number(t.qty)||0),rate=Number(t.purchaseRate||0),amount=Number(t.amount??qty*rate),gstRate=Number(t.taxRate??18),gst=Number(t.tax??amount*gstRate/100),total=Number(t.grandTotal??amount+gst);
    const id=String(t.id||t.ref||('PURCHASE-'+idx));
    return `<tr>
    <td>${t.date||''}</td><td>${t.supplier||''}</td><td>${it?it.name:(t.item||'')}</td>
@@ -3234,7 +3257,7 @@ document.querySelectorAll('[data-bom-del]').forEach(b=>b.onclick=()=>deleteBomPr
  renderJobWorkRates();
  
  const purchases=transactions.filter(t=>t.type==='RAW MATERIAL PURCHASE'||t.type==='RAW MATERIAL COMPANY INWARD');
- $('rmPurchaseTable').innerHTML=purchases.length?purchases.slice().reverse().map(t=>`<tr><td>${t.date}</td><td>${t.ref}</td><td>${t.supplier||''}</td><td>${(rawMaterials.find(r=>('RM:'+r.code)===t.item)||{name:t.item}).name}</td><td>${Number(t.qty||0).toFixed(3)}</td><td>₹${fmtRate2(t.purchaseRate??t.inwardRate??t.rate??0)}</td><td>${t.unit||''}</td><td><button data-rmp-edit="${t.id}">✏️ Edit</button> <button data-rmp="${t.id}">🗑 Delete</button></td></tr>`).join(''):'<tr><td colspan="7">No inward entries</td></tr>';
+ $('rmPurchaseTable').innerHTML=purchases.length?purchases.slice().reverse().map(t=>{const a=Number(t.amount??(Number(t.qty||0)*Number(t.purchaseRate??t.inwardRate??t.rate??0)))||0,gstRate=Number(t.taxRate??18),gst=Number(t.tax??a*gstRate/100),total=Number(t.grandTotal??a+gst);return `<tr><td>${t.date}</td><td>${t.ref}</td><td>${t.supplier||''}</td><td>${(rawMaterials.find(r=>('RM:'+r.code)===t.item)||{name:t.item}).name}</td><td>${Number(t.qty||0).toFixed(3)}</td><td>₹${fmtRate2(t.purchaseRate??t.inwardRate??t.rate??0)}</td><td>₹${a.toFixed(2)}</td><td>${gstRate.toFixed(2)}%</td><td>₹${gst.toFixed(2)}</td><td>₹${total.toFixed(2)}</td><td>${t.unit||''}</td><td><button data-rmp-edit="${t.id}">✏️ Edit</button> <button data-rmp="${t.id}">🗑 Delete</button></td></tr>`}).join(''):'<tr><td colspan="12">No inward entries</td></tr>';
  document.querySelectorAll('[data-rmp-edit]').forEach(b=>b.onclick=()=>editPurchase(b.dataset.rmpEdit));
  document.querySelectorAll('[data-rmp]').forEach(b=>b.onclick=()=>deletePurchase(b.dataset.rmp));
 $('rmTable').innerHTML=rawMaterials.map(r=>`<tr><td>${r.name}</td><td>${Number(r.stock||0).toFixed(3)} ${r.unit}</td><td><button type="button" data-rm-edit="${r.code}">✏️ Edit</button> <button type="button" data-rm-del="${r.code}">🗑 Delete</button></td></tr>`).join('');
@@ -4290,6 +4313,36 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   fix();
   [300,800,1500,3000].forEach(ms=>setTimeout(fix,ms));
   new MutationObserver(fix).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<script>
+/* V164: Ensure existing purchase/inward/job-work records also carry default 18% GST. */
+(function(){
+  function backfill(){
+    let a=[];
+    try{a=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]')}catch(e){}
+    if(!Array.isArray(a))return;
+    let changed=false;
+    a.forEach(t=>{
+      const ty=String(t.type||'').toUpperCase();
+      if(!['PURCHASE','RAW MATERIAL COMPANY INWARD','RAW MATERIAL PURCHASE','JOB WORK RECEIVE'].includes(ty))return;
+      if(t.taxRate!=null || t.tax!=null || t.grandTotal!=null)return;
+      const q=Math.abs(Number(t.qty)||0);
+      const rate=Number(t.purchaseRate??t.inwardRate??t.jobRate??t.rate??0);
+      const amount=Number(t.amount??q*rate)||0;
+      t.taxRate=18;t.tax=amount*0.18;t.grandTotal=amount+t.tax;changed=true;
+    });
+    if(changed)localStorage.setItem('adr_tx_v2',JSON.stringify(a));
+  }
+  function init(){
+    backfill();
+    ['rmPurchaseTaxRate','purchaseTaxRate','jwTaxRate'].forEach(id=>{
+      const e=document.getElementById(id);if(e&&e.value==='')e.value='18';
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init,700));
+  else setTimeout(init,700);
 })();
 </script>
 </body></html>
