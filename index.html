@@ -4997,6 +4997,30 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   #v172ItemSubmenu button:hover{background:#dce5ed}
 }
 </style>
+<style id="v174-raw-submenu">
+@media (min-width:900px){
+  #v174RawSubmenu{
+    display:none;
+    flex-direction:column;
+    gap:3px;
+    margin:0 0 5px 8px;
+    padding:4px 0 4px 10px;
+    border-left:2px solid #b8c4cf;
+  }
+  #v174RawSubmenu button{
+    width:100%;
+    border:0;
+    background:transparent;
+    text-align:left;
+    padding:8px 9px;
+    cursor:pointer;
+    border-radius:5px;
+    font-size:14px;
+  }
+  #v174RawSubmenu button:hover{background:#dce5ed}
+}
+</style>
+
 <script>
 /* V172: Item Master sidebar submenu; Add Item opens the Item form. */
 (function(){
@@ -5069,6 +5093,75 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   new MutationObserver(()=>{
     setup();
   }).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+<script>
+/* V174: Raw Material Master submenu toggles open/closed like Item Master. */
+(function(){
+  let rawMenuOpen=false;
+
+  function rawSetup(){
+    const tabs=document.querySelector('.tabs');
+    const rawBtn=document.querySelector('.tabs button[data-page="rawmaterials"]');
+    if(!tabs||!rawBtn)return;
+
+    let menu=document.getElementById('v174RawSubmenu');
+    if(!menu){
+      menu=document.createElement('div');
+      menu.id='v174RawSubmenu';
+      menu.innerHTML='<button type="button" id="v174AddRaw">➕ Add Raw Material</button><button type="button" id="v174AddRawStock">➕ Add Stock</button>';
+      rawBtn.insertAdjacentElement('afterend',menu);
+
+      const addRaw=document.getElementById('v174AddRaw');
+      if(addRaw){
+        addRaw.onclick=function(e){
+          e.stopPropagation();
+          const box=document.getElementById('rawMaterialMasterAddBox');
+          const btn=document.getElementById('showRawMaterialMasterBtn');
+          if(box)box.style.display='block';
+          if(btn)btn.style.display='none';
+          const code=document.getElementById('rmCode');
+          if(code)code.focus();
+        };
+      }
+
+      const addStock=document.getElementById('v174AddRawStock');
+      if(addStock){
+        addStock.onclick=function(e){
+          e.stopPropagation();
+          const date=document.getElementById('rmPurchaseDate');
+          if(date)date.scrollIntoView({behavior:'smooth',block:'center'});
+          const material=document.getElementById('rmPurchase');
+          if(material)setTimeout(()=>material.focus(),250);
+        };
+      }
+    }
+
+    const active=document.getElementById('rawmaterials')?.classList.contains('active');
+    menu.style.display=(active&&rawMenuOpen)?'flex':'none';
+    if(!active)rawMenuOpen=false;
+
+    if(!rawBtn.dataset.v174){
+      rawBtn.dataset.v174='1';
+      rawBtn.addEventListener('click',function(){
+        setTimeout(function(){
+          rawMenuOpen=!rawMenuOpen;
+          const isActive=document.getElementById('rawmaterials')?.classList.contains('active');
+          menu.style.display=(isActive&&rawMenuOpen)?'flex':'none';
+        },60);
+      });
+    }
+  }
+
+  function start(){
+    rawSetup();
+    setTimeout(rawSetup,300);
+    setTimeout(rawSetup,1000);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);
+  else start();
+
+  new MutationObserver(rawSetup).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
 <script>
