@@ -4973,4 +4973,95 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   new MutationObserver(bindModules).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
+
+<style id="v172-item-submenu">
+@media (min-width:900px){
+  #v172ItemSubmenu{
+    display:none;
+    flex-direction:column;
+    gap:3px;
+    margin:0 0 5px 8px;
+    padding:4px 0 4px 10px;
+    border-left:2px solid #b8c4cf;
+  }
+  #v172ItemSubmenu button{
+    width:100%;
+    border:0;
+    background:transparent;
+    text-align:left;
+    padding:8px 9px;
+    cursor:pointer;
+    border-radius:5px;
+    font-size:14px;
+  }
+  #v172ItemSubmenu button:hover{background:#dce5ed}
+}
+</style>
+<script>
+/* V172: Item Master sidebar submenu; Add Item opens the Item form. */
+(function(){
+  const $=id=>document.getElementById(id);
+
+  function setup(){
+    const tabs=document.querySelector('.tabs');
+    const itemBtn=document.querySelector('.tabs button[data-page="items"]');
+    if(!tabs||!itemBtn)return;
+
+    let menu=$('v172ItemSubmenu');
+    if(!menu){
+      menu=document.createElement('div');
+      menu.id='v172ItemSubmenu';
+      menu.innerHTML='<button type="button" id="v172AddItem">➕ Add Item</button>';
+      itemBtn.insertAdjacentElement('afterend',menu);
+      $('v172AddItem').onclick=function(e){
+        e.stopPropagation();
+        showForm(true);
+      };
+    }
+
+    // The form area consists of the first .grid and the Add Item button.
+    function showForm(show){
+      const sec=$('items');
+      if(!sec)return;
+      const panel=sec.querySelector('.panel');
+      if(!panel)return;
+      const grid=panel.querySelector('.grid');
+      const add=$('addItemBtn');
+      if(grid)grid.style.display=show?'grid':'none';
+      if(add)add.style.display=show?'inline-block':'none';
+      if(show){
+        const code=$('itemCode'); if(code)code.focus();
+      }
+    }
+
+    function sync(){
+      const active=$('items')?.classList.contains('active');
+      menu.style.display=active?'flex':'none';
+      if(!active)showForm(false);
+    }
+
+    if(!itemBtn.dataset.v172){
+      itemBtn.dataset.v172='1';
+      itemBtn.addEventListener('click',()=>setTimeout(sync,50));
+    }
+    setup._sync=sync;
+    sync();
+  }
+
+  function init(){
+    setup();
+    setTimeout(()=>setup(),300);
+    setTimeout(()=>setup(),1000);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+  else init();
+
+  new MutationObserver(()=>{
+    setup();
+    const item=$('items');
+    const menu=$('v172ItemSubmenu');
+    if(item&&menu&&item.classList.contains('active'))menu.style.display='flex';
+  }).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body></html>
