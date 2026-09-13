@@ -3987,4 +3987,230 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(bind,700));else setTimeout(bind,700);
  setTimeout(bind,2000);setTimeout(bind,4000);
 })();
-</script></body></html>
+</script>
+<script>
+/* V161: Combined Party Ledger -> one bill per Reference; component/detail opens on bill click */
+(function(){
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const money=n=>'₹'+Number(n||0).toFixed(2);
+ const read=k=>{try{const a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}};
+ const getTx=()=>read('adr_tx_v2');
+ const getPay=()=>read('adr_accounting_payments_v1');
+ const getSPay=()=>read('adr_supplier_payments_v1');
+
+ function party(t){return String(t.customer||t.supplier||t.vendor||'').trim()}
+ function item(t){
+   if(t.itemName)return t.itemName;
+   const code=String(t.item||'').replace(/^RM:/,'');
+   const r=read('adr_rawmaterials_v2').find(x=>String(x.code)===code);
+   if(r)return r.name||r.code;
+   const i=read('adr_items_v2').find(x=>String(x.code)===code);
+   return i?(i.name||i.code):code;
+ }
+ function refOf(t){ return String(t.billNo||t.invoiceNo||t.inwardRef||t.ref||'').trim() || 'No Reference'; }
+
+ function data(p){
+   const k=String(p).trim().toLowerCase();
+   const d={rawSale:0,component:0,jobwork:0,fgSales:0,purchase:0,received:0,given:0,details:[]};
+
+   getTx().forEach(t=>{
+     if(party(t).toLowerCase()!==k)return;
+     const type=String(t.type||'').toUpperCase();
+     const q=Math.abs(Number(t.qty)||0);
+     let amount=0,total=0,gst=Number(t.tax)||0,rate=0,label='';
+
+     if(type==='RAW MATERIAL SALE'){
+       rate=Number(t.saleRate)||0;
+       amount=Number(t.amount)||(q*rate);
+       total=Number(t.grandTotal)||(amount+gst);
+       d.rawSale+=total; label='Raw Material Sale';
+     }else if(type==='JOB WORK RECEIVE'){
+       rate=Number(t.jobRate)||0;
+       amount=Number(t.jobAmount)||(q*rate);
+       total=amount;
+       d.component+=total; d.jobwork+=amount; label='Component Receive / Job Work';
+     }else if(type==='DISPATCH'){
+       rate=Number(t.dispatchRate)||0;
+       amount=Number(t.amount)||(q*rate);
+       total=Number(t.grandTotal)||(amount+gst);
+       d.fgSales+=total; label='Finished Product Sales';
+     }else if(type==='PURCHASE'){
+       rate=Number(t.purchaseRate??t.rate)||0;
+       amount=Number(t.amount)||(q*rate);
+       total=Number(t.grandTotal)||(amount+gst);
+       d.purchase+=total; label='Purchase';
+     }else if(type==='RAW MATERIAL COMPANY INWARD'){
+       rate=Number(t.inwardRate??t.rate)||0;
+       amount=Number(t.amount)||(q*rate);
+       total=Number(t.grandTotal)||(amount+gst);
+       d.purchase+=total; label='Raw Material Inward';
+     }else return;
+
+     d.details.push({
+       date:t.date||'', type, label, ref:refOf(t), item:item(t), qty:q, unit:t.unit||'',
+       rate, amount, gst, total,
+       debit:(type==='DISPATCH'||type==='RAW MATERIAL SALE')?total:0,
+       credit:(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD'||type==='JOB WORK RECEIVE')?total:0,
+       remark:t.remark||'', source:t
+     });
+   });
+
+   getPay().forEach(x=>{
+     if(String(x.customer||'').trim().toLowerCase()!==k)return;
+     const a=Number(x.amount)||0;
+     d.received+=a;
+     d.details.push({date:x.date||'',type:'PAYMENT RECEIVED',label:'Payment Received',
+       ref:String(x.ref||x.receiptNo||'').trim()||'No Reference',item:'-',qty:0,unit:'',
+       rate:0,amount:a,gst:0,total:a,debit:0,credit:a,remark:x.remark||'',source:x});
+   });
+
+   getSPay().forEach(x=>{
+     if(String(x.party||'').trim().toLowerCase()!==k)return;
+     const a=Number(x.amount)||0;
+     d.given+=a;
+     d.details.push({date:x.date||'',type:'PAYMENT GIVEN',label:'Payment Given',
+       ref:String(x.ref||x.paymentNo||'').trim()||'No Reference',item:'-',qty:0,unit:'',
+       rate:0,amount:a,gst:0,total:a,debit:a,credit:0,remark:x.remark||'',source:x});
+   });
+   return d;
+ }
+
+ function groupBills(details){
+   const map=new Map();
+   details.forEach(x=>{
+     const key=String(x.ref||'No Reference').trim()||'No Reference';
+     if(!map.has(key)){
+       map.set(key,{ref:key,date:x.date||'',labels:new Set(),items:[],qty:0,amount:0,gst:0,total:0,debit:0,credit:0,rows:[]});
+     }
+     const g=map.get(key);
+     if(String(x.date||'')<String(g.date||''))g.date=x.date||g.date;
+     g.labels.add(x.label);
+     g.items.push(x.item);
+     g.qty+=Number(x.qty)||0;
+     g.amount+=Number(x.amount)||0;
+     g.gst+=Number(x.gst)||0;
+     g.total+=Number(x.total)||0;
+     g.debit+=Number(x.debit)||0;
+     g.credit+=Number(x.credit)||0;
+     g.rows.push(x);
+   });
+   return Array.from(map.values()).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+ }
+
+ function hideOld(){
+   ['v159PartyLedger','v160PartySummary'].forEach(id=>{
+     const e=document.getElementById(id); if(e)e.style.display='none';
+   });
+ }
+
+ function openBill(panel,bill,index){
+   const old=document.getElementById('v161BillDetail');
+   if(old)old.remove();
+
+   const detail=document.createElement('div');
+   detail.id='v161BillDetail';
+   detail.style.cssText='margin-top:14px;overflow:auto;border-top:1px solid #ddd;padding-top:10px';
+   let bal=0;
+   const rows=bill.rows.map(x=>{
+     bal+=x.debit-x.credit;
+     return `<tr>
+       <td>${esc(x.date)}</td><td>${esc(x.label)}</td><td>${esc(x.ref)}</td>
+       <td>${esc(x.item)}</td><td>${x.qty?esc(x.qty+' '+x.unit):'-'}</td>
+       <td>${x.rate?money(x.rate):'-'}</td><td>${x.amount?money(x.amount):'-'}</td>
+       <td>${x.gst?money(x.gst):'-'}</td><td>${x.total?money(x.total):'-'}</td>
+       <td>${x.debit?money(x.debit):'-'}</td><td>${x.credit?money(x.credit):'-'}</td>
+       <td>${money(bal)}</td><td>${esc(x.remark)}</td>
+     </tr>`;
+   }).join('');
+
+   detail.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <h4 style="margin:8px 0">🔎 Bill / Reference ${esc(bill.ref)} — Component Detail</h4>
+      <button type="button" id="v161CloseBill" style="padding:6px 12px;cursor:pointer">× Hide Detail</button>
+    </div>
+    <table style="min-width:1350px">
+      <thead><tr><th>Date</th><th>Type</th><th>Reference</th><th>Item / Component</th><th>Qty</th><th>Rate</th><th>Amount</th><th>GST</th><th>Total</th><th>Debit</th><th>Credit</th><th>Balance</th><th>Remark</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="13">No component detail.</td></tr>'}</tbody>
+      <tfoot><tr><th colspan="6">BILL TOTAL</th><th>${money(bill.amount)}</th><th>${money(bill.gst)}</th><th>${money(bill.total)}</th><th>${money(bill.debit)}</th><th>${money(bill.credit)}</th><th>${money(bill.debit-bill.credit)}</th><th></th></tr></tfoot>
+    </table>`;
+   panel.appendChild(detail);
+   document.getElementById('v161CloseBill').onclick=()=>detail.remove();
+   detail.scrollIntoView({behavior:'smooth',block:'nearest'});
+ }
+
+ function open(p){
+   hideOld();
+   const d=data(p);
+   const net=d.fgSales+d.rawSale+d.given-d.purchase-d.component-d.received;
+   const host=document.getElementById('mergedPartyLedger');
+   if(!host)return;
+
+   let root=document.getElementById('v161PartyView');
+   if(!root){
+     root=document.createElement('div');
+     root.id='v161PartyView';
+     host.appendChild(root);
+   }
+   root.style.display='block';
+
+   const bills=groupBills(d.details);
+   root.innerHTML=`<h3 style="margin-top:16px">📊 ${esc(p)} — Party Summary</h3>
+    <div style="overflow:auto"><table style="min-width:1200px">
+      <thead><tr><th>Raw Material Sale</th><th>Component Receive</th><th>Job Work</th><th>Finished Product Sales</th><th>Purchase / Inward</th><th>Payment Received</th><th>Payment Given</th><th>Net Balance</th></tr></thead>
+      <tbody><tr>
+        <td>${money(d.rawSale)}</td><td>${money(d.component)}</td><td>${money(d.jobwork)}</td>
+        <td>${money(d.fgSales)}</td><td>${money(d.purchase)}</td><td>${money(d.received)}</td><td>${money(d.given)}</td>
+        <td class="${net>=0?'payment-due':'payment-received'}"><b>${money(net)} ${net>0?'Dr':net<0?'Cr':'-'}</b></td>
+      </tr></tbody>
+    </table></div>
+
+    <h3 style="margin-top:18px">🧾 ${esc(p)} — Bill / Reference Summary</h3>
+    <div style="overflow:auto"><table style="min-width:1200px">
+      <thead><tr><th>Bill / Reference</th><th>Date</th><th>Type</th><th>Item / Component</th><th>Qty</th><th>Amount</th><th>GST</th><th>Bill Total</th><th>Debit</th><th>Credit</th><th>Action</th></tr></thead>
+      <tbody id="v161BillRows">
+        ${bills.map((b,i)=>`<tr>
+          <td><b>${esc(b.ref)}</b></td>
+          <td>${esc(b.date)}</td>
+          <td>${esc(Array.from(b.labels).join(' / '))}</td>
+          <td>${esc(Array.from(new Set(b.items.filter(Boolean))).join(', '))}</td>
+          <td>${b.qty?esc(b.qty):'-'}</td>
+          <td>${money(b.amount)}</td>
+          <td>${b.gst?money(b.gst):'-'}</td>
+          <td><b>${money(b.total)}</b></td>
+          <td>${b.debit?money(b.debit):'-'}</td>
+          <td>${b.credit?money(b.credit):'-'}</td>
+          <td><button type="button" class="v161BillBtn" data-i="${i}" style="padding:5px 10px;cursor:pointer">View Component Detail</button></td>
+        </tr>`).join('') || '<tr><td colspan="11">No bill / reference found.</td></tr>'}
+      </tbody>
+      <tfoot><tr><th colspan="5">TOTAL</th><th>${money(bills.reduce((a,b)=>a+b.amount,0))}</th><th>${money(bills.reduce((a,b)=>a+b.gst,0))}</th><th>${money(bills.reduce((a,b)=>a+b.total,0))}</th><th>${money(bills.reduce((a,b)=>a+b.debit,0))}</th><th>${money(bills.reduce((a,b)=>a+b.credit,0))}</th><th></th></tr></tfoot>
+    </table></div>`;
+
+   root.querySelectorAll('.v161BillBtn').forEach(btn=>{
+     btn.addEventListener('click',()=>openBill(root,bills[Number(btn.dataset.i)],Number(btn.dataset.i)));
+   });
+   root.scrollIntoView({behavior:'smooth',block:'start'});
+ }
+
+ function bind(){
+   const box=document.getElementById('mergedPartySuggest');
+   if(!box||box.dataset.v161==='1')return;
+   box.dataset.v161='1';
+   box.addEventListener('mousedown',e=>{
+     const row=e.target.closest('div');
+     if(!row||row===box)return;
+     const n=String(row.textContent||'').trim();
+     if(n)setTimeout(()=>open(n),350);
+   },true);
+   box.addEventListener('click',e=>{
+     const row=e.target.closest('div');
+     if(!row||row===box)return;
+     const n=String(row.textContent||'').trim();
+     if(n)setTimeout(()=>open(n),350);
+   },true);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(bind,900));
+ else setTimeout(bind,900);
+ setTimeout(bind,2200);
+ setTimeout(bind,4500);
+})();
+</script>
+</body></html>
