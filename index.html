@@ -4391,4 +4391,91 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   else setTimeout(backfillHistoricalGST,900);
 })();
 </script>
+
+<script>
+/* V166: Every generated report gets an X to hide its result without hiding
+   the report/filter module. Generate again to show the report. */
+(function(){
+  const configs=[
+    {panel:'dispatchReportPanel', table:'dispatchReportTable', msg:'dispatchReportMsg'},
+    {panel:'purchaseReportPanel', table:'purchaseReportTable', msg:'purchaseReportMsg'},
+    {panel:'productionReportPanel', table:'productionReportTable', msg:'productionReportMsg', extra:'productionReportTotal'},
+    {panel:'jobWorkMonthlyReportPanel', table:'jwReportTable', msg:'jwReportHeader', extra:'jwReportQty'},
+    {panel:'purchaseInlineReportPanel', table:'purchaseInlineReportTable', msg:'purchaseInlineReportMsg', extra:'purchaseInlineQty'}
+  ];
+
+  function addClose(c){
+    const panel=document.getElementById(c.panel);
+    const table=document.getElementById(c.table);
+    if(!panel||!table)return;
+
+    let btn=panel.querySelector('.v166ReportClose');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.type='button';
+      btn.className='v166ReportClose';
+      btn.textContent='×';
+      btn.title='Hide Report';
+      btn.setAttribute('aria-label','Hide Report');
+      btn.style.cssText='display:none;float:right;margin:6px 0 8px 8px;border:0;background:transparent;font-size:26px;font-weight:bold;line-height:1;cursor:pointer;';
+      const controls=panel.querySelector('.grid');
+      if(controls) controls.parentNode.insertBefore(btn,controls.nextSibling);
+      else panel.insertBefore(btn,panel.firstChild.nextSibling);
+
+      btn.onclick=()=>{
+        btn.style.display='none';
+        const m=document.getElementById(c.msg); if(m)m.style.display='none';
+        const t=document.getElementById(c.table);
+        if(t){
+          const wrap=t.parentElement;
+          if(wrap && wrap!==panel && wrap.children.length<=1) wrap.style.display='none';
+          else t.style.display='none';
+        }
+        if(c.extra){
+          const e=document.getElementById(c.extra);
+          if(e){
+            const parent=e.closest('div');
+            if(parent)parent.style.display='none';
+            else e.style.display='none';
+          }
+        }
+      };
+    }
+
+    // Keep a reference to the actual table wrapper so it can be shown again.
+    if(!table.dataset.v166){
+      table.dataset.v166='1';
+      const observer=new MutationObserver(()=>{
+        btn.style.display='inline-block';
+        const m=document.getElementById(c.msg); if(m)m.style.display='';
+        const wrap=table.parentElement;
+        if(wrap && wrap!==panel)wrap.style.display='';
+        table.style.display='';
+        if(c.extra){
+          const e=document.getElementById(c.extra);
+          if(e){
+            const parent=e.closest('div');
+            if(parent)parent.style.display='';
+            e.style.display='';
+          }
+        }
+      });
+      const tb=table.querySelector('tbody')||table;
+      observer.observe(tb,{childList:true,subtree:true,characterData:true});
+    }
+  }
+
+  function init(){configs.forEach(addClose);}
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>{
+      setTimeout(init,500);setTimeout(init,1500);setTimeout(init,3000);
+    });
+  }else{
+    setTimeout(init,500);setTimeout(init,1500);setTimeout(init,3000);
+  }
+
+  new MutationObserver(()=>init()).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body></html>
