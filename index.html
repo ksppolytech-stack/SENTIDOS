@@ -4345,4 +4345,50 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   else setTimeout(init,700);
 })();
 </script>
+
+<script>
+/* V165: Historical Accounting GST backfill - default 18% */
+(function(){
+  function backfillHistoricalGST(){
+    let tx=[];
+    try{tx=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]')}catch(e){}
+    if(!Array.isArray(tx))return;
+    let changed=false;
+    tx.forEach(t=>{
+      const type=String(t.type||'').toUpperCase();
+      const taxable=['DISPATCH','RAW MATERIAL SALE','PURCHASE','RAW MATERIAL PURCHASE','RAW MATERIAL COMPANY INWARD','JOB WORK RECEIVE'];
+      if(!taxable.includes(type))return;
+      if(t.taxRate!=null || t.tax!=null || t.grandTotal!=null)return;
+
+      const qty=Math.abs(Number(t.qty)||0);
+      let rate=0;
+      if(type==='DISPATCH') rate=Number(t.dispatchRate??t.rate??0);
+      else if(type==='RAW MATERIAL SALE') rate=Number(t.saleRate??t.rate??0);
+      else if(type==='PURCHASE') rate=Number(t.purchaseRate??t.rate??0);
+      else if(type==='RAW MATERIAL PURCHASE' || type==='RAW MATERIAL COMPANY INWARD')
+        rate=Number(t.inwardRate??t.purchaseRate??t.rate??0);
+      else if(type==='JOB WORK RECEIVE') rate=Number(t.jobRate??t.rate??0);
+
+      const amount=Number(t.amount ?? (qty*rate)) || 0;
+      const gst=amount*18/100;
+      t.taxRate=18;
+      t.tax=gst;
+      t.grandTotal=amount+gst;
+      changed=true;
+    });
+    if(changed){
+      localStorage.setItem('adr_tx_v2',JSON.stringify(tx));
+      setTimeout(()=>{
+        try{
+          if(typeof render==='function')render();
+          if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger();
+        }catch(e){}
+      },150);
+    }
+  }
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(backfillHistoricalGST,900));
+  else setTimeout(backfillHistoricalGST,900);
+})();
+</script>
 </body></html>
