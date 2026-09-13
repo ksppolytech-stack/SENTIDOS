@@ -4745,4 +4745,87 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   new MutationObserver(()=>{addButton()}).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
+
+<script>
+/* V169: GST Report Print + Excel/CSV download */
+(function(){
+  const $=id=>document.getElementById(id);
+
+  function addActions(){
+    const panel=$('v168GSTReport');
+    if(!panel)return;
+    let bar=$('v169GSTActions');
+    if(!bar){
+      bar=document.createElement('div');
+      bar.id='v169GSTActions';
+      bar.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin:10px 0';
+      const summary=$('v168GSTSummary');
+      if(summary)summary.parentNode.insertBefore(bar,summary);
+      else panel.insertBefore(bar,panel.firstChild.nextSibling);
+      bar.innerHTML=`
+        <button type="button" id="v169GSTPrint">🖨️ Print</button>
+        <button type="button" id="v169GSTExcel">📥 Download Excel</button>
+      `;
+      $('v169GSTPrint').onclick=printGST;
+      $('v169GSTExcel').onclick=downloadExcel;
+    }
+  }
+
+  function printGST(){
+    const panel=$('v168GSTReport');
+    if(!panel)return;
+    const clone=panel.cloneNode(true);
+    const actions=clone.querySelector('#v169GSTActions');
+    if(actions)actions.remove();
+    const close=clone.querySelector('#v168GSTClose');
+    if(close)close.remove();
+    const style=`<style>
+      @page{size:landscape;margin:10mm}
+      body{font-family:Arial,sans-serif;font-size:11px}
+      table{width:100%;border-collapse:collapse}
+      th,td{border:1px solid #777;padding:5px;text-align:right}
+      th:first-child,td:first-child{text-align:left}
+      h3{margin:0 0 10px}
+    </style>`;
+    const w=window.open('','_blank','width=1200,height=800');
+    if(!w)return;
+    w.document.write('<!doctype html><html><head><title>GST Report</title>'+style+'</head><body>'+clone.innerHTML+'</body></html>');
+    w.document.close();
+    w.focus();
+    setTimeout(()=>{w.print();w.close()},400);
+  }
+
+  function csvCell(v){
+    const s=String(v??'');
+    return '"'+s.replace(/"/g,'""')+'"';
+  }
+
+  function downloadExcel(){
+    const table=$('v168GSTReport')?.querySelector('table');
+    if(!table){alert('પહેલા GST Report Generate કરો.');return;}
+    const rows=[...table.querySelectorAll('tr')].map(tr=>
+      [...tr.children].map(td=>csvCell(td.innerText.trim())).join(',')
+    );
+    const csv='\uFEFF'+rows.join('\r\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='GST_Report_Month_Wise.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+
+  function init(){
+    addActions();
+  }
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',()=>{setTimeout(init,1000);setTimeout(init,2500)});
+  else{setTimeout(init,1000);setTimeout(init,2500)}
+
+  new MutationObserver(addActions).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body></html>
