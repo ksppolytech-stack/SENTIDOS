@@ -4478,4 +4478,102 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   new MutationObserver(()=>init()).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
+
+<style id="v167-report-close-style">
+.v167-report-result{position:relative;margin-top:8px}
+.v167-report-close{
+  position:absolute;right:4px;top:2px;z-index:20;
+  border:0;background:#fff;border-radius:50%;
+  width:30px;height:30px;padding:0;
+  font-size:24px;line-height:28px;font-weight:700;
+  cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25);
+}
+.v167-report-result.v167-hidden{display:none!important}
+</style>
+<script>
+/* V167: Reliable X-hide for generated reports.
+   Works from the actual report tables in #reports/reportArea, including
+   Job Work Monthly Report whose table has no id. */
+(function(){
+  function isReportTable(t){
+    if(!t || t.closest('.v167-report-result')) return false;
+    const page=t.closest('#reports,.reportArea');
+    if(!page)return false;
+    // Exclude input/autocomplete/helper tables if any.
+    return !!t.querySelector('tbody');
+  }
+
+  function hasGeneratedData(t){
+    const body=t.querySelector('tbody');
+    if(!body)return false;
+    const text=String(body.textContent||'').replace(/\s+/g,' ').trim();
+    if(!text)return false;
+    return !/^(Generate report|No .*entries|No data|No records|No transactions|No items added)$/i.test(text);
+  }
+
+  function setupTable(t){
+    if(!isReportTable(t))return;
+    let wrap=t.parentElement;
+    if(!wrap || !wrap.classList.contains('v167-report-result')){
+      wrap=document.createElement('div');
+      wrap.className='v167-report-result';
+      t.parentNode.insertBefore(wrap,t);
+      wrap.appendChild(t);
+    }
+
+    let btn=wrap.querySelector('.v167-report-close');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.type='button';
+      btn.className='v167-report-close';
+      btn.textContent='×';
+      btn.title='Hide Report';
+      btn.setAttribute('aria-label','Hide Report');
+      wrap.insertBefore(btn,wrap.firstChild);
+      btn.addEventListener('click',function(){
+        wrap.classList.add('v167-hidden');
+      });
+    }
+
+    const update=()=>{
+      if(wrap.classList.contains('v167-hidden'))return;
+      btn.style.display=hasGeneratedData(t)?'block':'none';
+    };
+    update();
+
+    if(!t.dataset.v167Observer){
+      t.dataset.v167Observer='1';
+      const ob=new MutationObserver(()=>{
+        // A new generated result should automatically reappear.
+        if(hasGeneratedData(t)){
+          wrap.classList.remove('v167-hidden');
+          btn.style.display='block';
+        }else{
+          btn.style.display='none';
+        }
+      });
+      const body=t.querySelector('tbody');
+      if(body)ob.observe(body,{childList:true,subtree:true,characterData:true});
+    }
+  }
+
+  function scan(){
+    document.querySelectorAll('#reports table, .reportArea table').forEach(setupTable);
+  }
+
+  function init(){
+    scan();
+    setTimeout(scan,300);
+    setTimeout(scan,1000);
+    setTimeout(scan,2000);
+    setTimeout(scan,4000);
+  }
+
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',init);
+  else init();
+
+  new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body></html>
