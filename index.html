@@ -5002,6 +5002,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 (function(){
   const $=id=>document.getElementById(id);
 
+  let itemMenuOpen=false;
+
   function setup(){
     const tabs=document.querySelector('.tabs');
     const itemBtn=document.querySelector('.tabs button[data-page="items"]');
@@ -5036,13 +5038,21 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
     function sync(){
       const active=$('items')?.classList.contains('active');
-      menu.style.display=active?'flex':'none';
-      if(!active)showForm(false);
+      menu.style.display=(active && itemMenuOpen)?'flex':'none';
+      if(!active){
+        itemMenuOpen=false;
+        showForm(false);
+      }
     }
 
     if(!itemBtn.dataset.v172){
       itemBtn.dataset.v172='1';
-      itemBtn.addEventListener('click',()=>setTimeout(sync,50));
+      itemBtn.addEventListener('click',()=>{
+        setTimeout(()=>{
+          itemMenuOpen=!itemMenuOpen;
+          sync();
+        },50);
+      });
     }
     setup._sync=sync;
     sync();
@@ -5058,10 +5068,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
   new MutationObserver(()=>{
     setup();
-    const item=$('items');
-    const menu=$('v172ItemSubmenu');
-    if(item&&menu&&item.classList.contains('active'))menu.style.display='flex';
   }).observe(document.body,{childList:true,subtree:true});
 })();
+</script>
+<script>
+/* V173: Item Master submenu toggles open/closed on repeated Item Master clicks. */
 </script>
 </body></html>
