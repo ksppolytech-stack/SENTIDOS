@@ -4576,4 +4576,173 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
+
+<style id="v168-gst-style">
+#v168GSTReport{margin-top:18px}
+#v168GSTReport table{width:100%;border-collapse:collapse;min-width:1050px}
+#v168GSTReport th,#v168GSTReport td{border:1px solid #ddd;padding:7px;text-align:right}
+#v168GSTReport th:first-child,#v168GSTReport td:first-child{text-align:left}
+#v168GSTReport .v168-gst-net{font-weight:700}
+</style>
+<script>
+/* V168: Month-wise GST Report - Sales / Purchase / Net GST */
+(function(){
+  const $=id=>document.getElementById(id);
+  const n=v=>Number(v)||0;
+  const money=v=>'₹'+n(v).toFixed(2);
+  const read=k=>{try{const a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}};
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  function getRows(){
+    const tx=read('adr_tx_v2'), rows=[];
+    tx.forEach(t=>{
+      const type=String(t.type||'').toUpperCase();
+      const taxable=['DISPATCH','RAW MATERIAL SALE','PURCHASE','RAW MATERIAL PURCHASE','RAW MATERIAL COMPANY INWARD','JOB WORK RECEIVE'];
+      if(!taxable.includes(type))return;
+      const date=String(t.date||'').slice(0,10);
+      if(!date)return;
+
+      let amount=n(t.amount), gst=n(t.tax), total=n(t.grandTotal);
+      const qty=Math.abs(n(t.qty));
+      let rate=0;
+      if(type==='DISPATCH')rate=n(t.dispatchRate??t.rate);
+      else if(type==='RAW MATERIAL SALE')rate=n(t.saleRate??t.rate);
+      else if(type==='PURCHASE')rate=n(t.purchaseRate??t.rate);
+      else if(type==='RAW MATERIAL PURCHASE'||type==='RAW MATERIAL COMPANY INWARD')rate=n(t.purchaseRate??t.inwardRate??t.rate);
+      else if(type==='JOB WORK RECEIVE')rate=n(t.jobRate??t.rate);
+      if(amount===0 && qty*rate)amount=qty*rate;
+      if(gst===0 && (t.taxRate!=null || amount))gst=amount*n(t.taxRate??18)/100;
+      if(total===0)total=amount+gst;
+
+      const isSale=type==='DISPATCH'||type==='RAW MATERIAL SALE';
+      const isPurchase=!isSale;
+      rows.push({date,type,amount,gst,total,isSale,isPurchase});
+    });
+    return rows;
+  }
+
+  function months(rows){
+    const m=new Map();
+    rows.forEach(r=>{
+      const d=new Date(r.date+'T00:00:00');
+      if(isNaN(d))return;
+      const key=r.date.slice(0,7);
+      if(!m.has(key))m.set(key,{key,sales:0,salesGST:0,salesTotal:0,purchase:0,purchaseGST:0,purchaseTotal:0});
+      const x=m.get(key);
+      if(r.isSale){x.sales+=r.amount;x.salesGST+=r.gst;x.salesTotal+=r.total}
+      else{x.purchase+=r.amount;x.purchaseGST+=r.gst;x.purchaseTotal+=r.total}
+    });
+    return [...m.values()].sort((a,b)=>a.key.localeCompare(b.key));
+  }
+
+  function label(key){
+    const [y,m]=key.split('-');
+    return new Date(Number(y),Number(m)-1,1).toLocaleString('en-IN',{month:'long',year:'numeric'});
+  }
+
+  function render(){
+    const host=$('reports');
+    if(!host)return;
+    let panel=$('v168GSTReport');
+    if(!panel){
+      panel=document.createElement('section');
+      panel.id='v168GSTReport';
+      panel.className='panel';
+      host.appendChild(panel);
+    }
+
+    const rows=getRows(), ms=months(rows);
+    const salesGST=ms.reduce((a,x)=>a+x.salesGST,0);
+    const purchaseGST=ms.reduce((a,x)=>a+x.purchaseGST,0);
+    const net=salesGST-purchaseGST;
+
+    panel.innerHTML=`
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <h3 style="margin:0">🧾 GST Report — Month Wise</h3>
+        <button type="button" id="v168GSTClose" title="Hide GST Report"
+          style="border:0;background:transparent;font-size:25px;font-weight:700;cursor:pointer">×</button>
+      </div>
+      <div class="grid" style="margin-top:10px">
+        <div>
+          <label>Month Filter</label>
+          <select id="v168GSTMonth">
+            <option value="ALL">All Months</option>
+            ${ms.map(x=>`<option value="${esc(x.key)}">${esc(label(x.key))}</option>`).join('')}
+          </select>
+        </div>
+        <div style="align-self:end">
+          <button type="button" id="v168GSTGenerate">Generate GST Report</button>
+        </div>
+      </div>
+      <div id="v168GSTSummary" style="margin-top:12px"></div>
+      <div style="overflow:auto;margin-top:12px">
+        <table>
+          <thead><tr>
+            <th>Month</th>
+            <th>Sales Taxable</th><th>Sales GST</th><th>Sales Total</th>
+            <th>Purchase Taxable</th><th>Purchase GST</th><th>Purchase Total</th>
+            <th>Input GST</th><th>Output GST</th><th>Due GST</th>
+          </tr></thead>
+          <tbody id="v168GSTBody"></tbody>
+          <tfoot id="v168GSTFoot"></tfoot>
+        </table>
+      </div>`;
+
+    const fill=(filter)=>{
+      const list=filter==='ALL'?ms:ms.filter(x=>x.key===filter);
+      const s=list.reduce((a,x)=>a+x.salesGST,0);
+      const p=list.reduce((a,x)=>a+x.purchaseGST,0);
+      const due=s-p;
+      $('v168GSTBody').innerHTML=list.map(x=>{
+        const d=x.salesGST-x.purchaseGST;
+        return `<tr>
+          <td>${esc(label(x.key))}</td>
+          <td>${money(x.sales)}</td><td>${money(x.salesGST)}</td><td>${money(x.salesTotal)}</td>
+          <td>${money(x.purchase)}</td><td>${money(x.purchaseGST)}</td><td>${money(x.purchaseTotal)}</td>
+          <td>${money(x.purchaseGST)}</td><td>${money(x.salesGST)}</td>
+          <td class="v168-gst-net">${money(d)} ${d>0?'Payable':d<0?'Credit':'Nil'}</td>
+        </tr>`;
+      }).join('')||'<tr><td colspan="10">No GST entries found.</td></tr>';
+      $('v168GSTFoot').innerHTML=`<tr>
+        <th>Selected Total</th><th>${money(list.reduce((a,x)=>a+x.sales,0))}</th><th>${money(s)}</th><th>${money(list.reduce((a,x)=>a+x.salesTotal,0))}</th>
+        <th>${money(list.reduce((a,x)=>a+x.purchase,0))}</th><th>${money(p)}</th><th>${money(list.reduce((a,x)=>a+x.purchaseTotal,0))}</th>
+        <th>${money(p)}</th><th>${money(s)}</th><th>${money(due)} ${due>0?'Payable':due<0?'Credit':'Nil'}</th>
+      </tr>`;
+      $('v168GSTSummary').innerHTML=`
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div class="card"><small>Output GST (Sales)</small><b>${money(s)}</b></div>
+          <div class="card"><small>Input GST (Purchase)</small><b>${money(p)}</b></div>
+          <div class="card"><small>Due GST</small><b>${money(due)}</b></div>
+        </div>`;
+    };
+    fill('ALL');
+    $('v168GSTMonth').onchange=e=>fill(e.target.value);
+    $('v168GSTGenerate').onclick=()=>fill($('v168GSTMonth').value);
+    $('v168GSTClose').onclick=()=>panel.style.display='none';
+  }
+
+  function addButton(){
+    // Add a separate GST Report button to the Reports module controls.
+    const reports=$('reports'); if(!reports)return;
+    let btn=$('v168OpenGST');
+    if(btn)return;
+    btn=document.createElement('button');
+    btn.id='v168OpenGST'; btn.type='button'; btn.textContent='🧾 GST Report';
+    btn.style.cssText='margin:6px;padding:8px 12px;cursor:pointer';
+    btn.onclick=()=>{render();const p=$('v168GSTReport');if(p)p.style.display='block';};
+    const firstPanel=reports.querySelector('.panel');
+    if(firstPanel)firstPanel.insertBefore(btn,firstPanel.firstChild);
+    else reports.insertBefore(btn,reports.firstChild);
+  }
+
+  function init(){
+    addButton();
+    // GST report remains separate and hidden until its button is clicked.
+    const p=$('v168GSTReport');if(p)p.style.display='none';
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init,900));
+  else setTimeout(init,900);
+  new MutationObserver(()=>{addButton()}).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body></html>
