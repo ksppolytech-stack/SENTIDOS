@@ -4810,6 +4810,19 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </style>
 
 
+
+<style id="v182-raw-close">
+.v182-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;box-sizing:border-box}
+.v182-close{
+  margin-left:auto;border:0;background:transparent;font-size:24px;
+  font-weight:700;line-height:1;cursor:pointer;padding:2px 7px;
+  border-radius:5px;color:#555;
+}
+.v182-close:hover{background:#eee;color:#c00}
+#rawmaterials.v182-name-open .v182-name-close,
+#rawmaterials.v182-inward-open .v182-inward-close{display:block}
+.v182-name-close,.v182-inward-close{display:none}
+</style>
 </head><body>'+clone.innerHTML+'</body></html>');
     w.document.close();
     w.focus();
@@ -5260,72 +5273,74 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
-<script>
-/* V178: Material Inward gets its own right-side field area and X closes it. */
-(function(){
-  let inwardOpen=false;
 
+<script>
+/* V182: Working X moved to the right side of Raw Material headings. */
+</script>
+<script>
+/* V181: Base restored to V178 with V178 X-button additions removed. */
+</script>
+
+<script>
+/* V182: Put one working X on the right side of each Raw Material section heading. */
+(function(){
   function setup(){
     const sec=document.getElementById('rawmaterials');
     if(!sec)return;
 
-    // Locate the existing Material Inward area by the rmPurchaseDate field.
-    const date=document.getElementById('rmPurchaseDate');
-    if(date){
-      let area=date.closest('.panel') || date.parentElement;
-      // Prefer the nearest block that contains the inward controls, without
-      // disturbing the existing HTML/data logic.
-      while(area && area.parentElement && area.parentElement!==sec &&
-            !area.querySelector('#rmPurchaseTaxRate')) area=area.parentElement;
-
-      if(area && !area.id) area.id='v177InwardWrap';
-      else if(area && area.id!=='rawMaterialMasterAddBox' &&
-              !area.id.startsWith('v177')) area.id='v177InwardWrap';
-
-      if(area && !area.querySelector('.v178-field-close')){
-        const close=document.createElement('button');
-        close.type='button';
-        close.className='v178-field-close';
-        close.textContent='×';
-        close.title='Close';
-        close.addEventListener('click',function(e){
-          e.preventDefault(); e.stopPropagation();
-          inwardOpen=false;
-          sec.classList.remove('v178-show-inward');
-          sec.classList.remove('v177-show-inward');
-        });
-        area.insertBefore(close,area.firstChild);
-      }
+    const masterBox=document.getElementById('rawMaterialMasterAddBox');
+    const h2=sec.querySelector('.panel > h2');
+    if(h2 && !h2.querySelector('.v182-name-close')){
+      const row=document.createElement('div');
+      row.className='v182-title-row';
+      h2.parentNode.insertBefore(row,h2);
+      row.appendChild(h2);
+      const x=document.createElement('button');
+      x.type='button'; x.className='v182-close v182-name-close';
+      x.textContent='×'; x.title='Close Raw Material Name';
+      x.onclick=function(e){
+        e.preventDefault(); e.stopPropagation();
+        if(masterBox)masterBox.style.display='none';
+        sec.classList.remove('v177-show-name','v182-name-open');
+      };
+      row.appendChild(x);
     }
 
-    const inward=document.getElementById('v174AddRawStock');
-    if(inward && !inward.dataset.v178){
-      inward.dataset.v178='1';
-      inward.addEventListener('click',function(e){
-        e.stopPropagation();
-        inwardOpen=true;
-        sec.classList.remove('v177-show-name');
-        sec.classList.add('v178-show-inward');
-        const el=document.getElementById('rmPurchaseDate') || document.getElementById('rmPurchase');
-        if(el)setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'center'}),80);
-      });
+    const inwardH3=Array.from(sec.querySelectorAll('h3')).find(h=>/Company Raw Material Inward/i.test(h.textContent||''));
+    if(inwardH3 && !inwardH3.querySelector('.v182-inward-close')){
+      const row=document.createElement('div');
+      row.className='v182-title-row';
+      inwardH3.parentNode.insertBefore(row,inwardH3);
+      row.appendChild(inwardH3);
+      const x=document.createElement('button');
+      x.type='button'; x.className='v182-close v182-inward-close';
+      x.textContent='×'; x.title='Close Material Inward';
+      x.onclick=function(e){
+        e.preventDefault(); e.stopPropagation();
+        sec.classList.remove('v177-show-inward','v178-show-inward','v182-inward-open');
+        // Hide only the Material Inward entry controls; keep the inward history table.
+        let n=row.nextElementSibling;
+        while(n){
+          if(n.tagName==='HR' || (n.tagName==='H3' && /Inward/i.test(n.textContent||'')))break;
+          if(n.classList && n.classList.contains('grid')) n.style.display='none';
+          if(n.tagName==='BUTTON' && n.id==='rmPurchaseBtn') n.style.display='none';
+          if(n.id==='rmPurchaseMsg') n.style.display='none';
+          n=n.nextElementSibling;
+        }
+      };
+      row.appendChild(x);
     }
 
-    // Keep Material Inward closed when Raw Material Master itself is first opened.
-    if(!sec.classList.contains('active')){
-      inwardOpen=false;
-      sec.classList.remove('v178-show-inward');
-    }
+    const nameOpen=masterBox && getComputedStyle(masterBox).display!=='none';
+    sec.classList.toggle('v182-name-open',!!nameOpen);
+    // Material Inward is considered open when its submenu state class is active.
+    const inwardOpen=sec.classList.contains('v177-show-inward') || sec.classList.contains('v178-show-inward');
+    sec.classList.toggle('v182-inward-open',inwardOpen);
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
   else setup();
-  setTimeout(setup,300);
-  setTimeout(setup,1000);
-  setTimeout(setup,2000);
+  [200,600,1200,2000].forEach(t=>setTimeout(setup,t));
 })();
-</script>
-<script>
-/* V181: Base restored to V178 with V178 X-button additions removed. */
 </script>
 </body></html>
