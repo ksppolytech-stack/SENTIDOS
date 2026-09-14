@@ -5216,7 +5216,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* V173: Item Master submenu toggles open/closed on repeated Item Master clicks. */
 </script>
 <script>
-/* V179: Fixed X and right-side close controls for Raw Material sections. */
+/* V180: One X only, aligned to the right side. */
 </script>
 <script>
 /* V178: Material Inward fields open on submenu click and close with X. */
@@ -5404,6 +5404,50 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         if(inwardArea)inwardArea.style.display='';
       };
     }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
+  [300,800,1500,2500].forEach(t=>setTimeout(setup,t));
+})();
+</script>
+
+<script>
+/* V180: Keep exactly one X button per Raw Material section and place it right. */
+(function(){
+  function fixArea(area,kind){
+    if(!area)return;
+    const xs=Array.from(area.querySelectorAll(':scope > .v179-close'));
+    let x=xs[0];
+    xs.slice(1).forEach(e=>e.remove());
+    if(!x){
+      x=document.createElement('button');
+      x.type='button';
+      x.className='v179-close';
+      x.textContent='×';
+      x.title='Close';
+      area.insertBefore(x,area.firstChild);
+    }
+    x.style.cssText='margin-left:auto!important;float:none!important;display:block!important;border:0!important;background:transparent!important;color:#555!important;font-size:22px!important;font-weight:bold!important;line-height:1!important;padding:2px 6px!important;cursor:pointer!important;border-radius:5px!important;';
+    x.onclick=function(e){
+      e.preventDefault(); e.stopImmediatePropagation();
+      const sec=document.getElementById('rawmaterials');
+      if(kind==='name'){
+        sec.classList.remove('v177-show-name');
+        area.style.display='none';
+      }else{
+        sec.classList.remove('v177-show-inward','v178-show-inward');
+        area.style.display='none';
+      }
+      return false;
+    };
+  }
+
+  function setup(){
+    const sec=document.getElementById('rawmaterials');
+    if(!sec)return;
+    const nameEl=document.getElementById('rmCode');
+    const inwardEl=document.getElementById('rmPurchaseDate');
+    fixArea(nameEl ? (nameEl.closest('.panel')||nameEl.parentElement) : null,'name');
+    fixArea(inwardEl ? (inwardEl.closest('.panel')||inwardEl.parentElement) : null,'inward');
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
   [300,800,1500,2500].forEach(t=>setTimeout(setup,t));
