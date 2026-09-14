@@ -5517,15 +5517,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 <script>
-/* V195 — Purchase two submenus, based on V189 */
+/* V196 — Purchase Inward keeps Purchase submenu open, based on V189 */
 (function(){
-  function initPurchaseSubmenuV195(){
+  function initPurchaseSubmenuV196(){
     const tabs = document.querySelector('.tabs');
     const purchaseBtn = tabs && tabs.querySelector('button[data-page="purchase"]');
-    if(!tabs || !purchaseBtn || document.getElementById('purchaseSubmenuV195')) return;
+    if(!tabs || !purchaseBtn || document.getElementById('purchaseSubmenuV196')) return;
 
     const wrap = document.createElement('div');
-    wrap.id = 'purchaseSubmenuV195';
+    wrap.id = 'purchaseSubmenuV196';
     wrap.style.cssText = 'display:none;margin:0 0 6px 18px;';
 
     const inward = document.createElement('button');
@@ -5541,27 +5541,38 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     wrap.append(inward, report);
     purchaseBtn.insertAdjacentElement('afterend', wrap);
 
-    // Purchase click toggles both submenus together.
-    purchaseBtn.addEventListener('click', function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none';
-    });
+    let keepOpen = false;
 
-    // Purchase Inward opens the existing Purchase page/form.
+    purchaseBtn.addEventListener('click', function(e){
+      if(keepOpen){
+        keepOpen = false;
+        return;
+      }
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none';
+    }, true);
+
     inward.addEventListener('click', function(e){
       e.preventDefault();
       e.stopPropagation();
+
+      // Open the normal Purchase page without closing the submenu.
+      keepOpen = true;
       const realPurchase = document.querySelector('.tabs > button[data-page="purchase"]');
       if(realPurchase) realPurchase.click();
+
+      wrap.style.display = 'block';
+      setTimeout(function(){ wrap.style.display = 'block'; }, 50);
     });
 
-    // Purchase Report opens the existing Purchase Report.
     report.addEventListener('click', function(e){
       e.preventDefault();
       e.stopPropagation();
+
       const reportsBtn = document.querySelector('.tabs > button[data-page="reports"]');
       if(reportsBtn) reportsBtn.click();
+
       setTimeout(function(){
         const panel = document.getElementById('purchaseReportPanel');
         if(panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
@@ -5570,9 +5581,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', initPurchaseSubmenuV195);
+    document.addEventListener('DOMContentLoaded', initPurchaseSubmenuV196);
   }else{
-    initPurchaseSubmenuV195();
+    initPurchaseSubmenuV196();
   }
 })();
 </script>
