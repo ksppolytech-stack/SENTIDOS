@@ -5517,79 +5517,83 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 <script>
-/* V193 — Purchase submenu + Purchase Inward form toggle, based on V189 */
+/* V194 — Purchase submenu and Purchase Inward form toggle, based strictly on V189 */
 (function(){
-  function initPurchaseSubmenuV193(){
+  function initV194(){
     const tabs = document.querySelector('.tabs');
-    if(!tabs || document.getElementById('purchaseSubmenuV193')) return;
+    const purchaseBtn = tabs && tabs.querySelector('button[data-page="purchase"]');
+    const purchaseSec = document.getElementById('purchase');
+    if(!tabs || !purchaseBtn || !purchaseSec || document.getElementById('purchaseSubmenuV194')) return;
 
-    const purchaseBtn = tabs.querySelector('button[data-page="purchase"]');
-    if(!purchaseBtn) return;
+    const submenu = document.createElement('div');
+    submenu.id = 'purchaseSubmenuV194';
+    submenu.style.cssText = 'display:none;margin:0 0 6px 18px;';
 
-    const wrap = document.createElement('div');
-    wrap.id = 'purchaseSubmenuV193';
-    wrap.style.cssText = 'display:none;margin:0 0 6px 18px;';
+    const inwardBtn = document.createElement('button');
+    inwardBtn.type = 'button';
+    inwardBtn.textContent = '↳ Purchase Inward';
+    inwardBtn.style.cssText = 'display:block;width:calc(100% - 8px);margin:2px 0;padding:7px 8px;text-align:left;font-size:13px;';
 
-    const inward = document.createElement('button');
-    inward.type = 'button';
-    inward.textContent = '↳ Purchase Inward';
-    inward.style.cssText = 'display:block;width:calc(100% - 8px);margin:2px 0;padding:7px 8px;text-align:left;font-size:13px;';
+    const reportBtn = document.createElement('button');
+    reportBtn.type = 'button';
+    reportBtn.textContent = '📊 Purchase Report';
+    reportBtn.style.cssText = 'display:block;width:calc(100% - 8px);margin:2px 0;padding:7px 8px;text-align:left;font-size:13px;';
 
-    const report = document.createElement('button');
-    report.type = 'button';
-    report.textContent = '📊 Purchase Report';
-    report.style.cssText = 'display:block;width:calc(100% - 8px);margin:2px 0;padding:7px 8px;text-align:left;font-size:13px;';
+    submenu.append(inwardBtn, reportBtn);
+    purchaseBtn.insertAdjacentElement('afterend', submenu);
 
-    wrap.appendChild(inward);
-    wrap.appendChild(report);
-    purchaseBtn.insertAdjacentElement('afterend', wrap);
+    // Only the Purchase ENTRY FORM is controlled here.
+    const formElements = [
+      purchaseSec.querySelector('.grid'),
+      document.getElementById('addPurchaseItem'),
+      document.getElementById('openPurchaseMaster'),
+      document.getElementById('purchaseBtn'),
+      purchaseSec.querySelector('.small'),
+      document.getElementById('purchaseCartTable')?.closest('div[style*="overflow:auto"]'),
+      document.getElementById('purchaseMsg')
+    ].filter(Boolean);
 
-    function getPurchaseFormParts(){
-      const sec = document.getElementById('purchase');
-      if(!sec) return [];
-      return [
-        sec.querySelector('.grid'),
-        document.getElementById('addPurchaseItem'),
-        document.getElementById('openPurchaseMaster'),
-        document.getElementById('purchaseBtn'),
-        sec.querySelector('.small'),
-        document.getElementById('purchaseCartTable')?.closest('div[style*="overflow:auto"]'),
-        document.getElementById('purchaseMsg')
-      ].filter(Boolean);
+    let inwardOpen = false;
+
+    function setInwardForm(show){
+      inwardOpen = !!show;
+      formElements.forEach(el => {
+        el.style.display = show ? '' : 'none';
+      });
     }
 
-    function setPurchaseInwardVisible(show){
-      getPurchaseFormParts().forEach(el => el.style.display = show ? '' : 'none');
-    }
+    // Initial state: Purchase entry form hidden.
+    setInwardForm(false);
 
-    // Entry form is hidden until Purchase Inward is clicked.
-    setPurchaseInwardVisible(false);
-
+    // Purchase: first click opens both submenus; second click hides both.
     purchaseBtn.addEventListener('click', function(e){
       e.preventDefault();
       e.stopPropagation();
-      wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none';
+      submenu.style.display = submenu.style.display === 'none' ? 'block' : 'none';
     });
 
-    inward.addEventListener('click', function(e){
+    // Purchase Inward: click toggles only the Purchase entry form.
+    inwardBtn.addEventListener('click', function(e){
       e.preventDefault();
       e.stopPropagation();
-      const real = document.querySelector('.tabs > button[data-page="purchase"]');
-      if(real) real.click();
+
+      const realPurchase = document.querySelector('.tabs > button[data-page="purchase"]');
+      if(realPurchase) realPurchase.click();
+
       setTimeout(function(){
-        const sec = document.getElementById('purchase');
-        if(sec) sec.scrollIntoView({behavior:'smooth', block:'start'});
-        setPurchaseInwardVisible(
-          getPurchaseFormParts().some(el => el.style.display === 'none')
-        );
-      }, 30);
+        setInwardForm(!inwardOpen);
+        purchaseSec.scrollIntoView({behavior:'smooth', block:'start'});
+      }, 20);
     });
 
-    report.addEventListener('click', function(e){
+    // Purchase Report: opens existing Purchase Report.
+    reportBtn.addEventListener('click', function(e){
       e.preventDefault();
       e.stopPropagation();
-      const real = document.querySelector('.tabs > button[data-page="reports"]');
-      if(real) real.click();
+
+      const reportsBtn = document.querySelector('.tabs > button[data-page="reports"]');
+      if(reportsBtn) reportsBtn.click();
+
       setTimeout(function(){
         const panel = document.getElementById('purchaseReportPanel');
         if(panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
@@ -5598,9 +5602,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', initPurchaseSubmenuV193);
+    document.addEventListener('DOMContentLoaded', initV194);
   }else{
-    initPurchaseSubmenuV193();
+    initV194();
   }
 })();
 </script>
