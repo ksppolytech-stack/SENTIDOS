@@ -4857,6 +4857,21 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 }
 #rawmaterials .v183-head-row > .v183-x:hover{background:#eee!important;color:#c00!important}
 </style>
+
+<style id="v190-purchase-submenu">
+@media (min-width:900px){
+  #v190PurchaseSubmenu{
+    display:none;flex-direction:column;gap:3px;
+    margin:0 0 5px 8px;padding:4px 0 4px 10px;
+    border-left:2px solid #b8c4cf;
+  }
+  #v190PurchaseSubmenu button{
+    width:100%;border:0;background:transparent;text-align:left;
+    padding:8px 9px;cursor:pointer;border-radius:5px;font-size:14px;
+  }
+  #v190PurchaseSubmenu button:hover{background:#dce5ed}
+}
+</style>
 </head><body>'+clone.innerHTML+'</body></html>');
     w.document.close();
     w.focus();
@@ -5384,6 +5399,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 <script>
+/* V190: Purchase module submenu with Purchase Report field toggle. */
+</script>
+<script>
 /* V189: Item Master Add Item click toggles the Item form open/closed. */
 </script>
 <script>
@@ -5513,6 +5531,91 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
   else setup();
   [300,800,1500].forEach(t=>setTimeout(setup,t));
+})();
+</script>
+
+<script>
+/* V190: Purchase module submenu; Purchase Report opens only when selected. */
+(function(){
+  let purchaseOpen=false;
+  let reportOpen=false;
+
+  function setup(){
+    const tabs=document.querySelector('.tabs');
+    const purchaseBtn=document.querySelector('.tabs button[data-page="purchase"]');
+    const sec=document.getElementById('purchase');
+    if(!tabs||!purchaseBtn||!sec)return;
+
+    let menu=document.getElementById('v190PurchaseSubmenu');
+    if(!menu){
+      menu=document.createElement('div');
+      menu.id='v190PurchaseSubmenu';
+      menu.innerHTML='<button type="button" id="v190PurchaseEntry">🧾 Purchase</button><button type="button" id="v190PurchaseReport">📊 Purchase Report</button>';
+      purchaseBtn.insertAdjacentElement('afterend',menu);
+
+      document.getElementById('v190PurchaseEntry').onclick=function(e){
+        e.preventDefault();e.stopPropagation();
+        reportOpen=false;
+        purchaseOpen=true;
+        apply();
+      };
+      document.getElementById('v190PurchaseReport').onclick=function(e){
+        e.preventDefault();e.stopPropagation();
+        reportOpen=!reportOpen;
+        purchaseOpen=false;
+        apply();
+        if(reportOpen){
+          const panel=document.getElementById('purchaseReportPanel') ||
+                       document.getElementById('purchaseInlineReportPanel');
+          if(panel)setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'start'}),80);
+        }
+      };
+    }
+
+    function apply(){
+      const active=sec.classList.contains('active');
+      menu.style.display=(active)?'flex':'none';
+
+      // Existing Purchase entry area
+      const mainGrid=sec.querySelector('.grid');
+      const purchaseBtnEl=document.getElementById('savePurchaseBtn') ||
+                            document.getElementById('addPurchaseBtn') ||
+                            document.querySelector('#purchase button.primary');
+      // Purchase report areas
+      const reportPanel=document.getElementById('purchaseReportPanel');
+      const inlinePanel=document.getElementById('purchaseInlineReportPanel');
+
+      if(!active){
+        purchaseOpen=false; reportOpen=false;
+        return;
+      }
+
+      if(mainGrid)mainGrid.style.display=purchaseOpen?'grid':'none';
+
+      if(reportPanel)reportPanel.style.display=reportOpen?'block':'none';
+      if(inlinePanel)inlinePanel.style.display=reportOpen?'block':'none';
+
+      if(purchaseBtnEl && purchaseBtnEl.closest('#purchase'))
+        purchaseBtnEl.style.display=purchaseOpen?'inline-block':'none';
+    }
+
+    if(!purchaseBtn.dataset.v190){
+      purchaseBtn.dataset.v190='1';
+      purchaseBtn.addEventListener('click',function(){
+        setTimeout(()=>{
+          purchaseOpen=false;
+          reportOpen=false;
+          apply();
+        },60);
+      });
+    }
+
+    apply();
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
+  else setup();
+  [300,800,1500,2500].forEach(t=>setTimeout(setup,t));
 })();
 </script>
 </body></html>
