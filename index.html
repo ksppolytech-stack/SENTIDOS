@@ -5384,6 +5384,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 <script>
+/* V188: Material Inward click toggles its fields open/closed. */
+</script>
+<script>
 /* V187: Raw Material Name click toggles its fields open/closed. */
 </script>
 <script>
@@ -5415,6 +5418,49 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           sec.classList.add('v177-show-name','v187-name-open');
           const code=document.getElementById('rmCode');
           if(code)setTimeout(()=>code.focus(),50);
+        }
+      },true);
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
+  else setup();
+  [300,800,1500].forEach(t=>setTimeout(setup,t));
+})();
+</script>
+
+<script>
+/* V188: Material Inward submenu toggles its fields open/closed like Raw Material Name. */
+(function(){
+  function setup(){
+    const sec=document.getElementById('rawmaterials');
+    const btn=document.getElementById('v174AddRawStock');
+    const date=document.getElementById('rmPurchaseDate');
+    const grid=date ? date.closest('.grid') : null;
+    const addBtn=document.getElementById('rmPurchaseBtn');
+    const msg=document.getElementById('rmPurchaseMsg');
+    if(!sec||!btn||!grid)return;
+
+    if(!btn.dataset.v188){
+      btn.dataset.v188='1';
+      btn.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        const isOpen=sec.classList.contains('v188-inward-open') ||
+          (getComputedStyle(grid).display!=='none');
+
+        if(isOpen){
+          grid.style.display='none';
+          if(addBtn)addBtn.style.display='none';
+          if(msg)msg.style.display='none';
+          sec.classList.remove('v177-show-inward','v178-show-inward','v188-inward-open');
+        }else{
+          grid.style.display='grid';
+          if(addBtn)addBtn.style.display='inline-block';
+          if(msg)msg.style.display='';
+          sec.classList.remove('v177-show-name','v187-name-open');
+          sec.classList.add('v177-show-inward','v188-inward-open');
+          setTimeout(()=>date.focus(),50);
         }
       },true);
     }
