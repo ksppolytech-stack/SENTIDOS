@@ -5517,74 +5517,100 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 <script>
-/* V196 — Purchase Inward keeps Purchase submenu open, based on V189 */
+/* V197: Purchase Inward submenu toggles the existing Purchase entry fields.
+   Purchase submenu remains visible while Purchase Inward is selected. */
 (function(){
-  function initPurchaseSubmenuV196(){
-    const tabs = document.querySelector('.tabs');
-    const purchaseBtn = tabs && tabs.querySelector('button[data-page="purchase"]');
-    if(!tabs || !purchaseBtn || document.getElementById('purchaseSubmenuV196')) return;
+  function setup(){
+    const tabs=document.querySelector('.tabs');
+    const purchaseBtn=tabs && tabs.querySelector('button[data-page="purchase"]');
+    const sec=document.getElementById('purchase');
+    if(!tabs||!purchaseBtn||!sec)return;
 
-    const wrap = document.createElement('div');
-    wrap.id = 'purchaseSubmenuV196';
-    wrap.style.cssText = 'display:none;margin:0 0 6px 18px;';
+    let menu=document.getElementById('v197PurchaseSubmenu');
+    if(!menu){
+      menu=document.createElement('div');
+      menu.id='v197PurchaseSubmenu';
+      menu.style.display='none';
+      menu.innerHTML=
+        '<button type="button" id="v197PurchaseInward">🧾 Purchase Inward</button>'+
+        '<button type="button" id="v197PurchaseReport">📊 Purchase Report</button>';
+      purchaseBtn.insertAdjacentElement('afterend',menu);
 
-    const inward = document.createElement('button');
-    inward.type = 'button';
-    inward.textContent = '↳ Purchase Inward';
-    inward.style.cssText = 'display:block;width:calc(100% - 8px);margin:2px 0;padding:7px 8px;text-align:left;font-size:13px;';
+      const style=document.createElement('style');
+      style.textContent=
+        '#v197PurchaseSubmenu{margin:-4px 0 6px 18px;}'+
+        '#v197PurchaseSubmenu button{display:block;width:100%;text-align:left;margin:2px 0;padding:7px 10px;border:0;background:transparent;cursor:pointer;border-radius:6px;}'+
+        '#v197PurchaseSubmenu button:hover{background:rgba(0,0,0,.06);}';
+      document.head.appendChild(style);
 
-    const report = document.createElement('button');
-    report.type = 'button';
-    report.textContent = '📊 Purchase Report';
-    report.style.cssText = 'display:block;width:calc(100% - 8px);margin:2px 0;padding:7px 8px;text-align:left;font-size:13px;';
+      menu.querySelector('#v197PurchaseInward').addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopImmediatePropagation();
 
-    wrap.append(inward, report);
-    purchaseBtn.insertAdjacentElement('afterend', wrap);
+        const panel=sec.querySelector('.panel');
+        if(!panel)return;
 
-    let keepOpen = false;
+        /* The first grid is the existing Purchase Entry fields. */
+        const grid=panel.querySelector('.grid');
+        const addBtn=document.getElementById('addPurchaseItem');
+        if(!grid)return;
 
-    purchaseBtn.addEventListener('click', function(e){
-      if(keepOpen){
-        keepOpen = false;
-        return;
-      }
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none';
-    }, true);
+        const isOpen=grid.dataset.v197Open==='1' ||
+          getComputedStyle(grid).display!=='none';
 
-    inward.addEventListener('click', function(e){
-      e.preventDefault();
-      e.stopPropagation();
+        if(isOpen){
+          grid.style.display='none';
+          if(addBtn)addBtn.style.display='none';
+          grid.dataset.v197Open='0';
+        }else{
+          grid.style.display='grid';
+          if(addBtn)addBtn.style.display='inline-block';
+          grid.dataset.v197Open='1';
+          const date=document.getElementById('purchaseDate');
+          if(date)setTimeout(()=>date.focus(),50);
+        }
 
-      // Open the normal Purchase page without closing the submenu.
-      keepOpen = true;
-      const realPurchase = document.querySelector('.tabs > button[data-page="purchase"]');
-      if(realPurchase) realPurchase.click();
+        menu.style.display='block';
+      });
 
-      wrap.style.display = 'block';
-      setTimeout(function(){ wrap.style.display = 'block'; }, 50);
-    });
+      menu.querySelector('#v197PurchaseReport').addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopImmediatePropagation();
 
-    report.addEventListener('click', function(e){
-      e.preventDefault();
-      e.stopPropagation();
+        /* Open the existing Purchase Report page/panel without hiding submenu. */
+        const reportsBtn=tabs.querySelector('button[data-page="reports"]');
+        if(reportsBtn)reportsBtn.click();
+        setTimeout(function(){
+          const report=document.getElementById('purchaseReportPanel');
+          if(report)report.scrollIntoView({behavior:'smooth',block:'start'});
+        },80);
+        menu.style.display='block';
+      });
+    }
 
-      const reportsBtn = document.querySelector('.tabs > button[data-page="reports"]');
-      if(reportsBtn) reportsBtn.click();
+    /* Parent Purchase click only toggles submenu and opens Purchase page. */
+    if(!purchaseBtn.dataset.v197){
+      purchaseBtn.dataset.v197='1';
+      purchaseBtn.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopImmediatePropagation();
 
-      setTimeout(function(){
-        const panel = document.getElementById('purchaseReportPanel');
-        if(panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
-      }, 50);
-    });
+        const isOpen=menu.style.display!=='none';
+        menu.style.display=isOpen?'none':'block';
+
+        /* Keep Purchase page active. */
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+        sec.classList.add('active');
+
+        try{sessionStorage.setItem('sentidosLastPage','purchase')}catch(_){}
+        window.scrollTo({top:0,behavior:'smooth'});
+      },true);
+    }
   }
 
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', initPurchaseSubmenuV196);
-  }else{
-    initPurchaseSubmenuV196();
-  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
+  else setup();
+  [300,800,1500].forEach(t=>setTimeout(setup,t));
 })();
 </script>
 </body></html>
