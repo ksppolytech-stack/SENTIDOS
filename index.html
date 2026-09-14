@@ -4821,6 +4821,16 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 }
 .v178-field-close:hover{color:#c00}
 </style>
+
+<style id="v179-close-fix">
+.v179-close{
+  margin-left:auto!important; float:none!important; display:block!important;
+  border:0!important; background:transparent!important; color:#555!important;
+  font-size:22px!important; font-weight:bold!important; line-height:1!important;
+  padding:2px 6px!important; cursor:pointer!important; border-radius:5px!important;
+}
+.v179-close:hover{background:#eee!important;color:#c00!important}
+</style>
 </head><body>'+clone.innerHTML+'</body></html>');
     w.document.close();
     w.focus();
@@ -5206,6 +5216,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* V173: Item Master submenu toggles open/closed on repeated Item Master clicks. */
 </script>
 <script>
+/* V179: Fixed X and right-side close controls for Raw Material sections. */
+</script>
+<script>
 /* V178: Material Inward fields open on submenu click and close with X. */
 </script>
 <script>
@@ -5336,6 +5349,64 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   setTimeout(setup,300);
   setTimeout(setup,1000);
   setTimeout(setup,2000);
+})();
+</script>
+
+<script>
+/* V179: Reliable right-side X for Raw Material Name and Material Inward. */
+(function(){
+  function areaBy(id){
+    const e=document.getElementById(id);
+    return e ? (e.closest('.panel')||e.parentElement) : null;
+  }
+  function addX(area,fn){
+    if(!area)return;
+    let x=area.querySelector(':scope > .v179-close');
+    if(!x){
+      x=document.createElement('button');
+      x.type='button'; x.className='v179-close'; x.textContent='×';
+      x.title='Close'; area.insertBefore(x,area.firstChild);
+    }
+    x.onclick=function(e){e.preventDefault();e.stopPropagation();fn();return false;};
+  }
+  function setup(){
+    const sec=document.getElementById('rawmaterials');
+    if(!sec)return;
+    const nameArea=areaBy('rmCode');
+    const inwardArea=areaBy('rmPurchaseDate');
+
+    addX(nameArea,function(){
+      sec.classList.remove('v177-show-name');
+      if(nameArea) nameArea.style.display='none';
+    });
+    addX(inwardArea,function(){
+      sec.classList.remove('v177-show-inward','v178-show-inward');
+      if(inwardArea) inwardArea.style.display='none';
+    });
+
+    const nameBtn=document.getElementById('v174AddRaw');
+    if(nameBtn&&!nameBtn.dataset.v179){
+      nameBtn.dataset.v179='1';
+      nameBtn.onclick=function(e){
+        e.preventDefault(); e.stopPropagation();
+        sec.classList.remove('v177-show-inward','v178-show-inward');
+        sec.classList.add('v177-show-name');
+        if(nameArea)nameArea.style.display='';
+      };
+    }
+    const inwardBtn=document.getElementById('v174AddRawStock');
+    if(inwardBtn&&!inwardBtn.dataset.v179){
+      inwardBtn.dataset.v179='1';
+      inwardBtn.onclick=function(e){
+        e.preventDefault(); e.stopPropagation();
+        sec.classList.remove('v177-show-name');
+        sec.classList.add('v177-show-inward');
+        if(inwardArea)inwardArea.style.display='';
+      };
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
+  [300,800,1500,2500].forEach(t=>setTimeout(setup,t));
 })();
 </script>
 </body></html>
