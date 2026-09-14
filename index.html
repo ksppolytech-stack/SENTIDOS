@@ -5515,4 +5515,66 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   [300,800,1500].forEach(t=>setTimeout(setup,t));
 })();
 </script>
+
+<script>
+/* V192 — Purchase sidebar submenu toggle */
+(function(){
+  function initPurchaseSubmenu(){
+    const tabs = document.querySelector('.tabs');
+    if(!tabs || document.getElementById('purchaseSubmenuV192')) return;
+
+    const purchaseBtn = tabs.querySelector('button[data-page="purchase"]');
+    if(!purchaseBtn) return;
+
+    const wrap = document.createElement('div');
+    wrap.id = 'purchaseSubmenuV192';
+    wrap.style.cssText = 'display:none;margin:0 0 6px 18px;';
+
+    const inward = document.createElement('button');
+    inward.type = 'button';
+    inward.textContent = '↳ Purchase Inward';
+    inward.style.cssText = 'display:block;width:calc(100% - 8px);margin:2px 0;padding:7px 8px;text-align:left;font-size:13px;';
+
+    const report = document.createElement('button');
+    report.type = 'button';
+    report.textContent = '📊 Purchase Report';
+    report.style.cssText = 'display:block;width:calc(100% - 8px);margin:2px 0;padding:7px 8px;text-align:left;font-size:13px;';
+
+    wrap.appendChild(inward);
+    wrap.appendChild(report);
+    purchaseBtn.insertAdjacentElement('afterend', wrap);
+
+    purchaseBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none';
+    });
+
+    inward.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const real = document.querySelector('.tabs > button[data-page="purchase"]');
+      if(real) real.click();
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+
+    report.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const real = document.querySelector('.tabs > button[data-page="reports"]');
+      if(real) real.click();
+      setTimeout(function(){
+        const panel = document.getElementById('purchaseReportPanel');
+        if(panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
+      }, 50);
+    });
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initPurchaseSubmenu);
+  }else{
+    initPurchaseSubmenu();
+  }
+})();
+</script>
 </body></html>
