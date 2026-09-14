@@ -174,7 +174,7 @@ tr.low-stock-row td * {
 </section>
 
 
-<section id="rawmaterials" class="page"><div class="panel"><h2>Raw Material Master</h2><p class="small"><b>આ જ Raw Material stockનું main source છે.</b> અહીં Add/Purchase કરેલા materialમાંથી Purchase, Vendor Job Work Issue અને Vendor Consumption બધું deduct/add થશે.</p>
+<section id="rawmaterials" class="page"><div class="panel"><div class="v185-head"><h2 style="margin:0">Raw Material Master</h2><button type="button" class="v185-x" id="v185NameX" title="Close Raw Material Name">×</button></div><p class="small"><b>આ જ Raw Material stockનું main source છે.</b> અહીં Add/Purchase કરેલા materialમાંથી Purchase, Vendor Job Work Issue અને Vendor Consumption બધું deduct/add થશે.</p>
 <div id="rawMaterialMasterAddBox" style="display:none">
 <div class="grid">
 <input id="rmCode" placeholder="Material Code"><input id="rmName" placeholder="Material Name">
@@ -187,7 +187,7 @@ tr.low-stock-row td * {
 <button type="button" id="showRawMaterialMasterBtn" class="primary" style="display:none;margin-bottom:12px">➕ Add Raw Material</button>
 <table><thead><tr><th>Material Name</th><th>Total Stock</th><th>Action</th></tr></thead><tbody id="rmTable"></tbody></table><div id="rawLotDetails" class="small"></div>
 <hr>
-<h3>Company Raw Material Inward / Stock Add</h3><p class="small">ઉપરની listમાં માત્ર Material Name અને Total Stock દેખાશે. નીચેની Inward listમાં દરેક batchનો Rate અલગ દેખાશે.</p>
+<div class="v185-head"><h3 style="margin:0">Company Raw Material Inward / Stock Add</h3><button type="button" class="v185-x" id="v185InwardX" title="Close Material Inward">×</button></div><p class="small">ઉપરની listમાં માત્ર Material Name અને Total Stock દેખાશે. નીચેની Inward listમાં દરેક batchનો Rate અલગ દેખાશે.</p>
 <div class="grid">
 <input id="rmPurchaseDate" type="date" title="Inward Date">
 <div class="autowrap" style="position:relative"><input id="rmPurchaseSupplier" placeholder="Type Supplier Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearRMPurchaseSupplier" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer">×</button><div id="rmPurchaseSupplierSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
@@ -4809,33 +4809,22 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 }
 </style>
 
-
-
-<style id="v183-clean-close">
-.v183-head-row{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;gap:10px}
-.v183-x{
-  margin-left:auto!important;flex:0 0 auto!important;width:34px!important;height:34px!important;
-  border:1px solid #999!important;border-radius:5px!important;background:#fff!important;
-  color:#222!important;font-size:20px!important;line-height:30px!important;
-  padding:0!important;cursor:pointer!important;text-align:center!important;
+<style id="v178-inward-close">
+@media (min-width:900px){
+  #rawmaterials #v177InwardWrap{display:none!important;}
+  #rawmaterials.v178-show-inward #v177InwardWrap{display:block!important;}
+  #rawmaterials.v178-show-name #v177InwardWrap{display:none!important;}
 }
-.v183-x:hover{background:#eee!important;color:#c00!important}
+.v178-field-close{
+  float:right;border:0;background:transparent;font-size:20px;line-height:1;
+  cursor:pointer;padding:0 4px;color:#555;
+}
+.v178-field-close:hover{color:#c00}
 </style>
-
-<style id="v184-right-x">
-.v184-right-row{position:relative!important;width:100%!important;box-sizing:border-box!important;min-height:34px!important;padding-right:46px!important}
-.v184-right-row .v183-x{
-  position:absolute!important;
-  right:0!important;
-  top:0!important;
-  left:auto!important;
-  margin:0!important;
-  float:none!important;
-  display:block!important;
-  width:34px!important;
-  height:34px!important;
-  z-index:5!important;
-}
+<style id="v185-raw-x">
+.v185-head{display:flex!important;align-items:center!important;justify-content:space-between!important;width:100%!important;box-sizing:border-box!important;gap:12px!important}
+.v185-x{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 34px!important;width:34px!important;height:34px!important;margin-left:auto!important;padding:0!important;border:1px solid #888!important;border-radius:5px!important;background:#fff!important;color:#222!important;font-size:21px!important;font-weight:bold!important;line-height:1!important;cursor:pointer!important;visibility:visible!important;opacity:1!important}
+.v185-x:hover{background:#eee!important;color:#c00!important}
 </style>
 </head><body>'+clone.innerHTML+'</body></html>');
     w.document.close();
@@ -5222,10 +5211,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* V173: Item Master submenu toggles open/closed on repeated Item Master clicks. */
 </script>
 <script>
+/* V178: Material Inward fields open on submenu click and close with X. */
+</script>
+<script>
 /* V177: Raw Material Master right-side fields are shown only on submenu click. */
 </script>
 <script>
-/* V183: Clean single right-side X; removed all extra X controls. */
+/* V185: Static right-side X buttons for Raw Material Name and Material Inward. */
 </script>
 <script>
 /* V176: Add Stock submenu label changed to Material Inward. */
@@ -5289,103 +5281,131 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
-
-
 <script>
-/* V183: Clean single X controls on the right side of Raw Material sections. */
+/* V178: Material Inward gets its own right-side field area and X closes it. */
 (function(){
-  function makeRow(titleEl, cls, closeFn){
-    if(!titleEl || titleEl.dataset.v183Wrapped==='1')return;
-    titleEl.dataset.v183Wrapped='1';
-    const row=document.createElement('div');
-    row.className='v183-head-row';
-    titleEl.parentNode.insertBefore(row,titleEl);
-    row.appendChild(titleEl);
-    const x=document.createElement('button');
-    x.type='button'; x.className='v183-x '+cls; x.textContent='×'; x.title='Close';
-    x.addEventListener('click',function(e){
-      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-      closeFn(); return false;
-    });
-    row.appendChild(x);
-  }
+  let inwardOpen=false;
 
   function setup(){
     const sec=document.getElementById('rawmaterials');
     if(!sec)return;
 
-    const h2=sec.querySelector('.panel > h2');
-    const nameBox=document.getElementById('rawMaterialMasterAddBox');
-    makeRow(h2,'v183-name-x',function(){
-      if(nameBox)nameBox.style.display='none';
-      sec.classList.remove('v177-show-name');
-    });
+    // Locate the existing Material Inward area by the rmPurchaseDate field.
+    const date=document.getElementById('rmPurchaseDate');
+    if(date){
+      let area=date.closest('.panel') || date.parentElement;
+      // Prefer the nearest block that contains the inward controls, without
+      // disturbing the existing HTML/data logic.
+      while(area && area.parentElement && area.parentElement!==sec &&
+            !area.querySelector('#rmPurchaseTaxRate')) area=area.parentElement;
 
-    const inwardH3=Array.from(sec.querySelectorAll('h3')).find(h=>/Company Raw Material Inward \/ Stock Add/i.test(h.textContent||''));
-    const inwardGrid=document.getElementById('rmPurchaseDate')?.closest('.grid');
-    const inwardBtn=document.getElementById('rmPurchaseBtn');
-    const inwardMsg=document.getElementById('rmPurchaseMsg');
+      if(area && !area.id) area.id='v177InwardWrap';
+      else if(area && area.id!=='rawMaterialMasterAddBox' &&
+              !area.id.startsWith('v177')) area.id='v177InwardWrap';
 
-    makeRow(inwardH3,'v183-inward-x',function(){
-      sec.classList.remove('v177-show-inward','v178-show-inward');
-      if(inwardGrid)inwardGrid.style.display='none';
-      if(inwardBtn)inwardBtn.style.display='none';
-      if(inwardMsg)inwardMsg.style.display='none';
-    });
+      if(area && !area.querySelector('.v178-field-close')){
+        const close=document.createElement('button');
+        close.type='button';
+        close.className='v178-field-close';
+        close.textContent='×';
+        close.title='Close';
+        close.addEventListener('click',function(e){
+          e.preventDefault(); e.stopPropagation();
+          inwardOpen=false;
+          sec.classList.remove('v178-show-inward');
+          sec.classList.remove('v177-show-inward');
+        });
+        area.insertBefore(close,area.firstChild);
+      }
+    }
 
-    // Ensure submenu click opens only the selected section.
-    const nameBtn=document.getElementById('v174AddRaw');
-    if(nameBtn && !nameBtn.dataset.v183){
-      nameBtn.dataset.v183='1';
-      nameBtn.addEventListener('click',function(e){
+    const inward=document.getElementById('v174AddRawStock');
+    if(inward && !inward.dataset.v178){
+      inward.dataset.v178='1';
+      inward.addEventListener('click',function(e){
         e.stopPropagation();
-        sec.classList.remove('v177-show-inward','v178-show-inward');
-        sec.classList.add('v177-show-name');
-        if(nameBox)nameBox.style.display='block';
+        inwardOpen=true;
+        sec.classList.remove('v177-show-name');
+        sec.classList.add('v178-show-inward');
+        const el=document.getElementById('rmPurchaseDate') || document.getElementById('rmPurchase');
+        if(el)setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'center'}),80);
       });
     }
-    const inBtn=document.getElementById('v174AddRawStock');
-    if(inBtn && !inBtn.dataset.v183){
-      inBtn.dataset.v183='1';
-      inBtn.addEventListener('click',function(e){
-        e.stopPropagation();
-        sec.classList.remove('v177-show-name');
-        sec.classList.add('v177-show-inward');
-        if(inwardGrid)inwardGrid.style.display='grid';
-        if(inwardBtn)inwardBtn.style.display='inline-block';
-        if(inwardMsg)inwardMsg.style.display='';
-      });
+
+    // Keep Material Inward closed when Raw Material Master itself is first opened.
+    if(!sec.classList.contains('active')){
+      inwardOpen=false;
+      sec.classList.remove('v178-show-inward');
     }
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
   else setup();
-  [250,700,1500,2500].forEach(t=>setTimeout(setup,t));
+  setTimeout(setup,300);
+  setTimeout(setup,1000);
+  setTimeout(setup,2000);
 })();
 </script>
 
 <script>
-/* V184: Move both Raw Material X buttons to the far right of their headings. */
+/* V185: Static, visible right-side X buttons; no duplicate dynamically-created buttons. */
 (function(){
-  function moveX(){
+  function setup(){
     const sec=document.getElementById('rawmaterials');
     if(!sec)return;
-    document.querySelectorAll('#rawmaterials .v183-head-row').forEach(row=>{
-      row.classList.add('v184-right-row');
-      const x=row.querySelector('.v183-x');
-      if(x){
-        x.style.position='absolute';
-        x.style.right='0';
-        x.style.left='auto';
-        x.style.top='0';
-        x.style.margin='0';
-        x.style.float='none';
-      }
-    });
+
+    const nameX=document.getElementById('v185NameX');
+    const inwardX=document.getElementById('v185InwardX');
+    const nameBox=document.getElementById('rawMaterialMasterAddBox');
+    const inwardGrid=document.getElementById('rmPurchaseDate')?.closest('.grid');
+    const inwardBtn=document.getElementById('rmPurchaseBtn');
+    const inwardMsg=document.getElementById('rmPurchaseMsg');
+
+    if(nameX && !nameX.dataset.bound){
+      nameX.dataset.bound='1';
+      nameX.onclick=function(e){
+        e.preventDefault();e.stopPropagation();
+        if(nameBox)nameBox.style.display='none';
+        sec.classList.remove('v177-show-name');
+      };
+    }
+    if(inwardX && !inwardX.dataset.bound){
+      inwardX.dataset.bound='1';
+      inwardX.onclick=function(e){
+        e.preventDefault();e.stopPropagation();
+        if(inwardGrid)inwardGrid.style.display='none';
+        if(inwardBtn)inwardBtn.style.display='none';
+        if(inwardMsg)inwardMsg.style.display='none';
+        sec.classList.remove('v177-show-inward','v178-show-inward');
+      };
+    }
+
+    // Make submenu clicks explicitly open the corresponding fields.
+    const nameBtn=document.getElementById('v174AddRaw');
+    if(nameBtn && !nameBtn.dataset.v185){
+      nameBtn.dataset.v185='1';
+      nameBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(nameBox)nameBox.style.display='block';
+        sec.classList.remove('v177-show-inward','v178-show-inward');
+        sec.classList.add('v177-show-name');
+      });
+    }
+    const inBtn=document.getElementById('v174AddRawStock');
+    if(inBtn && !inBtn.dataset.v185){
+      inBtn.dataset.v185='1';
+      inBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(inwardGrid)inwardGrid.style.display='grid';
+        if(inwardBtn)inwardBtn.style.display='inline-block';
+        if(inwardMsg)inwardMsg.style.display='';
+        sec.classList.remove('v177-show-name');
+        sec.classList.add('v177-show-inward');
+      });
+    }
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',moveX);
-  else moveX();
-  [200,600,1200,2000].forEach(t=>setTimeout(moveX,t));
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
+  [300,800,1500].forEach(t=>setTimeout(setup,t));
 })();
 </script>
 </body></html>
