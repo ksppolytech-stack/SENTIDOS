@@ -5384,6 +5384,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 <script>
+/* V189: Item Master Add Item click toggles the Item form open/closed. */
+</script>
+<script>
 /* V188: Material Inward click toggles its fields open/closed. */
 </script>
 <script>
@@ -5461,6 +5464,48 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           sec.classList.remove('v177-show-name','v187-name-open');
           sec.classList.add('v177-show-inward','v188-inward-open');
           setTimeout(()=>date.focus(),50);
+        }
+      },true);
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
+  else setup();
+  [300,800,1500].forEach(t=>setTimeout(setup,t));
+})();
+</script>
+
+<script>
+/* V189: Item Master Add Item submenu toggles its form open/closed. */
+(function(){
+  function setup(){
+    const sec=document.getElementById('items');
+    const btn=document.getElementById('v172AddItem');
+    if(!sec||!btn)return;
+
+    if(!btn.dataset.v189){
+      btn.dataset.v189='1';
+      btn.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        const panel=sec.querySelector('.panel');
+        const grid=panel ? panel.querySelector('.grid') : null;
+        const addBtn=document.getElementById('addItemBtn');
+        if(!grid)return;
+
+        const isOpen=sec.classList.contains('v189-item-open') ||
+          getComputedStyle(grid).display!=='none';
+
+        if(isOpen){
+          grid.style.display='none';
+          if(addBtn)addBtn.style.display='none';
+          sec.classList.remove('v189-item-open');
+        }else{
+          grid.style.display='grid';
+          if(addBtn)addBtn.style.display='inline-block';
+          sec.classList.add('v189-item-open');
+          const code=document.getElementById('itemCode');
+          if(code)setTimeout(()=>code.focus(),50);
         }
       },true);
     }
