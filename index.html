@@ -5517,17 +5517,17 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 <script>
-/* V192 — Purchase sidebar submenu toggle */
+/* V193 — Purchase submenu + Purchase Inward form toggle, based on V189 */
 (function(){
-  function initPurchaseSubmenu(){
+  function initPurchaseSubmenuV193(){
     const tabs = document.querySelector('.tabs');
-    if(!tabs || document.getElementById('purchaseSubmenuV192')) return;
+    if(!tabs || document.getElementById('purchaseSubmenuV193')) return;
 
     const purchaseBtn = tabs.querySelector('button[data-page="purchase"]');
     if(!purchaseBtn) return;
 
     const wrap = document.createElement('div');
-    wrap.id = 'purchaseSubmenuV192';
+    wrap.id = 'purchaseSubmenuV193';
     wrap.style.cssText = 'display:none;margin:0 0 6px 18px;';
 
     const inward = document.createElement('button');
@@ -5544,6 +5544,27 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     wrap.appendChild(report);
     purchaseBtn.insertAdjacentElement('afterend', wrap);
 
+    function getPurchaseFormParts(){
+      const sec = document.getElementById('purchase');
+      if(!sec) return [];
+      return [
+        sec.querySelector('.grid'),
+        document.getElementById('addPurchaseItem'),
+        document.getElementById('openPurchaseMaster'),
+        document.getElementById('purchaseBtn'),
+        sec.querySelector('.small'),
+        document.getElementById('purchaseCartTable')?.closest('div[style*="overflow:auto"]'),
+        document.getElementById('purchaseMsg')
+      ].filter(Boolean);
+    }
+
+    function setPurchaseInwardVisible(show){
+      getPurchaseFormParts().forEach(el => el.style.display = show ? '' : 'none');
+    }
+
+    // Entry form is hidden until Purchase Inward is clicked.
+    setPurchaseInwardVisible(false);
+
     purchaseBtn.addEventListener('click', function(e){
       e.preventDefault();
       e.stopPropagation();
@@ -5555,7 +5576,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       e.stopPropagation();
       const real = document.querySelector('.tabs > button[data-page="purchase"]');
       if(real) real.click();
-      window.scrollTo({top:0, behavior:'smooth'});
+      setTimeout(function(){
+        const sec = document.getElementById('purchase');
+        if(sec) sec.scrollIntoView({behavior:'smooth', block:'start'});
+        setPurchaseInwardVisible(
+          getPurchaseFormParts().some(el => el.style.display === 'none')
+        );
+      }, 30);
     });
 
     report.addEventListener('click', function(e){
@@ -5571,9 +5598,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', initPurchaseSubmenu);
+    document.addEventListener('DOMContentLoaded', initPurchaseSubmenuV193);
   }else{
-    initPurchaseSubmenu();
+    initPurchaseSubmenuV193();
   }
 })();
 </script>
