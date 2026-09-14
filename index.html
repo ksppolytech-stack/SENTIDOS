@@ -4821,6 +4821,22 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 }
 .v183-x:hover{background:#eee!important;color:#c00!important}
 </style>
+
+<style id="v184-right-x">
+.v184-right-row{position:relative!important;width:100%!important;box-sizing:border-box!important;min-height:34px!important;padding-right:46px!important}
+.v184-right-row .v183-x{
+  position:absolute!important;
+  right:0!important;
+  top:0!important;
+  left:auto!important;
+  margin:0!important;
+  float:none!important;
+  display:block!important;
+  width:34px!important;
+  height:34px!important;
+  z-index:5!important;
+}
+</style>
 </head><body>'+clone.innerHTML+'</body></html>');
     w.document.close();
     w.focus();
@@ -5345,6 +5361,31 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
   else setup();
   [250,700,1500,2500].forEach(t=>setTimeout(setup,t));
+})();
+</script>
+
+<script>
+/* V184: Move both Raw Material X buttons to the far right of their headings. */
+(function(){
+  function moveX(){
+    const sec=document.getElementById('rawmaterials');
+    if(!sec)return;
+    document.querySelectorAll('#rawmaterials .v183-head-row').forEach(row=>{
+      row.classList.add('v184-right-row');
+      const x=row.querySelector('.v183-x');
+      if(x){
+        x.style.position='absolute';
+        x.style.right='0';
+        x.style.left='auto';
+        x.style.top='0';
+        x.style.margin='0';
+        x.style.float='none';
+      }
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',moveX);
+  else moveX();
+  [200,600,1200,2000].forEach(t=>setTimeout(moveX,t));
 })();
 </script>
 </body></html>
