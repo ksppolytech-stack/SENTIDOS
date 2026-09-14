@@ -5384,6 +5384,44 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 <script>
+/* V187: Raw Material Name click toggles its fields open/closed. */
+</script>
+<script>
 /* V186: V183 base — existing single X buttons moved to far right. */
+</script>
+
+<script>
+/* V187: Raw Material Name submenu toggles its fields open/closed. */
+(function(){
+  function setup(){
+    const sec=document.getElementById('rawmaterials');
+    const btn=document.getElementById('v174AddRaw');
+    const box=document.getElementById('rawMaterialMasterAddBox');
+    if(!sec||!btn||!box)return;
+
+    if(!btn.dataset.v187){
+      btn.dataset.v187='1';
+      btn.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const isOpen=sec.classList.contains('v187-name-open') ||
+                     getComputedStyle(box).display!=='none';
+        if(isOpen){
+          box.style.display='none';
+          sec.classList.remove('v177-show-name','v187-name-open');
+        }else{
+          box.style.display='block';
+          sec.classList.remove('v177-show-inward','v178-show-inward');
+          sec.classList.add('v177-show-name','v187-name-open');
+          const code=document.getElementById('rmCode');
+          if(code)setTimeout(()=>code.focus(),50);
+        }
+      },true);
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
+  else setup();
+  [300,800,1500].forEach(t=>setTimeout(setup,t));
+})();
 </script>
 </body></html>
