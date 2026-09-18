@@ -180,11 +180,6 @@ tr.low-stock-row td * {
 <button type="button" id="v225JobWorkBtn" data-page="jobwork" aria-expanded="false">🏭 Job Work</button>
 <div id="jobWorkSubMenuV225" class="v225JobWorkSubMenu" hidden>
 <button type="button" id="openJWIssueBtnV225">🧱 Raw Material Issue to Vendor</button>
-</div>
-<div class="v212SideMenuGroup">
-  <button type="button" id="jwIssueHistorySideBtn" data-page="jwIssueHistory">📋 Raw Material Issue History</button>
-</div>
-
 <button type="button" id="openJWReceiveBtnV225">🔩 Component Receive from Vendor</button>
 </div>
 </div><button data-page="reports">📄 Reports</button><button data-page="stock">📊 Stock</button>
@@ -451,7 +446,7 @@ tr.low-stock-row td * {
 <div id="jwIssueSectionV225">
 <hr><h3>🧱 Raw Material Issue to Vendor</h3><p class="small">Challan No. software automatic generate કરશે.</p>
 <div class="grid">
-<div class="autowrap" style="position:relative"><input <label>Issue Date<input id="jwIssueDate" type="date"></label>id="jwIssueVendor" placeholder="Type Vendor Name"><div id="issueVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<div class="autowrap" style="position:relative"><input id="jwIssueVendor" placeholder="Type Vendor Name"><div id="issueVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
 <div class="autowrap" style="position:relative"><input id="jwRaw" placeholder="Type Raw Material"><div id="rawSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
 <input id="jwIssueQty" type="number" step="0.001" placeholder="Issue Qty">
 
@@ -5884,67 +5879,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 <!-- V226: Job Work submenu labels updated: removed 1./2. numbering and kept suitable icons. Based on V225. -->
-
-<script>
-/* V228: Raw Material Issue History moved to side panel. Based on V227. */
-(function(){
-  function getToday(){
-    const d=new Date();
-    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  }
-  function getRows(){
-    let arr=[];
-    try{arr=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]')}catch(e){arr=[]}
-    return arr.filter(t=>{
-      const type=String(t.type||t.transactionType||'').toUpperCase();
-      return type==='JOB WORK ISSUE'||type==='JOBWORK ISSUE'||type==='JW ISSUE'||type==='RAW MATERIAL ISSUE TO VENDOR';
-    });
-  }
-  function renderHistoryPage(){
-    let page=document.getElementById('jwIssueHistory');
-    if(!page){
-      page=document.createElement('section');
-      page.id='jwIssueHistory';
-      page.className='page';
-      page.innerHTML='<div class="card"><h2>📋 Raw Material Issue History</h2><div id="jwIssueHistoryTable"></div></div>';
-      const container=document.querySelector('main')||document.body;
-      container.appendChild(page);
-    }
-    const box=document.getElementById('jwIssueHistoryTable');
-    if(!box)return;
-    const rows=getRows();
-    if(!rows.length){box.innerHTML='<div style="padding:12px">No transactions yet.</div>';return;}
-    let h='<div style="overflow:auto"><table><thead><tr><th>Date</th><th>Vendor</th><th>Raw Material</th><th>Qty</th><th>Reference</th></tr></thead><tbody>';
-    rows.slice().reverse().forEach(t=>{
-      h+='<tr><td>'+String(t.date||t.issueDate||'')+'</td><td>'+String(t.vendor||t.vendorName||t.party||'')+'</td><td>'+String(t.itemName||t.item||t.material||t.rawMaterial||'')+'</td><td>'+String(t.qty??'')+'</td><td>'+String(t.ref||t.billNo||t.reference||'')+'</td></tr>';
-    });
-    h+='</tbody></table></div>';
-    box.innerHTML=h;
-  }
-  function showHistory(){
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    const p=document.getElementById('jwIssueHistory');
-    if(p){p.classList.add('active');renderHistoryPage()}
-  }
-  function init(){
-    const date=document.getElementById('jwIssueDate');
-    if(date&&!date.value)date.value=getToday();
-    const b=document.getElementById('jwIssueHistorySideBtn');
-    if(b && !b.dataset.v228Ready){
-      b.dataset.v228Ready='1';
-      b.addEventListener('click',function(e){
-        e.preventDefault();e.stopImmediatePropagation();
-        showHistory();
-      },true);
-    }
-    renderHistoryPage();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-  setInterval(renderHistoryPage,1000);
-})();
-</script>
-
-<!-- V228: Raw Material Issue History moved from Job Work page to left side-panel menu. Based on V227. -->
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
