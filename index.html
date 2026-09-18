@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V220 - Firebase Online Sync</title>
+<title>Sentidos ERP V221 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -20,7 +20,8 @@ main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-w
  table{font-size:11px}h2{margin-top:0}
 }
 
-/* V220: Master parent menu with all Master modules as submenus. */
+/* V220: Master parent menu with all Master modules as submenus.
+/* V221: Raw Material Master moved outside the Master submenu as requested. */ */
 .v220MasterSideGroup{display:inline-flex;flex-direction:column;vertical-align:top;gap:4px;position:relative}
 .v220MasterSideBtn{border:0;padding:10px;border-radius:7px;background:#fff;cursor:pointer}
 .v220MasterSideBtn.active{background:#17324d;color:#fff}
@@ -151,7 +152,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V220</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V221</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -160,7 +161,6 @@ tr.low-stock-row td * {
 <button type="button" id="v220MasterBtn" class="v220MasterSideBtn" aria-expanded="false">📚 Master</button>
 <div id="v220MasterSubMenu" class="v220MasterSubMenu" hidden>
 <button type="button" data-page="items">📦 Item Master</button>
-<button type="button" data-page="rawmaterials">🧱 Raw Material Master</button>
 <button type="button" data-page="bom">🔧 BOM Master</button>
 <button type="button" data-page="purchaseMaster">🏢 Supplier Master</button>
 <button type="button" data-page="customerMaster">👤 Customer Master</button>
@@ -168,7 +168,7 @@ tr.low-stock-row td * {
 <button type="button" data-page="jwrates">💰 Job Work Rate Master</button>
 </div>
 </div>
-<button data-page="purchase">🛒 Purchase</button><button data-page="production">🏭 Production</button>
+<button data-page="rawmaterials">🧱 Raw Material Master</button><button data-page="purchase">🛒 Purchase</button><button data-page="production">🏭 Production</button>
 <button data-page="dispatch">🚚 Dispatch</button><button data-page="rawSale">🧾 Raw Material Sale</button><div class="v212SideMenuGroup">
 <button type="button" class="v212AccountingSideBtn" data-page="accounting" aria-expanded="false">💰 Accounting</button>
 <div id="accountingSubMenuV211" class="v212AccountingSubMenu">
