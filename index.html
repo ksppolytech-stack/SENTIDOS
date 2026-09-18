@@ -712,27 +712,15 @@ document.querySelectorAll('.tabs button').forEach(btn=>btn.addEventListener('cli
  target.classList.add('active');
  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
 
- // V217: Accounting button toggles its submenu.
+ // V211: Accounting tab itself toggles its two sub-menu buttons.
  if(btn.dataset.page==='accounting'){
    const menu=document.getElementById('accountingSubMenuV211');
-   const isOpen=menu && menu.style.display==='block';
-   if(menu) menu.style.display=isOpen?'none':'block';
-   btn.setAttribute('aria-expanded',isOpen?'false':'true');
-   if(isOpen){
-     const rs=document.getElementById('receivePaymentSection');
-     const ps=document.getElementById('paySupplierSection');
-     if(rs)rs.style.display='none';
-     if(ps)ps.style.display='none';
-   }
+   if(menu) menu.style.display='block';
  }else{
    const menu=document.getElementById('accountingSubMenuV211');
    if(menu)menu.style.display='none';
    const ab=document.querySelector('[data-page="accounting"]');
    if(ab)ab.setAttribute('aria-expanded','false');
-   const rs=document.getElementById('receivePaymentSection');
-   const ps=document.getElementById('paySupplierSection');
-   if(rs)rs.style.display='none';
-   if(ps)ps.style.display='none';
  }
 }));
 
@@ -5649,7 +5637,147 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 
 
-<script>/* V217: Accounting submenu toggle is handled by the main side-menu click handler. */</script>
+<script>
+/* V216 — Fix Accounting + submenu + field toggle. Based on V215. */
+(function(){
+  function initV216(){
+    const acc=document.querySelector('.v212AccountingSideBtn');
+    const menu=document.getElementById('accountingSubMenuV211');
+    const receive=document.getElementById('openReceivePaymentBtn');
+    const pay=document.getElementById('openPaySupplierBtn');
+    const rs=document.getElementById('receivePaymentSection');
+    const ps=document.getElementById('paySupplierSection');
+    if(!acc||!menu||!receive||!pay||!rs||!ps)return;
+
+    acc.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen=menu.style.display==='block';
+      menu.style.display=isOpen?'none':'block';
+      acc.setAttribute('aria-expanded',isOpen?'false':'true');
+      if(isOpen){ rs.style.display='none'; ps.style.display='none'; }
+      const target=document.getElementById('accounting');
+      if(target){
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+        target.classList.add('active');
+        document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+        acc.classList.add('active');
+      }
+    };
+
+    receive.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const opening=rs.style.display!=='block';
+      rs.style.display=opening?'block':'none';
+      ps.style.display='none';
+      if(opening && typeof setPaymentDateToday==='function') setPaymentDateToday();
+    };
+
+    pay.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const opening=ps.style.display!=='block';
+      ps.style.display=opening?'block':'none';
+      rs.style.display='none';
+      if(opening && typeof setDateTodayV87==='function') setDateTodayV87('accPaySupplierDate');
+    };
+  }
+
+  function boot(){
+    initV216();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
+  else boot();
+  [300,800,1500].forEach(t=>setTimeout(initV216,t));
+})();
+</script>
+
+<script>
+/* V218: Robust Accounting submenu + payment form toggles.
+   Delegated click handling avoids conflicts with older menu handlers. */
+(function(){
+  function setupV218(){
+    if(document.documentElement.dataset.v218Bound==='1') return;
+    document.documentElement.dataset.v218Bound='1';
+
+    document.addEventListener('click',function(e){
+      const acc=e.target.closest('.v212AccountingSideBtn');
+      const receive=e.target.closest('#openReceivePaymentBtn');
+      const pay=e.target.closest('#openPaySupplierBtn');
+
+      if(acc){
+        e.preventDefault();
+        e.stopPropagation();
+        const menu=document.getElementById('accountingSubMenuV211');
+        const rs=document.getElementById('receivePaymentSection');
+        const ps=document.getElementById('paySupplierSection');
+        if(!menu)return;
+
+        const open=menu.dataset.v218Open==='1';
+        menu.style.setProperty('display',open?'none','important');
+        menu.dataset.v218Open=open?'0':'1';
+        acc.setAttribute('aria-expanded',open?'false':'true');
+
+        const target=document.getElementById('accounting');
+        if(target){
+          document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+          target.classList.add('active');
+          document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+          acc.classList.add('active');
+        }
+        if(open){
+          if(rs)rs.style.setProperty('display','none','important');
+          if(ps)ps.style.setProperty('display','none','important');
+        }
+        return;
+      }
+
+      if(receive){
+        e.preventDefault();
+        e.stopPropagation();
+        const rs=document.getElementById('receivePaymentSection');
+        const ps=document.getElementById('paySupplierSection');
+        if(!rs)return;
+        const opening=rs.dataset.v218Open!=='1';
+        rs.style.setProperty('display',opening?'block':'none','important');
+        rs.dataset.v218Open=opening?'1':'0';
+        if(ps){
+          ps.style.setProperty('display','none','important');
+          ps.dataset.v218Open='0';
+        }
+        if(opening && typeof setPaymentDateToday==='function')setPaymentDateToday();
+        return;
+      }
+
+      if(pay){
+        e.preventDefault();
+        e.stopPropagation();
+        const rs=document.getElementById('receivePaymentSection');
+        const ps=document.getElementById('paySupplierSection');
+        if(!ps)return;
+        const opening=ps.dataset.v218Open!=='1';
+        ps.style.setProperty('display',opening?'block':'none','important');
+        ps.dataset.v218Open=opening?'1':'0';
+        if(rs){
+          rs.style.setProperty('display','none','important');
+          rs.dataset.v218Open='0';
+        }
+        if(opening && typeof setDateTodayV87==='function')setDateTodayV87('accPaySupplierDate');
+      }
+    },true);
+
+    const menu=document.getElementById('accountingSubMenuV211');
+    const rs=document.getElementById('receivePaymentSection');
+    const ps=document.getElementById('paySupplierSection');
+    if(menu){menu.style.setProperty('display','none','important');menu.dataset.v218Open='0';}
+    if(rs){rs.style.setProperty('display','none','important');rs.dataset.v218Open='0';}
+    if(ps){ps.style.setProperty('display','none','important');ps.dataset.v218Open='0';}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setupV218);
+  else setupV218();
+})();
+</script>
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
