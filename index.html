@@ -1584,9 +1584,31 @@ function renderJobWorkRates(){
  if(!$('rateTable'))return;
  $('rateTable').innerHTML=jobworkRates.map((r,idx)=>{
   const c=items.find(i=>i.code===r.component);
-  return `<tr><td>${r.vendor}</td><td>${c?c.name:r.component}</td><td>₹${fmtRate2(r.rate)}</td><td><button data-rate-del="${idx}">🗑 Delete</button></td></tr>`;
- }).join('');
- document.querySelectorAll('[data-rate-del]').forEach(b=>b.onclick=()=>{if(confirm('Delete this rate?')){jobworkRates.splice(Number(b.dataset.rateDel),1);save();}});
+  return `<tr><td>${r.vendor}</td><td>${c?c.name:r.component}</td><td>₹${fmtRate2(r.rate)}</td><td><button type="button" data-rate-edit="${idx}">✏️ Edit</button> <button type="button" data-rate-del="${idx}">🗑 Delete</button></td></tr>`;
+ }).join('') || '<tr><td colspan="4">No Job Work rates added</td></tr>';
+ document.querySelectorAll('[data-rate-edit]').forEach(b=>b.onclick=()=>{
+  const idx=Number(b.dataset.rateEdit), r=jobworkRates[idx];
+  if(!r)return;
+  const current=Number(r.rate||0).toFixed(3);
+  const v=prompt('Job Work Rate:',current);
+  if(v===null)return;
+  const n=Number(v);
+  if(!Number.isFinite(n)||n<=0){alert('Valid Rate નાખો.');return;}
+  r.rate=n;
+  save();
+  renderJobWorkRates();
+  renderPurchaseEntries();
+ });
+ document.querySelectorAll('[data-rate-del]').forEach(b=>b.onclick=()=>{
+  const idx=Number(b.dataset.rateDel);
+  if(!jobworkRates[idx])return;
+  if(confirm('Delete this rate?')){
+   jobworkRates.splice(idx,1);
+   save();
+   renderJobWorkRates();
+   renderPurchaseEntries();
+  }
+ });
 }
 function receiveFromVendor(){
  const receiveDate=$('jwReceiveDate').value || new Date().toISOString().slice(0,10);
