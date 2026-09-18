@@ -109,6 +109,16 @@ tr.low-stock-row td * {
 #mergedPartySuggest>div{display:block!important;width:100%!important;box-sizing:border-box!important;padding:10px 12px!important;min-height:40px!important;color:#111!important;background:#fff!important;font-size:15px!important;line-height:20px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 #mergedPartySuggest>div:hover{background:#f1f5f9!important}
 </style>
+
+/* V229: Vendor Raw Material Balance - all content red and larger */
+<style id="v229VendorRawBalanceStyle">
+#vendorRawMaterialBalance,
+#vendorRawMaterialBalance * {
+  color:#d00 !important;
+  font-size:18px !important;
+  font-weight:700 !important;
+}
+</style>
 </head>
 <body>
 <button id="globalRefreshBtn" type="button" title="Refresh Page" aria-label="Refresh Page" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
@@ -472,7 +482,7 @@ tr.low-stock-row td * {
 </div>
 <p class="small">Raw Material Consumption = Component Weight × Receive Qty. Vendor પાસે issue થયેલા Raw Materialમાંથી આ quantity automatic deduct થશે.</p>
 <div class="msg" id="jwConsumption"></div><div class="msg" id="jwJobAmount"></div>
-<button class="primary" id="jwReceiveBtn">Receive Component</button><div class="msg" id="jwReceiveMsg"></div>
+<button class="primary" id="jwReceiveBtn">Receive Component</button><div class="msg" id="jwReceiveMsg" style="color:#d00 !important;font-size:18px !important;font-weight:700 !important;"></div>
 
 </div>
 
@@ -5965,7 +5975,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <!-- V227: Job Work module now shows Raw Material Issue to Vendor last transaction history. Based on V226. -->
 
 <style id="v228VendorRawBalanceStyle">
-/* V228: Vendor Raw Material Balance red + bold + larger font. */
+/* V229: Vendor Raw Material Balance red + bold + larger font. */
 #jwTable td:nth-child(3), #jwTable td:nth-child(4) {
   color: red !important;
   font-size: 20px !important;
