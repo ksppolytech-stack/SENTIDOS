@@ -4204,7 +4204,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           <td><button type="button" class="v161BillBtn" data-i="${i}" style="padding:5px 10px;cursor:pointer">View Component Detail</button></td>
         </tr>`).join('') || '<tr><td colspan="11">No bill / reference found.</td></tr>'}
       </tbody>
-      <tfoot><tr><th colspan="5">TOTAL</th><th>${money(bills.reduce((a,b)=>a+b.amount,0))}</th><th>${money(bills.reduce((a,b)=>a+b.gst,0))}</th><th>${money(bills.reduce((a,b)=>a+b.total,0))}</th><th>${money(bills.reduce((a,b)=>a+b.debit,0))}</th><th>${money(bills.reduce((a,b)=>a+b.credit,0))}</th><th></th></tr></tfoot>
+      <tfoot>
+        <tr><th colspan="5" style="text-align:right">TOTAL AMOUNT</th><th>${money(bills.reduce((a,b)=>a+b.amount,0))}</th><th colspan="5"></th></tr>
+        <tr><th colspan="5" style="text-align:right">TOTAL GST</th><th></th><th>${money(bills.reduce((a,b)=>a+b.gst,0))}</th><th colspan="4"></th></tr>
+        <tr><th colspan="5" style="text-align:right">TOTAL BILL</th><th></th><th></th><th>${money(bills.reduce((a,b)=>a+b.total,0))}</th><th colspan="3"></th></tr>
+        <tr><th colspan="5" style="text-align:right">TOTAL DEBIT</th><th></th><th></th><th></th><th>${money(bills.reduce((a,b)=>a+b.debit,0))}</th><th colspan="2"></th></tr>
+        <tr><th colspan="5" style="text-align:right">TOTAL CREDIT</th><th></th><th></th><th></th><th></th><th>${money(bills.reduce((a,b)=>a+b.credit,0))}</th><th></th></tr>
+      </tfoot>
     </table></div>`;
 
    root.querySelectorAll('.v161BillBtn').forEach(btn=>{
@@ -5513,62 +5519,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
   else setup();
   [300,800,1500].forEach(t=>setTimeout(setup,t));
-})();
-</script>
-
-<script>
-/* V198: Combined Party Ledger - show only transactions belonging to the
-   selected party (e.g. ADR), checking customer/supplier/vendor independently. */
-(function(){
-  function setup(){
-    if(typeof renderMergedPartyDetailV96!=='function')return;
-    if(window.__v198PartyLedgerPatched)return;
-    window.__v198PartyLedgerPatched=true;
-
-    const original=renderMergedPartyDetailV96;
-
-    window.renderMergedPartyDetailV96=function(party){
-      const target=String(party||'').trim().toLowerCase();
-      if(!target){ return original(party); }
-
-      /* Rebuild using the original renderer's transaction logic, but first
-         temporarily expose only records where ANY party field equals target.
-         This prevents unrelated party records from entering ADR's ledger. */
-      let tx=[];
-      try{tx=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]')}catch(e){}
-      if(!Array.isArray(tx))tx=[];
-
-      const filtered=tx.filter(t=>{
-        const parties=[
-          t.customer,t.supplier,t.vendor,
-          t.customerName,t.supplierName,t.vendorName
-        ].map(v=>String(v??'').trim().toLowerCase()).filter(Boolean);
-        return parties.includes(target);
-      });
-
-      const old=localStorage.getItem('adr_tx_v2');
-      localStorage.setItem('adr_tx_v2',JSON.stringify(filtered));
-      try{
-        original(party);
-      }finally{
-        if(old===null)localStorage.removeItem('adr_tx_v2');
-        else localStorage.setItem('adr_tx_v2',old);
-      }
-    };
-
-    /* Rebind the selected-party call sites to the patched function. */
-    const input=document.getElementById('mergedPartyFilter');
-    if(input){
-      input.addEventListener('change',function(){
-        const party=String(input.dataset.selectedParty||input.value||'').trim();
-        if(party)window.renderMergedPartyDetailV96(party);
-      },true);
-    }
-  }
-
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(setup,700));
-  else setTimeout(setup,700);
-  [1500,3000].forEach(ms=>setTimeout(setup,ms));
 })();
 </script>
 </body></html>
