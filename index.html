@@ -4228,8 +4228,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
      </tr>`;
    }).join('');
 
-   const totalDebit=bills.reduce((a,b)=>a+(Number(b.debit)||0),0);
-   const totalCredit=bills.reduce((a,b)=>a+(Number(b.credit)||0),0);
+   const totalDebit=d.details.reduce((a,x)=>a+(Number(x.debit)||0),0);
+   const totalCredit=d.details.reduce((a,x)=>a+(Number(x.credit)||0),0);
    const finalPending=totalDebit-totalCredit;
    const finalPendingText=Math.abs(finalPending)<0.005?'₹0.00':money(finalPending)+' '+(finalPending>0?'DB':'CR');
 
@@ -4248,9 +4248,27 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       <thead><tr><th>Bill / Reference</th><th>Date</th><th>Type</th><th>Item / Component</th><th>Qty</th><th>Amount</th><th>GST</th><th>Bill Total</th><th>Debit</th><th>Credit</th><th>Pending Balance</th><th>Action</th></tr></thead>
       <tbody id="v161BillRows">${billRows || '<tr><td colspan="12">No bill / reference found.</td></tr>'}</tbody>
       <tfoot><tr>
-        <th colspan="8" style="text-align:right">TOTAL</th><th>Debit Total: ${money(totalDebit)}</th><th>Credit Total: ${money(totalCredit)}</th><th>Pending Balance: ${finalPendingText}</th><th></th>
+        <th colspan="8" style="text-align:right">TOTAL</th>
+        <th>${money(totalDebit)}</th>
+        <th>${money(totalCredit)}</th>
+        <th>${finalPendingText}</th>
+        <th></th>
       </tr></tfoot>
-    </table></div>`;
+    </table></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+      <div style="flex:1;min-width:220px;border:2px solid #333;border-radius:8px;padding:12px;background:#fff">
+        <div style="font-size:14px;font-weight:700">DEBIT TOTAL</div>
+        <div style="font-size:22px;font-weight:800;margin-top:4px">${money(totalDebit)} DB</div>
+      </div>
+      <div style="flex:1;min-width:220px;border:2px solid #333;border-radius:8px;padding:12px;background:#fff">
+        <div style="font-size:14px;font-weight:700">CREDIT TOTAL</div>
+        <div style="font-size:22px;font-weight:800;margin-top:4px">${money(totalCredit)} CR</div>
+      </div>
+      <div style="flex:1;min-width:220px;border:2px solid #333;border-radius:8px;padding:12px;background:#fff">
+        <div style="font-size:14px;font-weight:700">PENDING BALANCE</div>
+        <div style="font-size:22px;font-weight:800;margin-top:4px">${finalPendingText}</div>
+      </div>
+    </div>`;
 
    root.querySelectorAll('.v161BillBtn').forEach(btn=>{
      btn.addEventListener('click',()=>openBill(root,bills[Number(btn.dataset.i)],Number(btn.dataset.i)));
@@ -5570,3 +5588,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 <script>/* V207: Explicit Debit Total and Credit Total labels. Based on V206. */</script>
 </body></html>
+
+<!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
+     Totals are calculated directly from party detail rows. Based on V207. -->
