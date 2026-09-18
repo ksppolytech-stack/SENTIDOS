@@ -4211,45 +4211,46 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
    root.style.display='block';
 
    const bills=groupBills(d.details);
+   let runningPending=0;
+   const billRows=bills.map((b,i)=>{
+     runningPending+=(Number(b.debit)||0)-(Number(b.credit)||0);
+     const pb=runningPending;
+     const pbText=Math.abs(pb)<0.005?'₹0.00':money(pb)+' '+(pb>0?'DB':'CR');
+     return `<tr>
+       <td><b>${esc(b.ref)}</b></td><td>${esc(b.date)}</td>
+       <td>${esc(Array.from(b.labels).join(' / '))}</td>
+       <td>${esc(Array.from(new Set(b.items.filter(Boolean))).join(', '))}</td>
+       <td>${b.qty?esc(b.qty):'-'}</td><td>${money(b.amount)}</td>
+       <td>${b.gst?money(b.gst):'-'}</td><td><b>${money(b.total)}</b></td>
+       <td>${b.debit?money(b.debit):'-'}</td><td>${b.credit?money(b.credit):'-'}</td>
+       <td class="${pb>=0?'payment-due':'payment-received'}"><b>${pbText}</b></td>
+       <td><button type="button" class="v161BillBtn" data-i="${i}" style="padding:5px 10px;cursor:pointer">View Component Detail</button></td>
+     </tr>`;
+   }).join('');
+
+   const totalDebit=bills.reduce((a,b)=>a+(Number(b.debit)||0),0);
+   const totalCredit=bills.reduce((a,b)=>a+(Number(b.credit)||0),0);
+   const finalPending=totalDebit-totalCredit;
+   const finalPendingText=Math.abs(finalPending)<0.005?'₹0.00':money(finalPending)+' '+(finalPending>0?'DB':'CR');
+
    root.innerHTML=`<h3 style="margin-top:16px">📊 ${esc(p)} — Party Summary</h3>
     <div style="overflow:auto"><table style="min-width:1200px">
       <thead><tr><th>Raw Material Sale</th><th>Component Receive</th><th>Job Work</th><th>Finished Product Sales</th><th>Purchase / Inward</th><th>Payment Received</th><th>Payment Given</th><th>Net Balance</th></tr></thead>
       <tbody><tr>
         <td>${money(d.rawSale)}</td><td>${money(d.component)}</td><td>${money(d.jobwork)}</td>
         <td>${money(d.fgSales)}</td><td>${money(d.purchase)}</td><td>${money(d.received)}</td><td>${money(d.given)}</td>
-        <td class="${net>=0?'payment-due':'payment-received'}"><b>${money(net)} ${net>0?'Dr':net<0?'Cr':'-'}</b></td>
+        <td class="${net>=0?'payment-due':'payment-received'}"><b>${Math.abs(net)<0.005?'₹0.00':money(net)+' '+(net>0?'DB':'CR')}</b></td>
       </tr></tbody>
     </table></div>
 
     <h3 style="margin-top:18px">🧾 ${esc(p)} — Bill / Reference Summary</h3>
     <div style="overflow:auto"><table style="min-width:1200px">
       <thead><tr><th>Bill / Reference</th><th>Date</th><th>Type</th><th>Item / Component</th><th>Qty</th><th>Amount</th><th>GST</th><th>Bill Total</th><th>Debit</th><th>Credit</th><th>Pending Balance</th><th>Action</th></tr></thead>
-      <tbody id="v161BillRows">
-        ${bills.map((b,i)=>`<tr>
-          <td><b>${esc(b.ref)}</b></td>
-          <td>${esc(b.date)}</td>
-          <td>${esc(Array.from(b.labels).join(' / '))}</td>
-          <td>${esc(Array.from(new Set(b.items.filter(Boolean))).join(', '))}</td>
-          <td>${b.qty?esc(b.qty):'-'}</td>
-          <td>${money(b.amount)}</td>
-          <td>${b.gst?money(b.gst):'-'}</td>
-          <td><b>${money(b.total)}</b></td>
-          <td>${b.debit?money(b.debit):'-'}</td>
-          <td>${b.credit?money(b.credit):'-'}</td>
-          <td>${((Number(b.debit)||0)-(Number(b.credit)||0)) ? (((Number(b.debit)||0)-(Number(b.credit)||0))>0 ? '+'+money((Number(b.debit)||0)-(Number(b.credit)||0))+' Due' : '-'+money(Math.abs((Number(b.debit)||0)-(Number(b.credit)||0)))+' Due') : '₹0.00'}</td>
-          <td><button type="button" class="v161BillBtn" data-i="${i}" style="padding:5px 10px;cursor:pointer">View Component Detail</button></td>
-        </tr>`).join('') || '<tr><td colspan="11">No bill / reference found.</td></tr>'}
-      </tbody>
+      <tbody id="v161BillRows">${billRows || '<tr><td colspan="12">No bill / reference found.</td></tr>'}</tbody>
       <tfoot><tr>
-<th colspan="2" style="text-align:right">TOTAL</th>
-<th>${money(bills.reduce((a,b)=>a+b.amount,0))}</th>
-<th>${money(bills.reduce((a,b)=>a+b.gst,0))}</th>
-<th>${money(bills.reduce((a,b)=>a+b.total,0))}</th>
-<th>${money(bills.reduce((a,b)=>a+b.debit,0))}</th>
-<th>${money(bills.reduce((a,b)=>a+b.credit,0))}</th>
-<th>${((bills.reduce((a,b)=>a+b.debit,0))-(bills.reduce((a,b)=>a+b.credit,0))) ? (((bills.reduce((a,b)=>a+b.debit,0))-(bills.reduce((a,b)=>a+b.credit,0)))>0 ? '+'+money((bills.reduce((a,b)=>a+b.debit,0))-(bills.reduce((a,b)=>a+b.credit,0)))+' Due' : '-'+money(Math.abs((bills.reduce((a,b)=>a+b.debit,0))-(bills.reduce((a,b)=>a+b.credit,0))))+' Due') : '₹0.00'}</th>
-<th></th>
-</tr></tfoot>
+        <th colspan="8" style="text-align:right">TOTAL</th>
+        <th>${money(totalDebit)}</th><th>${money(totalCredit)}</th><th>${finalPendingText}</th><th></th>
+      </tr></tfoot>
     </table></div>`;
 
    root.querySelectorAll('.v161BillBtn').forEach(btn=>{
@@ -5566,4 +5567,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <script>
 /* V205: Based on V204. Running Pending Balance uses DB for debit and CR for credit. */
 </script>
+<script>/* V206: Based on V205. Bill Summary running Pending Balance DB/CR. */</script>
 </body></html>
