@@ -150,8 +150,8 @@ tr.low-stock-row td * {
 <button data-page="items">📦 Item Master</button><button data-page="rawmaterials">🧱 Raw Material Master</button><button data-page="bom">🔧 BOM Master</button>
 <button data-page="purchase">🛒 Purchase</button><button data-page="purchaseMaster">🏢 Supplier Master</button><button data-page="customerMaster">👤 Customer Master</button><button data-page="fgRateMaster">💰 Finished Goods Rate Master</button><button data-page="production">🏭 Production</button>
 <button data-page="dispatch">🚚 Dispatch</button><button data-page="rawSale">🧾 Raw Material Sale</button><div class="v212SideMenuGroup">
-<button data-page="accounting" aria-expanded="false" class="v212AccountingSideBtn">💰 Accounting</button>
-<div id="accountingSubMenuV211" class="v212AccountingSubMenu" style="display:none">
+<button type="button" class="v212AccountingSideBtn" data-page="accounting" aria-expanded="false">💰 Accounting</button>
+<div id="accountingSubMenuV211" class="v212AccountingSubMenu">
 <button type="button" id="openReceivePaymentBtn" data-subpage="receive">🧾 Receive Payment</button>
 <button type="button" id="openPaySupplierBtn" data-subpage="pay">💸 Pay Supplier / Vendor</button>
 </div>
@@ -5693,89 +5693,80 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+
+
 <script>
-/* V218: Robust Accounting submenu + payment form toggles.
-   Delegated click handling avoids conflicts with older menu handlers. */
+/* V219: Final Accounting submenu fix.
+   Uses explicit class/attribute state and prevents older handlers from
+   immediately hiding the submenu/forms. */
 (function(){
-  function setupV218(){
-    if(document.documentElement.dataset.v218Bound==='1') return;
-    document.documentElement.dataset.v218Bound='1';
+  function initV219(){
+    const acc=document.querySelector('.v212AccountingSideBtn');
+    const menu=document.getElementById('accountingSubMenuV211');
+    const receive=document.getElementById('openReceivePaymentBtn');
+    const pay=document.getElementById('openPaySupplierBtn');
+    const rs=document.getElementById('receivePaymentSection');
+    const ps=document.getElementById('paySupplierSection');
+    if(!acc||!menu||!receive||!pay||!rs||!ps)return;
 
-    document.addEventListener('click',function(e){
-      const acc=e.target.closest('.v212AccountingSideBtn');
-      const receive=e.target.closest('#openReceivePaymentBtn');
-      const pay=e.target.closest('#openPaySupplierBtn');
+    // Initial state: submenu and both forms closed.
+    menu.hidden=true;
+    rs.hidden=true;
+    ps.hidden=true;
+    acc.setAttribute('aria-expanded','false');
 
-      if(acc){
-        e.preventDefault();
-        e.stopPropagation();
-        const menu=document.getElementById('accountingSubMenuV211');
-        const rs=document.getElementById('receivePaymentSection');
-        const ps=document.getElementById('paySupplierSection');
-        if(!menu)return;
+    acc.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const opening=menu.hidden===true;
+      menu.hidden=!opening;
+      menu.style.display=opening?'block':'none';
+      acc.setAttribute('aria-expanded',opening?'true':'false');
 
-        const open=menu.dataset.v218Open==='1';
-        menu.style.setProperty('display',open?'none','important');
-        menu.dataset.v218Open=open?'0':'1';
-        acc.setAttribute('aria-expanded',open?'false':'true');
-
-        const target=document.getElementById('accounting');
-        if(target){
-          document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-          target.classList.add('active');
-          document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
-          acc.classList.add('active');
-        }
-        if(open){
-          if(rs)rs.style.setProperty('display','none','important');
-          if(ps)ps.style.setProperty('display','none','important');
-        }
-        return;
-      }
-
-      if(receive){
-        e.preventDefault();
-        e.stopPropagation();
-        const rs=document.getElementById('receivePaymentSection');
-        const ps=document.getElementById('paySupplierSection');
-        if(!rs)return;
-        const opening=rs.dataset.v218Open!=='1';
-        rs.style.setProperty('display',opening?'block':'none','important');
-        rs.dataset.v218Open=opening?'1':'0';
-        if(ps){
-          ps.style.setProperty('display','none','important');
-          ps.dataset.v218Open='0';
-        }
-        if(opening && typeof setPaymentDateToday==='function')setPaymentDateToday();
-        return;
-      }
-
-      if(pay){
-        e.preventDefault();
-        e.stopPropagation();
-        const rs=document.getElementById('receivePaymentSection');
-        const ps=document.getElementById('paySupplierSection');
-        if(!ps)return;
-        const opening=ps.dataset.v218Open!=='1';
-        ps.style.setProperty('display',opening?'block':'none','important');
-        ps.dataset.v218Open=opening?'1':'0';
-        if(rs){
-          rs.style.setProperty('display','none','important');
-          rs.dataset.v218Open='0';
-        }
-        if(opening && typeof setDateTodayV87==='function')setDateTodayV87('accPaySupplierDate');
+      const page=document.getElementById('accounting');
+      if(page){
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+        page.classList.add('active');
       }
     },true);
 
-    const menu=document.getElementById('accountingSubMenuV211');
-    const rs=document.getElementById('receivePaymentSection');
-    const ps=document.getElementById('paySupplierSection');
-    if(menu){menu.style.setProperty('display','none','important');menu.dataset.v218Open='0';}
-    if(rs){rs.style.setProperty('display','none','important');rs.dataset.v218Open='0';}
-    if(ps){ps.style.setProperty('display','none','important');ps.dataset.v218Open='0';}
+    receive.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      // Keep Accounting submenu visible.
+      menu.hidden=false;
+      menu.style.display='block';
+      acc.setAttribute('aria-expanded','true');
+
+      const opening=rs.hidden===true;
+      rs.hidden=!opening;
+      rs.style.display=opening?'block':'none';
+      ps.hidden=true;
+      ps.style.display='none';
+
+      if(opening && typeof setPaymentDateToday==='function')setPaymentDateToday();
+    },true);
+
+    pay.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      // Keep Accounting submenu visible.
+      menu.hidden=false;
+      menu.style.display='block';
+      acc.setAttribute('aria-expanded','true');
+
+      const opening=ps.hidden===true;
+      ps.hidden=!opening;
+      ps.style.display=opening?'block':'none';
+      rs.hidden=true;
+      rs.style.display='none';
+
+      if(opening && typeof setDateTodayV87==='function')setDateTodayV87('accPaySupplierDate');
+    },true);
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setupV218);
-  else setupV218();
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV219);
+  else initV219();
 })();
 </script>
 </body></html>
