@@ -1422,10 +1422,20 @@ function setupJobWorkSuggestions(){
  setupRawMaterialSuggest('jwRaw','rawSuggest');
  setupItemSuggest('jwComponent','componentSuggest',i=>i.cat==='Component'||i.cat==='Finished Goods');
 }
+function renderVendorMasterV223(){
+ const body=$('vendorTable');if(!body)return;
+ const list=Array.isArray(vendors)?vendors:[];
+ body.innerHTML=list.map((v,n)=>`<tr><td>${String(v.name||'')}</td><td><button type="button" data-vendor-del-v223="${n}">🗑 Delete</button></td></tr>`).join('')||'<tr><td colspan="2">No vendors added</td></tr>';
+ body.querySelectorAll('[data-vendor-del-v223]').forEach(b=>b.onclick=()=>{
+  const i=Number(b.dataset.vendorDelV223);if(!Number.isInteger(i)||!vendors[i])return;
+  if(!confirm('Delete this vendor?'))return;
+  vendors.splice(i,1);save();renderVendorMasterV223();
+ });
+}
 function addVendor(){
  const name=$('jwVendor').value.trim();if(!name)return alert('Vendor Name નાખો.');
- if(vendors.some(v=>v.name.toLowerCase()===name.toLowerCase()))return alert('Vendor already exists.');
- vendors.push({id:Date.now(),name});save();$('jwVendor').value='';alert('Vendor Masterમાં add થયું.');
+ if(vendors.some(v=>String(v.name||'').toLowerCase()===name.toLowerCase()))return alert('Vendor already exists.');
+ vendors.push({id:Date.now(),name});save();$('jwVendor').value='';renderVendorMasterV223();alert('Vendor Masterમાં add થયું.');
 }
 function updateJWConsumption(){
  const comp=items.find(i=>i.code===$('jwComponent').dataset.selectedCode)||findItemByText($('jwComponent').value);
@@ -3392,7 +3402,7 @@ $('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;if($('di
 if($('openProductionReport'))$('openProductionReport').onclick=()=>{document.querySelector('[data-page="reports"]').click();};
 if($('printProductionReport'))$('printProductionReport').onclick=()=>printOnlyReport('productionReportPanel',generateProductionReport);
 if($('printJWReport'))$('printJWReport').onclick=()=>printOnlyReport('jobWorkMonthlyReportPanel',generateJWReport);if($('printDispatchReportMain'))$('printDispatchReportMain').onclick=()=>printOnlyReport('dispatchReportPanel',generateDispatchMainReport);$('addVendorBtn').onclick=addVendor;$('jwReceiveQty').addEventListener('input',updateJWConsumption);$('jwReceiveVendor').addEventListener('input',updateAutoJobRate);$('jwComponent').addEventListener('input',updateAutoJobRate);
-addBomRow();refreshDropdowns();
+addBomRow();refreshDropdowns();renderVendorMasterV223();
 if($('addCustomerBtn'))$('addCustomerBtn').onclick=addCustomerMaster;renderCustomerMaster();if($('addFgRateBtn'))$('addFgRateBtn').onclick=addFgRateMaster;setupFgRateItemSuggest();renderFgRateMaster();if($('dispatchBtn'))$('dispatchBtn').onclick=dispatch;setupDispatchClearButtonsV83();if($('dispatchTaxRate'))$('dispatchTaxRate').addEventListener('input',dispatchUpdateAmount);if($('accPaymentBtn'))$('accPaymentBtn').onclick=saveAccountingPayment;setupAccountingPaymentButtonsV133();setupAccountingPaymentCustomerSuggest();renderAccounting();setupAccountingPaymentClear();setupAccountingCustomerAndDateV94();setPaymentDateToday();if($('downloadCustomerLedgerPdf'))$('downloadCustomerLedgerPdf').onclick=downloadCustomerLedgerPDF;setupDueCustomerFilter();renderCustomerDueSummary();if($('dispatchReportMainBtn'))$('dispatchReportMainBtn').onclick=generateDispatchMainReport;setupDispatchMainReportSuggestions();setupDispatchReportClearButtons();setupAllReportClearButtons();if($('dispatchReportBtn'))$('dispatchReportBtn').onclick=generateDispatchReport;setupDispatchReportSuggestions();setupDispatchCustomerSuggest();if($('dispatchQty'))$('dispatchQty').addEventListener('input',dispatchUpdateAmount);if($('dispatchRate'))$('dispatchRate').addEventListener('input',dispatchUpdateAmount);if($('dispatchDate')&&!$('dispatchDate').value)$('dispatchDate').value=getSystemDateISO();if($('dispatchTaxRate')&&!$('dispatchTaxRate').value)$('dispatchTaxRate').value='18';dispatchUpdateAmount();renderDispatchEntries();showNextDispatchBillNo();if($('pmAddBtn')) $('pmAddBtn').onclick=pmAdd;if($('purchaseInlineReportBtn'))$('purchaseInlineReportBtn').onclick=generatePurchaseInlineReport;setupPurchaseInlineSupplierSuggest();
 window._generatePurchaseReport=generatePurchaseReport;window._generateProductionReport=generateProductionReport;
 pmInit();
@@ -5814,6 +5824,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 <!-- V222: Vendor Master moved from Job Work page into Master submenu as a separate page. -->
+
+<!-- V223: Fixed Vendor Master list rendering below the Vendor Master form. Based on V222. -->
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
