@@ -4116,8 +4116,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
      }else if(type==='JOB WORK RECEIVE'){
        rate=Number(t.jobRate)||0;
        amount=Number(t.jobAmount)||(q*rate);
-       total=amount;
-       d.component+=total; d.jobwork+=amount; label='Component Receive / Job Work';
+       // Job Work Receive Bill Total = Net/Job Amount + GST.
+       // Older records may have total saved as net amount only.
+       total=Number(t.grandTotal ?? t.billTotal ?? t.total);
+       if(!Number.isFinite(total) || total===0 || Math.abs(total-amount)<0.005){
+         total=amount+gst;
+       }
+       d.component+=total; d.jobwork+=total; label='Component Receive / Job Work';
      }else if(type==='DISPATCH'){
        rate=Number(t.dispatchRate)||0;
        amount=Number(t.amount)||(q*rate);
@@ -4178,7 +4183,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
      g.qty+=Number(x.qty)||0;
      g.amount+=Number(x.amount)||0;
      g.gst+=Number(x.gst)||0;
-     g.total+=Number(x.total)||0;
+     let rowTotal=Number(x.total)||0;
+     if(String(x.type||'').toUpperCase()==='JOB WORK RECEIVE' &&
+        (rowTotal===0 || Math.abs(rowTotal-(Number(x.amount)||0))<0.005)){
+       rowTotal=(Number(x.amount)||0)+(Number(x.gst)||0);
+     }
+     g.total+=rowTotal;
      g.debit+=Number(x.debit)||0;
      g.credit+=Number(x.credit)||0;
      g.rows.push(x);
@@ -5625,3 +5635,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 <!-- V209: KSP Polytech accounting ledger fix.
      Purchase/inward ledger bill amount now includes GST: Net + GST. -->
+
+<!-- V210: KSP Polytech Job Work Receive Bill Total fix.
+     GST is added to net/job amount for Bill Total, including older entries. -->
