@@ -2676,88 +2676,123 @@ function renderMergedPartyLedger(){
  document.querySelectorAll('.old-merged-party-row').forEach(r=>r.onclick=()=>renderMergedPartyDetailV96(r.dataset.party));
 }
 function renderMergedPartyDetailV96(party){
- const target=String(party||'').trim().toLowerCase(),events=[];
- const money=n=>'₹'+Math.abs(Number(n)||0).toFixed(2);
- const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- const pushTxn=(t)=>{
-  const c=String(t.customer||t.supplier||t.vendor||'').trim();
-  if(c.toLowerCase()!==target)return;
-  const type=String(t.type||'').toUpperCase(),ret=isReturnMergedV96(t);
-  const qty=Math.abs(Number(t.qty??t.quantity)||0);
-  const item=String(t.itemName||t.item||'').replace(/^RM:/,'');
-  const rate=Number(t.dispatchRate??t.saleRate??t.purchaseRate??t.inwardRate??t.jobRate??t.issueRate??0)||0;
-  let debit=0,credit=0,label=type,amount=0,gst=Number(t.tax)||0,total=0;
-  if(type==='DISPATCH'){
-    amount=Number(t.amount??qty*rate)||0; total=Number(t.grandTotal??amount+gst)||0;
-    debit=(ret?-1:1)*total; label=ret?'Sales Return':'Sales';
-  }else if(type==='RAW MATERIAL SALE'){
-    amount=Number(t.amount??qty*rate)||0; total=Number(t.grandTotal??amount+gst)||0;
-    debit=(ret?-1:1)*total; label='Raw Material Sale';
-  }else if(type==='PURCHASE'){
-    amount=Number(t.amount??qty*rate)||0; total=Number(t.grandTotal??amount+gst)||0;
-    credit=total; label='Purchase';
-  }else if(type==='RAW MATERIAL COMPANY INWARD'){
-    amount=Number(t.amount??qty*rate)||0; total=Number(t.grandTotal??amount+gst)||0;
-    credit=total; label='Raw Material Inward';
-  }else if(type==='JOB WORK RECEIVE'){
-    amount=Number(t.jobAmount??qty*rate)||0; total=Number(t.grandTotal??amount)||0;
-    credit=total; label='Job Work Receive';
-  }else if(type==='JOB WORK ISSUE'){
-    amount=Number(t.issueAmount??qty*rate)||0; total=Number(t.grandTotal??amount)||0;
-    label='Job Work Issue';
-  }else return;
-  events.push({
-   date:t.date||'',label,ref:t.billNo||t.invoiceNo||t.ref||'',
-   item,component:String(t.componentName||t.component||''),
-   qty,unit:t.unit||'',rate,amount,gst,total,debit,credit,
-   remark:t.remark||''
-  });
- };
- (transactions||[]).forEach(pushTxn);
- getAccountingPayments().filter(p=>String(p.customer||'').trim().toLowerCase()===target).forEach(p=>{
-  const a=Number(p.amount)||0;
-  events.push({date:p.date||'',label:'Payment Received',ref:p.ref||'',item:'',component:'',qty:0,unit:'',rate:0,amount:a,gst:0,total:a,debit:0,credit:a,remark:p.remark||''});
- });
- (typeof getSupplierPayments==='function'?getSupplierPayments():[]).filter(p=>String(p.party||'').trim().toLowerCase()===target).forEach(p=>{
-  const a=Number(p.amount)||0;
-  events.push({date:p.date||'',label:'Payment Given',ref:p.ref||'',item:'',component:'',qty:0,unit:'',rate:0,amount:a,gst:0,total:a,debit:a,credit:0,remark:p.remark||''});
- });
- events.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
- let bal=0,totalDebit=0,totalCredit=0,totalAmount=0,totalGST=0,totalGrand=0;
- const body=events.map(e=>{
-  bal+=e.debit-e.credit;totalDebit+=e.debit;totalCredit+=e.credit;
-  totalAmount+=e.amount;totalGST+=e.gst;totalGrand+=e.total;
-  const itemCell=e.component?safe(e.item)+' / '+safe(e.component):safe(e.item);
-  return `<tr>
-   <td>${safe(e.date)}</td><td>${safe(e.label)}</td><td>${safe(e.ref)}</td>
-   <td>${itemCell||'-'}</td><td>${e.qty?e.qty.toFixed(3)+' '+safe(e.unit):'-'}</td>
-   <td>${e.rate?money(e.rate):'-'}</td><td>${e.amount?money(e.amount):'-'}</td>
-   <td>${e.gst?money(e.gst):'-'}</td><td>${e.total?money(e.total):'-'}</td>
-   <td>${e.debit?money(e.debit):'-'}</td><td>${e.credit?money(e.credit):'-'}</td>
-   <td class="${bal>=0?'payment-due':'payment-received'}">${bal>0?'+'+money(bal)+' Due':bal<0?'-'+money(Math.abs(bal))+' Due':'₹0.00'}</td>
-   <td>${safe(e.remark)}</td>
-  </tr>`;
- }).join('');
- const table=$('mergedPartyLedgerTable');
- if(!table)return;
- let thead=table.querySelector('thead');
- if(!thead){thead=document.createElement('thead');table.insertBefore(thead,table.firstChild);}
- let tbody=table.querySelector('tbody');
- if(!tbody){tbody=document.createElement('tbody');table.appendChild(tbody);}
- let tfoot=table.querySelector('tfoot');
- if(!tfoot){tfoot=document.createElement('tfoot');table.appendChild(tfoot);}
- thead.innerHTML=`<tr>
-  <th>Date</th><th>Type</th><th>Reference</th><th>Item / Component</th><th>Qty</th><th>Rate</th>
-  <th>Amount</th><th>GST</th><th>Total</th><th>Debit</th><th>Credit</th><th>Pending Balance</th><th>Remark</th>
- </tr>`;
- tbody.innerHTML=body||'<tr><td colspan="13">No transactions found</td></tr>';
- tfoot.innerHTML=`<tr>
-  <th colspan="6">Total</th><th>${money(totalAmount)}</th><th>${money(totalGST)}</th><th>${money(totalGrand)}</th>
-  <th>${money(totalDebit)}</th><th>${money(totalCredit)}</th><th>${bal>0?"+"+money(bal)+" Due":bal<0?"-"+money(Math.abs(bal))+" Due":"₹0.00"}</th><th></th>
- </tr>`;
- $('mergedPartyLedgerTitle').textContent='📒 '+party+' — Complete Transaction Details';
- $('mergedPartyLedgerWrap').style.display='block';
-}
+    const target=String(party||'').trim().toLowerCase(),events=[];
+    const money=n=>'₹'+Math.abs(Number(n)||0).toFixed(2);
+    const balanceText=n=>{
+      const v=Number(n)||0;
+      if(Math.abs(v)<0.005)return '₹0.00';
+      return money(v)+' '+(v>0?'DB':'CR');
+    };
+    const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const pushTxn=(t)=>{
+      const type=String(t.type||'').toUpperCase();
+      const partyName=
+        type==='DISPATCH'||type==='RAW MATERIAL SALE'
+          ? String(t.customer||t.customerName||'').trim()
+          : type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD'
+            ? String(t.supplier||t.supplierName||'').trim()
+            : type==='JOB WORK RECEIVE'||type==='JOB WORK ISSUE'
+              ? String(t.vendor||t.vendorName||t.supplier||t.supplierName||'').trim()
+              : String(t.customer||t.supplier||t.vendor||t.customerName||t.supplierName||t.vendorName||'').trim();
+      if(partyName.toLowerCase()!==target)return;
+
+      const ret=isReturnMergedV96(t);
+      const qty=Math.abs(Number(t.qty??t.quantity)||0);
+      const item=String(t.itemName||t.item||'').replace(/^RM:/,'');
+      const rate=Number(t.dispatchRate??t.saleRate??t.purchaseRate??t.inwardRate??t.jobRate??t.issueRate??0)||0;
+      let debit=0,credit=0,label=type,amount=0,gst=Number(t.tax)||0,total=0;
+      if(type==='DISPATCH'){
+        amount=Number(t.amount??qty*rate)||0; total=Number(t.grandTotal??amount+gst)||0;
+        debit=(ret?-1:1)*total; label=ret?'Sales Return':'Sales';
+      }else if(type==='RAW MATERIAL SALE'){
+        amount=Number(t.amount??qty*rate)||0; total=Number(t.grandTotal??amount+gst)||0;
+        debit=(ret?-1:1)*total; label='Raw Material Sale';
+      }else if(type==='PURCHASE'){
+        amount=Number(t.amount??qty*rate)||0; total=Number(t.grandTotal??amount+gst)||0;
+        credit=total; label='Purchase';
+      }else if(type==='RAW MATERIAL COMPANY INWARD'){
+        amount=Number(t.amount??qty*rate)||0; total=Number(t.grandTotal??amount+gst)||0;
+        credit=total; label='Raw Material Inward';
+      }else if(type==='JOB WORK RECEIVE'){
+        amount=Number(t.jobAmount??qty*rate)||0; total=Number(t.grandTotal??amount)||0;
+        credit=total; label='Job Work Receive';
+      }else if(type==='JOB WORK ISSUE'){
+        amount=Number(t.issueAmount??qty*rate)||0; total=Number(t.grandTotal??amount)||0;
+        label='Job Work Issue';
+      }else return;
+
+      events.push({
+        date:t.date||'',label,ref:t.billNo||t.invoiceNo||t.ref||'',
+        item,component:String(t.componentName||t.component||''),
+        qty,unit:t.unit||'',rate,amount,gst,total,debit,credit,
+        remark:t.remark||''
+      });
+    };
+
+    (transactions||[]).forEach(pushTxn);
+
+    getAccountingPayments()
+      .filter(p=>String(p.customer||'').trim().toLowerCase()===target)
+      .forEach(p=>{
+        const a=Number(p.amount)||0;
+        events.push({date:p.date||'',label:'Payment Received',ref:p.ref||'',item:'',component:'',
+          qty:0,unit:'',rate:0,amount:a,gst:0,total:a,debit:0,credit:a,remark:p.remark||''});
+      });
+
+    (typeof getSupplierPayments==='function'?getSupplierPayments():[])
+      .filter(p=>String(p.party||'').trim().toLowerCase()===target)
+      .forEach(p=>{
+        const a=Number(p.amount)||0;
+        events.push({date:p.date||'',label:'Payment Given',ref:p.ref||'',item:'',component:'',
+          qty:0,unit:'',rate:0,amount:a,gst:0,total:a,debit:a,credit:0,remark:p.remark||''});
+      });
+
+    events.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+
+    let bal=0,totalDebit=0,totalCredit=0;
+    const body=events.map(e=>{
+      bal+=e.debit-e.credit;
+      totalDebit+=e.debit;
+      totalCredit+=e.credit;
+      const itemCell=e.component?safe(e.item)+' / '+safe(e.component):safe(e.item);
+      return `<tr>
+       <td>${safe(e.date)}</td><td>${safe(e.label)}</td><td>${safe(e.ref)}</td>
+       <td>${itemCell||'-'}</td><td>${e.qty?e.qty.toFixed(3)+' '+safe(e.unit):'-'}</td>
+       <td>${e.rate?money(e.rate):'-'}</td><td>${e.amount?money(e.amount):'-'}</td>
+       <td>${e.gst?money(e.gst):'-'}</td><td>${e.total?money(e.total):'-'}</td>
+       <td>${e.debit?money(e.debit):'-'}</td><td>${e.credit?money(e.credit):'-'}</td>
+       <td class="${bal>=0?'payment-due':'payment-received'}">${balanceText(bal)}</td>
+       <td>${safe(e.remark)}</td>
+      </tr>`;
+    }).join('');
+
+    const table=$('mergedPartyLedgerTable');
+    if(!table)return;
+    let thead=table.querySelector('thead');
+    if(!thead){thead=document.createElement('thead');table.insertBefore(thead,table.firstChild);}
+    let tbody=table.querySelector('tbody');
+    if(!tbody){tbody=document.createElement('tbody');table.appendChild(tbody);}
+    let tfoot=table.querySelector('tfoot');
+    if(!tfoot){tfoot=document.createElement('tfoot');table.appendChild(tfoot);}
+
+    thead.innerHTML=`<tr>
+     <th>Date</th><th>Type</th><th>Reference</th><th>Item / Component</th><th>Qty</th><th>Rate</th>
+     <th>Amount</th><th>GST</th><th>Bill Amount</th><th>Debit</th><th>Credit</th><th>Pending Balance</th><th>Remark</th>
+    </tr>`;
+    tbody.innerHTML=body||'<tr><td colspan="13">No transactions found</td></tr>';
+
+    // Bottom totals intentionally contain only Debit, Credit and final Pending Balance.
+    tfoot.innerHTML=`<tr>
+     <th colspan="9">TOTAL</th>
+     <th>${money(totalDebit)}</th>
+     <th>${money(totalCredit)}</th>
+     <th>${balanceText(bal)}</th>
+     <th></th>
+    </tr>`;
+
+    $('mergedPartyLedgerTitle').textContent='📒 '+party+' — Complete Transaction Details';
+    $('mergedPartyLedgerWrap').style.display='block';
+  }
 function isReturnMergedV96(t){return t.isReturn===true||String(t.entryType||'').toUpperCase()==='RETURN'||['RETURN','SALES RETURN','CUSTOMER RETURN','DISPATCH RETURN'].includes(String(t.type||'').toUpperCase())}
 
 function setupMergedPartyLedgerV87(){
@@ -5527,4 +5562,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 <script>/* V204: Party ledger shows Amount/GST/Bill totals and signed Pending Due balance for every entry. */</script>
+
+<script>
+/* V205: Based on V204. Running Pending Balance uses DB for debit and CR for credit. */
+</script>
 </body></html>
