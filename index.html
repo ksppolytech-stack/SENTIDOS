@@ -2254,12 +2254,43 @@ function getAccountingPayments(){
  try{const a=JSON.parse(localStorage.getItem('adr_accounting_payments_v1')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}
 }
 function saveAccountingPayments(a){localStorage.setItem('adr_accounting_payments_v1',JSON.stringify(a));}
+
+function accountingBillValues(t){
+  const net=Number(
+    t.grandTotal ?? t.billTotal ?? t.total ?? t.netAmount ??
+    t.amount ?? ((Number(t.qty)||0)*(Number(t.purchaseRate ?? t.rate ?? 0)))
+  ) || 0;
+
+  const gst=Number(
+    t.gst ?? t.tax ?? t.gstAmount ?? t.taxAmount ??
+    ((net * Number(t.taxRate ?? t.gstRate ?? 0))/100)
+  ) || 0;
+
+  // For purchase/inward entries, `amount` is generally the taxable/net amount.
+  // If an explicit GST exists, bill amount must be net + GST.
+  const type=String(t.type||t.transactionType||'').toUpperCase();
+  const isPurchase=/PURCHASE|INWARD/.test(type);
+
+  let taxable=Number(t.amount ?? t.taxableAmount ?? t.netAmount);
+  if(!Number.isFinite(taxable)) taxable=net;
+
+  let bill=Number(t.grandTotal ?? t.billTotal ?? t.total);
+  if(!Number.isFinite(bill) || bill===0){
+    bill=isPurchase ? taxable+gst : net;
+  }
+
+  // If stored grandTotal is actually only net on older purchase rows, correct it.
+  if(isPurchase && gst>0 && Math.abs(bill-taxable)<0.005) bill=taxable+gst;
+
+  return {taxable, gst, bill};
+}
+
 function renderAccounting(){
  const customer='',itemQ='';
  const sales=(transactions||[]).filter(t=>{if(String(t.type||'').toUpperCase()!=='DISPATCH')return false;const it=(items||[]).find(i=>String(i.code||'')===String(t.item||''));return (!customer||String(t.customer||'').toLowerCase().includes(customer))&&(!itemQ||String(it?.name||t.itemName||t.item||'').toLowerCase().includes(itemQ));});
  const payments=getAccountingPayments().filter(p=>!customer||String(p.customer||'').toLowerCase().includes(customer));
  let tax=0,grand=0,received=0,rows='';
- sales.forEach(t=>{const it=(items||[]).find(i=>String(i.code||'')===String(t.item||'')),q=Math.abs(Number(t.qty)||0),a=Number(t.amount??q*Number(t.dispatchRate||0))||0,x=Number(t.tax||0)||0,g=Number(t.grandTotal??a+x)||0;tax+=x;grand+=g;rows+=`<tr><td>${t.date||''}</td><td>Sales</td><td>${t.customer||''}</td><td>${t.billNo||t.ref||''}</td><td>${it?.name||t.itemName||t.item||''}</td><td>${q.toFixed(3)}</td><td>₹${a.toFixed(2)}</td><td>₹${x.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td></td><td>${t.remark||''}</td></tr>`});
+ sales.forEach(t=>{const it=(items||[]).find(i=>String(i.code||'')===String(t.item||'')),q=Math.abs(Number(t.qty)||0),bv=accountingBillValues(t),a=Number(bv.taxable)||0,x=Number(bv.gst)||0,g=Number(bv.bill)||0;tax+=x;grand+=g;rows+=`<tr><td>${t.date||''}</td><td>Sales</td><td>${t.customer||''}</td><td>${t.billNo||t.ref||''}</td><td>${it?.name||t.itemName||t.item||''}</td><td>${q.toFixed(3)}</td><td>₹${a.toFixed(2)}</td><td>₹${x.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td></td><td>${t.remark||''}</td></tr>`});
  payments.forEach(p=>{const a=Number(p.amount)||0;received+=a;rows+=`<tr><td>${p.date||''}</td><td>Payment</td><td>${p.customer||''}</td><td>${p.ref||''}</td><td></td><td></td><td></td><td></td><td>₹${a.toFixed(2)}</td><td>${p.mode||''}</td><td>${p.remark||''}</td></tr>`});
  $('accSales').textContent='₹'+grand.toFixed(2);$('accTax').textContent='₹'+tax.toFixed(2);$('accReceived').textContent='₹'+received.toFixed(2);$('accDue').textContent='₹'+(grand-received).toFixed(2);$('accTable').querySelector('tbody').innerHTML=rows||'<tr><td colspan="11">No accounting entries</td></tr>';;renderCustomerDueSummary();renderPartyLedgers();renderMergedPartyLedger()
 }
@@ -5591,3 +5622,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
      Totals are calculated directly from party detail rows. Based on V207. -->
+
+<!-- V209: KSP Polytech accounting ledger fix.
+     Purchase/inward ledger bill amount now includes GST: Net + GST. -->
