@@ -176,7 +176,13 @@ tr.low-stock-row td * {
 <button type="button" id="openReceivePaymentBtn" data-subpage="receive">🧾 Receive Payment</button>
 <button type="button" id="openPaySupplierBtn" data-subpage="pay">💸 Pay Supplier / Vendor</button>
 </div>
-</div><button data-page="jobwork">🏭 Job Work</button><button data-page="reports">📄 Reports</button><button data-page="stock">📊 Stock</button>
+</div><div class="v225SideMenuGroup">
+<button type="button" id="v225JobWorkBtn" data-page="jobwork" aria-expanded="false">🏭 Job Work</button>
+<div id="jobWorkSubMenuV225" class="v225JobWorkSubMenu" hidden>
+<button type="button" id="openJWIssueBtnV225">1. Raw Material Issue to Vendor</button>
+<button type="button" id="openJWReceiveBtnV225">2. Component Receive from Vendor</button>
+</div>
+</div><button data-page="reports">📄 Reports</button><button data-page="stock">📊 Stock</button>
 </div>
 
 
@@ -437,6 +443,7 @@ tr.low-stock-row td * {
 <section id="jobwork" class="page"><div class="panel"><h2>Vendor Job Work / Subcontracting</h2>
 <p>Vendor Master → Raw Material Issue → Component Receive. Componentનું weight Item Masterમાંથી automatic આવશે.</p>
 
+<div id="jwIssueSectionV225">
 <hr><h3>1. Raw Material Issue to Vendor</h3><p class="small">Challan No. software automatic generate કરશે.</p>
 <div class="grid">
 <div class="autowrap" style="position:relative"><input id="jwIssueVendor" placeholder="Type Vendor Name"><div id="issueVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
@@ -444,7 +451,9 @@ tr.low-stock-row td * {
 <input id="jwIssueQty" type="number" step="0.001" placeholder="Issue Qty">
 
 </div><br><button class="primary" id="jwIssueBtn">Issue Material</button><div class="msg" id="jwIssueMsg"></div>
+</div>
 
+<div id="jwReceiveSectionV225">
 <hr><h3>2. Component Receive from Vendor</h3><p class="small">Receive Challan No. software automatic generate કરશે.</p>
 <div class="grid">
 <input id="jwReceiveDate" type="date" title="Receive Date">
@@ -458,6 +467,8 @@ tr.low-stock-row td * {
 <p class="small">Raw Material Consumption = Component Weight × Receive Qty. Vendor પાસે issue થયેલા Raw Materialમાંથી આ quantity automatic deduct થશે.</p>
 <div class="msg" id="jwConsumption"></div><div class="msg" id="jwJobAmount"></div>
 <button class="primary" id="jwReceiveBtn">Receive Component</button><div class="msg" id="jwReceiveMsg"></div>
+
+</div>
 
 <hr><h3>Vendor Raw Material Balance</h3>
 <table><thead><tr><th>Vendor</th><th>Raw Material</th><th>Qty at Vendor</th><th>Unit</th></tr></thead><tbody id="jwTable"></tbody></table>
@@ -1584,31 +1595,9 @@ function renderJobWorkRates(){
  if(!$('rateTable'))return;
  $('rateTable').innerHTML=jobworkRates.map((r,idx)=>{
   const c=items.find(i=>i.code===r.component);
-  return `<tr><td>${r.vendor}</td><td>${c?c.name:r.component}</td><td>₹${fmtRate2(r.rate)}</td><td><button type="button" data-rate-edit="${idx}">✏️ Edit</button> <button type="button" data-rate-del="${idx}">🗑 Delete</button></td></tr>`;
- }).join('') || '<tr><td colspan="4">No Job Work rates added</td></tr>';
- document.querySelectorAll('[data-rate-edit]').forEach(b=>b.onclick=()=>{
-  const idx=Number(b.dataset.rateEdit), r=jobworkRates[idx];
-  if(!r)return;
-  const current=Number(r.rate||0).toFixed(3);
-  const v=prompt('Job Work Rate:',current);
-  if(v===null)return;
-  const n=Number(v);
-  if(!Number.isFinite(n)||n<=0){alert('Valid Rate નાખો.');return;}
-  r.rate=n;
-  save();
-  renderJobWorkRates();
-  renderPurchaseEntries();
- });
- document.querySelectorAll('[data-rate-del]').forEach(b=>b.onclick=()=>{
-  const idx=Number(b.dataset.rateDel);
-  if(!jobworkRates[idx])return;
-  if(confirm('Delete this rate?')){
-   jobworkRates.splice(idx,1);
-   save();
-   renderJobWorkRates();
-   renderPurchaseEntries();
-  }
- });
+  return `<tr><td>${r.vendor}</td><td>${c?c.name:r.component}</td><td>₹${fmtRate2(r.rate)}</td><td><button data-rate-del="${idx}">🗑 Delete</button></td></tr>`;
+ }).join('');
+ document.querySelectorAll('[data-rate-del]').forEach(b=>b.onclick=()=>{if(confirm('Delete this rate?')){jobworkRates.splice(Number(b.dataset.rateDel),1);save();}});
 }
 function receiveFromVendor(){
  const receiveDate=$('jwReceiveDate').value || new Date().toISOString().slice(0,10);
@@ -5848,6 +5837,46 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <!-- V222: Vendor Master moved from Job Work page into Master submenu as a separate page. -->
 
 <!-- V223: Fixed Vendor Master list rendering below the Vendor Master form. Based on V222. -->
+
+<script>
+/* V225: Job Work submenu. Job Work toggles two entry sections. */
+(function(){
+ function initV225JobWork(){
+  const btn=document.getElementById('v225JobWorkBtn'),menu=document.getElementById('jobWorkSubMenuV225');
+  const issueBtn=document.getElementById('openJWIssueBtnV225'),receiveBtn=document.getElementById('openJWReceiveBtnV225');
+  const issue=document.getElementById('jwIssueSectionV225'),receive=document.getElementById('jwReceiveSectionV225');
+  if(!btn||!menu||!issueBtn||!receiveBtn||!issue||!receive||btn.dataset.v225Ready==='1')return;
+  btn.dataset.v225Ready='1';
+  menu.hidden=true; issue.hidden=true; receive.hidden=true;
+  btn.setAttribute('aria-expanded','false');
+  function showPage(){
+   const page=document.getElementById('jobwork');
+   if(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));page.classList.add('active');}
+  }
+  btn.addEventListener('click',function(e){
+   e.preventDefault(); e.stopImmediatePropagation();
+   const opening=menu.hidden===true;
+   menu.hidden=!opening; menu.style.display=opening?'block':'none';
+   btn.setAttribute('aria-expanded',opening?'true':'false');
+   if(!opening){issue.hidden=true;receive.hidden=true;}
+   showPage();
+  },true);
+  issueBtn.addEventListener('click',function(e){
+   e.preventDefault(); e.stopImmediatePropagation();
+   menu.hidden=false; menu.style.display='block'; btn.setAttribute('aria-expanded','true');
+   const opening=issue.hidden===true; issue.hidden=!opening; issue.style.display=opening?'block':'none';
+   receive.hidden=true; receive.style.display='none'; showPage();
+  },true);
+  receiveBtn.addEventListener('click',function(e){
+   e.preventDefault(); e.stopImmediatePropagation();
+   menu.hidden=false; menu.style.display='block'; btn.setAttribute('aria-expanded','true');
+   const opening=receive.hidden===true; receive.hidden=!opening; receive.style.display=opening?'block':'none';
+   issue.hidden=true; issue.style.display='none'; showPage();
+  },true);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV225JobWork);else initV225JobWork();
+})();
+</script>
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
