@@ -446,7 +446,7 @@ tr.low-stock-row td * {
 <div id="jwIssueSectionV225">
 <hr><h3>🧱 Raw Material Issue to Vendor</h3><p class="small">Challan No. software automatic generate કરશે.</p>
 <div class="grid">
-<div class="autowrap" style="position:relative"><input id="jwIssueVendor" placeholder="Type Vendor Name"><div id="issueVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<input id="jwIssueDate" type="date" title="Issue Date"><div class="autowrap" style="position:relative"><input id="jwIssueVendor" placeholder="Type Vendor Name"><div id="issueVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
 <div class="autowrap" style="position:relative"><input id="jwRaw" placeholder="Type Raw Material"><div id="rawSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
 <input id="jwIssueQty" type="number" step="0.001" placeholder="Issue Qty">
 
@@ -5879,6 +5879,19 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 <!-- V226: Job Work submenu labels updated: removed 1./2. numbering and kept suitable icons. Based on V225. -->
+<script>
+/* V226: Raw Material Issue Date added. */
+(function(){
+ function setIssueDate(){
+  const e=document.getElementById('jwIssueDate');
+  if(!e || e.value)return;
+  const d=new Date();
+  e.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setIssueDate);
+ else setIssueDate();
+})();
+</script>
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
