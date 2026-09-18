@@ -476,8 +476,8 @@ tr.low-stock-row td * {
 
 </div>
 
-<hr><h3>Vendor Raw Material Balance</h3>
-<table><thead><tr><th>Vendor</th><th>Raw Material</th><th>Qty at Vendor</th><th>Unit</th></tr></thead><tbody id="jwTable"></tbody></table>
+<hr><h3 style="font-size:22px;font-weight:800">Vendor Raw Material Balance</h3>
+<table><thead><tr><th>Vendor</th><th>Raw Material</th><th style="color:red;font-size:19px;font-weight:800">Qty at Vendor</th><th>Unit</th></tr></thead><tbody id="jwTable"></tbody></table>
 </div></section>
 
 
@@ -5963,6 +5963,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 <!-- V227: Job Work module now shows Raw Material Issue to Vendor last transaction history. Based on V226. -->
+
+<style id="v228VendorRawBalanceStyle">
+/* V228: Vendor Raw Material Balance red + bold + larger font. */
+#jwTable td:nth-child(3), #jwTable td:nth-child(4) {
+  color: red !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+}
+</style>
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
