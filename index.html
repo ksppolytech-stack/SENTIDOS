@@ -5635,10 +5635,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 <script>/* V207: Explicit Debit Total and Credit Total labels. Based on V206. */</script>
 
-<style>
-/* V215 — Accounting + submenu + field toggle */
+
+
+<script>
+/* V216 — Fix Accounting + submenu + field toggle. Based on V215. */
 (function(){
-  function initV215(){
+  function initV216(){
     const acc=document.querySelector('.v212AccountingSideBtn');
     const menu=document.getElementById('accountingSubMenuV211');
     const receive=document.getElementById('openReceivePaymentBtn');
@@ -5647,20 +5649,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     const ps=document.getElementById('paySupplierSection');
     if(!acc||!menu||!receive||!pay||!rs||!ps)return;
 
-    // Accounting click: show/hide submenu.
     acc.onclick=function(e){
       e.preventDefault();
       e.stopPropagation();
-      const open=menu.style.display==='block';
-      menu.style.display=open?'none':'block';
-      acc.setAttribute('aria-expanded',open?'false':'true');
-
-      // When Accounting menu is closed, hide both forms too.
-      if(open){
-        rs.style.display='none';
-        ps.style.display='none';
-      }
-
+      const isOpen=menu.style.display==='block';
+      menu.style.display=isOpen?'none':'block';
+      acc.setAttribute('aria-expanded',isOpen?'false':'true');
+      if(isOpen){ rs.style.display='none'; ps.style.display='none'; }
       const target=document.getElementById('accounting');
       if(target){
         document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -5670,33 +5665,31 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       }
     };
 
-    menu.style.display='none';
-    rs.style.display='none';
-    ps.style.display='none';
-
-    // Receive Payment click: toggle its own fields.
     receive.onclick=function(e){
       e.preventDefault();
       e.stopPropagation();
       const opening=rs.style.display!=='block';
       rs.style.display=opening?'block':'none';
       ps.style.display='none';
-      if(opening && typeof setPaymentDateToday==='function')setPaymentDateToday();
+      if(opening && typeof setPaymentDateToday==='function') setPaymentDateToday();
     };
 
-    // Pay Supplier/Vendor click: toggle its own fields.
     pay.onclick=function(e){
       e.preventDefault();
       e.stopPropagation();
       const opening=ps.style.display!=='block';
       ps.style.display=opening?'block':'none';
       rs.style.display='none';
-      if(opening && typeof setDateTodayV87==='function')setDateTodayV87('accPaySupplierDate');
+      if(opening && typeof setDateTodayV87==='function') setDateTodayV87('accPaySupplierDate');
     };
   }
 
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV215);
-  else initV215();
+  function boot(){
+    initV216();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
+  else boot();
+  [300,800,1500].forEach(t=>setTimeout(initV216,t));
 })();
 </script>
 </body></html>
