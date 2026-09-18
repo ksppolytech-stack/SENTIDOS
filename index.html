@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V221 - Firebase Online Sync</title>
+<title>Sentidos ERP V222 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -165,6 +165,7 @@ tr.low-stock-row td * {
 <button type="button" data-page="purchaseMaster">🏢 Supplier Master</button>
 <button type="button" data-page="customerMaster">👤 Customer Master</button>
 <button type="button" data-page="fgRateMaster">💰 Finished Goods Rate Master</button>
+<button type="button" data-page="vendorMaster">👷 Vendor Master</button>
 <button type="button" data-page="jwrates">💰 Job Work Rate Master</button>
 </div>
 </div>
@@ -423,16 +424,18 @@ tr.low-stock-row td * {
 </div></section>
 
 
-<section id="jobwork" class="page"><div class="panel"><h2>Vendor Job Work / Subcontracting</h2>
-<p>Vendor Master → Raw Material Issue → Component Receive. Componentનું weight Item Masterમાંથી automatic આવશે.</p>
-
-<h3>Vendor Master</h3>
+<section id="vendorMaster" class="page"><div class="panel"><h2>Vendor Master</h2>
+<p>Job Work Vendor Master. અહીં Vendor add, suggestion અને delete functionality રહેશે.</p>
 <div class="autowrap" style="position:relative;max-width:500px">
 <input id="jwVendor" placeholder="Type Vendor Name">
 <div id="vendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto"></div>
 </div>
 <br><button class="primary" id="addVendorBtn">➕ Add Vendor to Master</button>
 <table><thead><tr><th>Vendor</th><th>Action</th></tr></thead><tbody id="vendorTable"></tbody></table>
+</div></section>
+
+<section id="jobwork" class="page"><div class="panel"><h2>Vendor Job Work / Subcontracting</h2>
+<p>Vendor Master → Raw Material Issue → Component Receive. Componentનું weight Item Masterમાંથી automatic આવશે.</p>
 
 <hr><h3>1. Raw Material Issue to Vendor</h3><p class="small">Challan No. software automatic generate કરશે.</p>
 <div class="grid">
@@ -5809,6 +5812,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV220Master);else initV220Master();
 })();
 </script>
+
+<!-- V222: Vendor Master moved from Job Work page into Master submenu as a separate page. -->
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
