@@ -712,15 +712,27 @@ document.querySelectorAll('.tabs button').forEach(btn=>btn.addEventListener('cli
  target.classList.add('active');
  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
 
- // V211: Accounting tab itself toggles its two sub-menu buttons.
+ // V217: Accounting button toggles its submenu.
  if(btn.dataset.page==='accounting'){
    const menu=document.getElementById('accountingSubMenuV211');
-   if(menu) menu.style.display='block';
+   const isOpen=menu && menu.style.display==='block';
+   if(menu) menu.style.display=isOpen?'none':'block';
+   btn.setAttribute('aria-expanded',isOpen?'false':'true');
+   if(isOpen){
+     const rs=document.getElementById('receivePaymentSection');
+     const ps=document.getElementById('paySupplierSection');
+     if(rs)rs.style.display='none';
+     if(ps)ps.style.display='none';
+   }
  }else{
    const menu=document.getElementById('accountingSubMenuV211');
    if(menu)menu.style.display='none';
    const ab=document.querySelector('[data-page="accounting"]');
    if(ab)ab.setAttribute('aria-expanded','false');
+   const rs=document.getElementById('receivePaymentSection');
+   const ps=document.getElementById('paySupplierSection');
+   if(rs)rs.style.display='none';
+   if(ps)ps.style.display='none';
  }
 }));
 
@@ -5637,61 +5649,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 
 
-<script>
-/* V216 — Fix Accounting + submenu + field toggle. Based on V215. */
-(function(){
-  function initV216(){
-    const acc=document.querySelector('.v212AccountingSideBtn');
-    const menu=document.getElementById('accountingSubMenuV211');
-    const receive=document.getElementById('openReceivePaymentBtn');
-    const pay=document.getElementById('openPaySupplierBtn');
-    const rs=document.getElementById('receivePaymentSection');
-    const ps=document.getElementById('paySupplierSection');
-    if(!acc||!menu||!receive||!pay||!rs||!ps)return;
-
-    acc.onclick=function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      const isOpen=menu.style.display==='block';
-      menu.style.display=isOpen?'none':'block';
-      acc.setAttribute('aria-expanded',isOpen?'false':'true');
-      if(isOpen){ rs.style.display='none'; ps.style.display='none'; }
-      const target=document.getElementById('accounting');
-      if(target){
-        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-        target.classList.add('active');
-        document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
-        acc.classList.add('active');
-      }
-    };
-
-    receive.onclick=function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      const opening=rs.style.display!=='block';
-      rs.style.display=opening?'block':'none';
-      ps.style.display='none';
-      if(opening && typeof setPaymentDateToday==='function') setPaymentDateToday();
-    };
-
-    pay.onclick=function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      const opening=ps.style.display!=='block';
-      ps.style.display=opening?'block':'none';
-      rs.style.display='none';
-      if(opening && typeof setDateTodayV87==='function') setDateTodayV87('accPaySupplierDate');
-    };
-  }
-
-  function boot(){
-    initV216();
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
-  else boot();
-  [300,800,1500].forEach(t=>setTimeout(initV216,t));
-})();
-</script>
+<script>/* V217: Accounting submenu toggle is handled by the main side-menu click handler. */</script>
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
