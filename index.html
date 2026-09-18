@@ -2320,14 +2320,7 @@ function saveAccountingPayment(){
 function setupAccountingPaymentButtonsV133(){
  const r=$('openReceivePaymentBtn'),p=$('openPaySupplierBtn'),rs=$('receivePaymentSection'),ps=$('paySupplierSection');
  if(!r||!p||!rs||!ps)return;
- const show=(which)=>{
-  rs.style.display=which==='receive'?'block':'none';
-  ps.style.display=which==='pay'?'block':'none';
-  if(which==='receive'){ try{setPaymentDateToday();}catch(e){} }
-  if(which==='pay'){ try{setDateTodayV87('accPaySupplierDate');}catch(e){} }
- };
- r.onclick=()=>show('receive');
- p.onclick=()=>show('pay');
+ // V215 owns these click handlers so each submenu toggles its own fields.
 }
 
 function setupAccountingCustomerSuggest(){
@@ -5643,19 +5636,30 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <script>/* V207: Explicit Debit Total and Credit Total labels. Based on V206. */</script>
 
 <style>
-/* V214 — Accounting submenu directly below Accounting */
+/* V215 — Accounting + submenu + field toggle */
 (function(){
-  function initV214(){
+  function initV215(){
     const acc=document.querySelector('.v212AccountingSideBtn');
     const menu=document.getElementById('accountingSubMenuV211');
-    if(!acc||!menu)return;
+    const receive=document.getElementById('openReceivePaymentBtn');
+    const pay=document.getElementById('openPaySupplierBtn');
+    const rs=document.getElementById('receivePaymentSection');
+    const ps=document.getElementById('paySupplierSection');
+    if(!acc||!menu||!receive||!pay||!rs||!ps)return;
 
+    // Accounting click: show/hide submenu.
     acc.onclick=function(e){
       e.preventDefault();
       e.stopPropagation();
       const open=menu.style.display==='block';
       menu.style.display=open?'none':'block';
       acc.setAttribute('aria-expanded',open?'false':'true');
+
+      // When Accounting menu is closed, hide both forms too.
+      if(open){
+        rs.style.display='none';
+        ps.style.display='none';
+      }
 
       const target=document.getElementById('accounting');
       if(target){
@@ -5667,30 +5671,32 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     };
 
     menu.style.display='none';
+    rs.style.display='none';
+    ps.style.display='none';
 
-    const receive=document.getElementById('openReceivePaymentBtn');
-    const pay=document.getElementById('openPaySupplierBtn');
-
-    if(receive)receive.onclick=function(e){
-      e.preventDefault(); e.stopPropagation();
-      const rs=document.getElementById('receivePaymentSection');
-      const ps=document.getElementById('paySupplierSection');
-      if(rs)rs.style.display='block';
-      if(ps)ps.style.display='none';
-      if(typeof setPaymentDateToday==='function')setPaymentDateToday();
+    // Receive Payment click: toggle its own fields.
+    receive.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const opening=rs.style.display!=='block';
+      rs.style.display=opening?'block':'none';
+      ps.style.display='none';
+      if(opening && typeof setPaymentDateToday==='function')setPaymentDateToday();
     };
 
-    if(pay)pay.onclick=function(e){
-      e.preventDefault(); e.stopPropagation();
-      const rs=document.getElementById('receivePaymentSection');
-      const ps=document.getElementById('paySupplierSection');
-      if(rs)rs.style.display='none';
-      if(ps)ps.style.display='block';
-      if(typeof setDateTodayV87==='function')setDateTodayV87('accPaySupplierDate');
+    // Pay Supplier/Vendor click: toggle its own fields.
+    pay.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const opening=ps.style.display!=='block';
+      ps.style.display=opening?'block':'none';
+      rs.style.display='none';
+      if(opening && typeof setDateTodayV87==='function')setDateTodayV87('accPaySupplierDate');
     };
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV214);
-  else initV214();
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV215);
+  else initV215();
 })();
 </script>
 </body></html>
@@ -5711,3 +5717,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <!-- V213: Removed arrow beside Accounting. Submenu remains directly below Accounting. Based on V212. -->
 
 <!-- V214: Accounting submenu visibility fixed. Receive Payment and Pay Supplier/Vendor appear directly below Accounting. Based on V213. -->
+
+<!-- V215: Accounting click toggles submenu; Receive Payment and Pay Supplier/Vendor each toggle their own fields. Based on V214. -->
