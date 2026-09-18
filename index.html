@@ -150,7 +150,7 @@ tr.low-stock-row td * {
 <button data-page="items">📦 Item Master</button><button data-page="rawmaterials">🧱 Raw Material Master</button><button data-page="bom">🔧 BOM Master</button>
 <button data-page="purchase">🛒 Purchase</button><button data-page="purchaseMaster">🏢 Supplier Master</button><button data-page="customerMaster">👤 Customer Master</button><button data-page="fgRateMaster">💰 Finished Goods Rate Master</button><button data-page="production">🏭 Production</button>
 <button data-page="dispatch">🚚 Dispatch</button><button data-page="rawSale">🧾 Raw Material Sale</button><div class="v212SideMenuGroup">
-<button data-page="accounting" aria-expanded="false" class="v212AccountingSideBtn">💰 Accounting <span class="v212Arrow">▶</span></button>
+<button data-page="accounting" aria-expanded="false" class="v212AccountingSideBtn">💰 Accounting</button>
 <div id="accountingSubMenuV211" class="v212AccountingSubMenu" style="display:none">
 <button type="button" id="openReceivePaymentBtn" data-subpage="receive">🧾 Receive Payment</button>
 <button type="button" id="openPaySupplierBtn" data-subpage="pay">💸 Pay Supplier / Vendor</button>
@@ -5650,8 +5650,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 /* V212 — Accounting side submenu */
 .v212SideMenuGroup{width:100%;display:block}
 .v212AccountingSideBtn{width:100%;box-sizing:border-box;text-align:left;position:relative}
-.v212Arrow{float:right;font-size:12px;margin-top:3px}
-.v212AccountingSubMenu{padding-left:14px;padding-bottom:4px}
+.v212AccountingSubMenu{padding-left:14px;padding-bottom:4px;margin-top:2px}
 .v212AccountingSubMenu button{
   width:calc(100% - 4px);
   box-sizing:border-box;
@@ -5681,9 +5680,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const open=menu.style.display!=='none' && menu.style.display!=='';
       menu.style.display=open?'none':'block';
       acc.setAttribute('aria-expanded',open?'false':'true');
-      const ar=acc.querySelector('.v212Arrow');
-      if(ar)ar.textContent=open?'▶':'▼';
-
       const target=document.getElementById('accounting');
       if(target){
         document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -5727,3 +5723,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <!-- V211: Accounting tab click toggles Receive Payment / Pay Supplier-Vendor submenu. Based on V210. -->
 
 <!-- V212: Accounting moved to side expandable menu with Receive Payment and Pay Supplier/Vendor underneath. Based on V211. -->
+
+<!-- V213: Removed arrow beside Accounting. Submenu remains directly below Accounting. Based on V212. -->
