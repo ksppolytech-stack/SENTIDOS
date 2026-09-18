@@ -451,6 +451,12 @@ tr.low-stock-row td * {
 <input id="jwIssueQty" type="number" step="0.001" placeholder="Issue Qty">
 
 </div><br><button class="primary" id="jwIssueBtn">Issue Material</button><div class="msg" id="jwIssueMsg"></div>
+
+</div>
+
+<div id="jwLastIssueHistoryV227" class="card" style="margin-top:16px">
+  <h3>📋 Last Transaction History — Raw Material Issue to Vendor</h3>
+  <div id="jwLastIssueHistoryTableV227">No transactions yet.</div>
 </div>
 
 <div id="jwReceiveSectionV225">
@@ -5892,6 +5898,71 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  else setIssueDate();
 })();
 </script>
+
+<script>
+/* V227: Job Work side last transaction history for Raw Material Issue to Vendor. */
+(function(){
+  function esc(v){
+    return String(v ?? '').replace(/[&<>"']/g,function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);
+    });
+  }
+
+  function renderJWLastIssueHistoryV227(){
+    const box=document.getElementById('jwLastIssueHistoryTableV227');
+    if(!box)return;
+
+    let tx=[];
+    try{ tx=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]'); }catch(e){ tx=[]; }
+
+    const rows=tx.filter(t=>{
+      const type=String(t.type||t.transactionType||'').toUpperCase();
+      return type==='JOB WORK ISSUE' ||
+             type==='JOBWORK ISSUE' ||
+             type==='JW ISSUE' ||
+             type==='RAW MATERIAL ISSUE TO VENDOR';
+    });
+
+    if(!rows.length){
+      box.innerHTML='<div style="padding:10px">No Raw Material Issue transactions yet.</div>';
+      return;
+    }
+
+    const recent=rows.slice().reverse().slice(0,10);
+    let h='<div style="overflow:auto"><table><thead><tr>'+
+      '<th>Date</th><th>Vendor</th><th>Raw Material</th><th>Qty</th><th>Reference</th>'+
+      '</tr></thead><tbody>';
+
+    recent.forEach(t=>{
+      h+='<tr>'+
+        '<td>'+esc(t.date||t.issueDate||'')+'</td>'+
+        '<td>'+esc(t.vendor||t.vendorName||t.party||'')+'</td>'+
+        '<td>'+esc(t.itemName||t.material||t.rawMaterial||t.item||'')+'</td>'+
+        '<td>'+esc(t.issueQty ?? t.qty ?? '')+'</td>'+
+        '<td>'+esc(t.ref||t.billNo||t.invoiceNo||t.reference||'')+'</td>'+
+      '</tr>';
+    });
+
+    h+='</tbody></table></div>';
+    box.innerHTML=h;
+  }
+
+  function initV227(){
+    renderJWLastIssueHistoryV227();
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',initV227);
+  }else{
+    initV227();
+  }
+
+  // Refresh the visible history after a transaction is saved.
+  setInterval(renderJWLastIssueHistoryV227,1000);
+})();
+</script>
+
+<!-- V227: Job Work module now shows Raw Material Issue to Vendor last transaction history. Based on V226. -->
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
