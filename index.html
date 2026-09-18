@@ -149,7 +149,7 @@ tr.low-stock-row td * {
 <button class="active" data-page="dashboard">🏠 Dashboard</button>
 <button data-page="items">📦 Item Master</button><button data-page="rawmaterials">🧱 Raw Material Master</button><button data-page="bom">🔧 BOM Master</button>
 <button data-page="purchase">🛒 Purchase</button><button data-page="purchaseMaster">🏢 Supplier Master</button><button data-page="customerMaster">👤 Customer Master</button><button data-page="fgRateMaster">💰 Finished Goods Rate Master</button><button data-page="production">🏭 Production</button>
-<button data-page="dispatch">🚚 Dispatch</button><button data-page="rawSale">🧾 Raw Material Sale</button><button data-page="accounting">💰 Accounting</button><button data-page="jobwork">🏭 Job Work</button><button data-page="jwrates">💰 Job Work Rate Master</button><button data-page="reports">📄 Reports</button><button data-page="stock">📊 Stock</button>
+<button data-page="dispatch">🚚 Dispatch</button><button data-page="rawSale">🧾 Raw Material Sale</button><button data-page="accounting" aria-expanded="false">💰 Accounting</button><button data-page="jobwork">🏭 Job Work</button><button data-page="jwrates">💰 Job Work Rate Master</button><button data-page="reports">📄 Reports</button><button data-page="stock">📊 Stock</button>
 </div>
 
 
@@ -450,7 +450,7 @@ tr.low-stock-row td * {
 <section id="accounting" class="page">
 <div class="panel">
 <h2>💰 Accounting</h2>
-<div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px">
+<div id="accountingSubMenuV211" style="display:none;gap:10px;flex-wrap:wrap;margin:10px 0 14px">
 <button type="button" class="primary" id="openReceivePaymentBtn">🧾 Receive Payment</button>
 <button type="button" class="primary" id="openPaySupplierBtn">💸 Pay Supplier / Vendor</button>
 </div>
@@ -709,6 +709,21 @@ document.querySelectorAll('.tabs button').forEach(btn=>btn.addEventListener('cli
  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
  target.classList.add('active');
  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+
+ // V211: Accounting tab itself toggles its two sub-menu buttons.
+ if(btn.dataset.page==='accounting'){
+   const menu=document.getElementById('accountingSubMenuV211');
+   if(menu){
+     const opening=menu.style.display==='none' || menu.style.display==='';
+     menu.style.display=opening?'flex':'none';
+     btn.setAttribute('aria-expanded',opening?'true':'false');
+   }
+ }else{
+   const menu=document.getElementById('accountingSubMenuV211');
+   if(menu)menu.style.display='none';
+   const ab=document.querySelector('[data-page="accounting"]');
+   if(ab)ab.setAttribute('aria-expanded','false');
+ }
 }));
 
 function addItem(){
@@ -5638,3 +5653,5 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 <!-- V210: KSP Polytech Job Work Receive Bill Total fix.
      GST is added to net/job amount for Bill Total, including older entries. -->
+
+<!-- V211: Accounting tab click toggles Receive Payment / Pay Supplier-Vendor submenu. Based on V210. -->
