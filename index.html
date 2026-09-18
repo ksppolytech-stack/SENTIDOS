@@ -179,8 +179,8 @@ tr.low-stock-row td * {
 </div><div class="v225SideMenuGroup">
 <button type="button" id="v225JobWorkBtn" data-page="jobwork" aria-expanded="false">🏭 Job Work</button>
 <div id="jobWorkSubMenuV225" class="v225JobWorkSubMenu" hidden>
-<button type="button" id="openJWIssueBtnV225">1. Raw Material Issue to Vendor</button>
-<button type="button" id="openJWReceiveBtnV225">2. Component Receive from Vendor</button>
+<button type="button" id="openJWIssueBtnV225">🧱 Raw Material Issue to Vendor</button>
+<button type="button" id="openJWReceiveBtnV225">🔩 Component Receive from Vendor</button>
 </div>
 </div><button data-page="reports">📄 Reports</button><button data-page="stock">📊 Stock</button>
 </div>
@@ -444,7 +444,7 @@ tr.low-stock-row td * {
 <p>Vendor Master → Raw Material Issue → Component Receive. Componentનું weight Item Masterમાંથી automatic આવશે.</p>
 
 <div id="jwIssueSectionV225">
-<hr><h3>1. Raw Material Issue to Vendor</h3><p class="small">Challan No. software automatic generate કરશે.</p>
+<hr><h3>🧱 Raw Material Issue to Vendor</h3><p class="small">Challan No. software automatic generate કરશે.</p>
 <div class="grid">
 <div class="autowrap" style="position:relative"><input id="jwIssueVendor" placeholder="Type Vendor Name"><div id="issueVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
 <div class="autowrap" style="position:relative"><input id="jwRaw" placeholder="Type Raw Material"><div id="rawSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
@@ -454,7 +454,7 @@ tr.low-stock-row td * {
 </div>
 
 <div id="jwReceiveSectionV225">
-<hr><h3>2. Component Receive from Vendor</h3><p class="small">Receive Challan No. software automatic generate કરશે.</p>
+<hr><h3>🔩 Component Receive from Vendor</h3><p class="small">Receive Challan No. software automatic generate કરશે.</p>
 <div class="grid">
 <input id="jwReceiveDate" type="date" title="Receive Date">
 <div class="autowrap" style="position:relative"><input id="jwReceiveVendor" placeholder="Type Vendor Name"><div id="receiveVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
@@ -5877,6 +5877,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV225JobWork);else initV225JobWork();
 })();
 </script>
+
+<!-- V226: Job Work submenu labels updated: removed 1./2. numbering and kept suitable icons. Based on V225. -->
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
