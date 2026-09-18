@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V123 - Firebase Online Sync</title>
+<title>Sentidos ERP V220 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -19,6 +19,15 @@ main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-w
  body.report-printing #reports > section.report-print-target button,body.report-printing #reports > section.report-print-target input,body.report-printing #reports > section.report-print-target select,body.report-printing #reports > section.report-print-target .msg{display:none!important}
  table{font-size:11px}h2{margin-top:0}
 }
+
+/* V220: Master parent menu with all Master modules as submenus. */
+.v220MasterSideGroup{display:inline-flex;flex-direction:column;vertical-align:top;gap:4px;position:relative}
+.v220MasterSideBtn{border:0;padding:10px;border-radius:7px;background:#fff;cursor:pointer}
+.v220MasterSideBtn.active{background:#17324d;color:#fff}
+.v220MasterSubMenu{display:flex;flex-direction:column;gap:4px;padding:4px;background:#fff;border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,.12);min-width:220px}
+.v220MasterSubMenu[hidden]{display:none}
+.v220MasterSubMenu button{border:0;padding:9px 10px;border-radius:6px;background:#f7f9fb;text-align:left;white-space:nowrap}
+.v220MasterSubMenu button:hover{background:#eef5ff}
 </style>
 <style>
 .payment-due{color:#c62828;font-weight:700}
@@ -142,20 +151,31 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V117</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V220</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
 <button class="active" data-page="dashboard">🏠 Dashboard</button>
-<button data-page="items">📦 Item Master</button><button data-page="rawmaterials">🧱 Raw Material Master</button><button data-page="bom">🔧 BOM Master</button>
-<button data-page="purchase">🛒 Purchase</button><button data-page="purchaseMaster">🏢 Supplier Master</button><button data-page="customerMaster">👤 Customer Master</button><button data-page="fgRateMaster">💰 Finished Goods Rate Master</button><button data-page="production">🏭 Production</button>
+<div class="v220MasterSideGroup">
+<button type="button" id="v220MasterBtn" class="v220MasterSideBtn" aria-expanded="false">📚 Master</button>
+<div id="v220MasterSubMenu" class="v220MasterSubMenu" hidden>
+<button type="button" data-page="items">📦 Item Master</button>
+<button type="button" data-page="rawmaterials">🧱 Raw Material Master</button>
+<button type="button" data-page="bom">🔧 BOM Master</button>
+<button type="button" data-page="purchaseMaster">🏢 Supplier Master</button>
+<button type="button" data-page="customerMaster">👤 Customer Master</button>
+<button type="button" data-page="fgRateMaster">💰 Finished Goods Rate Master</button>
+<button type="button" data-page="jwrates">💰 Job Work Rate Master</button>
+</div>
+</div>
+<button data-page="purchase">🛒 Purchase</button><button data-page="production">🏭 Production</button>
 <button data-page="dispatch">🚚 Dispatch</button><button data-page="rawSale">🧾 Raw Material Sale</button><div class="v212SideMenuGroup">
 <button type="button" class="v212AccountingSideBtn" data-page="accounting" aria-expanded="false">💰 Accounting</button>
 <div id="accountingSubMenuV211" class="v212AccountingSubMenu">
 <button type="button" id="openReceivePaymentBtn" data-subpage="receive">🧾 Receive Payment</button>
 <button type="button" id="openPaySupplierBtn" data-subpage="pay">💸 Pay Supplier / Vendor</button>
 </div>
-</div><button data-page="jobwork">🏭 Job Work</button><button data-page="jwrates">💰 Job Work Rate Master</button><button data-page="reports">📄 Reports</button><button data-page="stock">📊 Stock</button>
+</div><button data-page="jobwork">🏭 Job Work</button><button data-page="reports">📄 Reports</button><button data-page="stock">📊 Stock</button>
 </div>
 
 
@@ -5767,6 +5787,26 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV219);
   else initV219();
+})();
+</script>
+
+<script>
+/* V220: Master menu. Clicking Master toggles all Master submenus. */
+(function(){
+ function initV220Master(){
+  const btn=document.getElementById('v220MasterBtn'),menu=document.getElementById('v220MasterSubMenu');
+  if(!btn||!menu||btn.dataset.v220Ready==='1')return;
+  btn.dataset.v220Ready='1'; menu.hidden=true; btn.setAttribute('aria-expanded','false');
+  btn.addEventListener('click',function(e){
+   e.preventDefault(); e.stopImmediatePropagation();
+   const opening=menu.hidden===true; menu.hidden=!opening;
+   btn.setAttribute('aria-expanded',opening?'true':'false'); btn.classList.toggle('active',opening);
+  },true);
+  menu.querySelectorAll('button[data-page]').forEach(child=>child.addEventListener('click',function(){
+   menu.hidden=false; btn.setAttribute('aria-expanded','true'); btn.classList.add('active');
+  },true));
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV220Master);else initV220Master();
 })();
 </script>
 </body></html>
