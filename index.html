@@ -5517,100 +5517,58 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 <script>
-/* V197: Purchase Inward submenu toggles the existing Purchase entry fields.
-   Purchase submenu remains visible while Purchase Inward is selected. */
+/* V198: Combined Party Ledger - show only transactions belonging to the
+   selected party (e.g. ADR), checking customer/supplier/vendor independently. */
 (function(){
   function setup(){
-    const tabs=document.querySelector('.tabs');
-    const purchaseBtn=tabs && tabs.querySelector('button[data-page="purchase"]');
-    const sec=document.getElementById('purchase');
-    if(!tabs||!purchaseBtn||!sec)return;
+    if(typeof renderMergedPartyDetailV96!=='function')return;
+    if(window.__v198PartyLedgerPatched)return;
+    window.__v198PartyLedgerPatched=true;
 
-    let menu=document.getElementById('v197PurchaseSubmenu');
-    if(!menu){
-      menu=document.createElement('div');
-      menu.id='v197PurchaseSubmenu';
-      menu.style.display='none';
-      menu.innerHTML=
-        '<button type="button" id="v197PurchaseInward">🧾 Purchase Inward</button>'+
-        '<button type="button" id="v197PurchaseReport">📊 Purchase Report</button>';
-      purchaseBtn.insertAdjacentElement('afterend',menu);
+    const original=renderMergedPartyDetailV96;
 
-      const style=document.createElement('style');
-      style.textContent=
-        '#v197PurchaseSubmenu{margin:-4px 0 6px 18px;}'+
-        '#v197PurchaseSubmenu button{display:block;width:100%;text-align:left;margin:2px 0;padding:7px 10px;border:0;background:transparent;cursor:pointer;border-radius:6px;}'+
-        '#v197PurchaseSubmenu button:hover{background:rgba(0,0,0,.06);}';
-      document.head.appendChild(style);
+    window.renderMergedPartyDetailV96=function(party){
+      const target=String(party||'').trim().toLowerCase();
+      if(!target){ return original(party); }
 
-      menu.querySelector('#v197PurchaseInward').addEventListener('click',function(e){
-        e.preventDefault();
-        e.stopImmediatePropagation();
+      /* Rebuild using the original renderer's transaction logic, but first
+         temporarily expose only records where ANY party field equals target.
+         This prevents unrelated party records from entering ADR's ledger. */
+      let tx=[];
+      try{tx=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]')}catch(e){}
+      if(!Array.isArray(tx))tx=[];
 
-        const panel=sec.querySelector('.panel');
-        if(!panel)return;
-
-        /* The first grid is the existing Purchase Entry fields. */
-        const grid=panel.querySelector('.grid');
-        const addBtn=document.getElementById('addPurchaseItem');
-        if(!grid)return;
-
-        const isOpen=grid.dataset.v197Open==='1' ||
-          getComputedStyle(grid).display!=='none';
-
-        if(isOpen){
-          grid.style.display='none';
-          if(addBtn)addBtn.style.display='none';
-          grid.dataset.v197Open='0';
-        }else{
-          grid.style.display='grid';
-          if(addBtn)addBtn.style.display='inline-block';
-          grid.dataset.v197Open='1';
-          const date=document.getElementById('purchaseDate');
-          if(date)setTimeout(()=>date.focus(),50);
-        }
-
-        menu.style.display='block';
+      const filtered=tx.filter(t=>{
+        const parties=[
+          t.customer,t.supplier,t.vendor,
+          t.customerName,t.supplierName,t.vendorName
+        ].map(v=>String(v??'').trim().toLowerCase()).filter(Boolean);
+        return parties.includes(target);
       });
 
-      menu.querySelector('#v197PurchaseReport').addEventListener('click',function(e){
-        e.preventDefault();
-        e.stopImmediatePropagation();
+      const old=localStorage.getItem('adr_tx_v2');
+      localStorage.setItem('adr_tx_v2',JSON.stringify(filtered));
+      try{
+        original(party);
+      }finally{
+        if(old===null)localStorage.removeItem('adr_tx_v2');
+        else localStorage.setItem('adr_tx_v2',old);
+      }
+    };
 
-        /* Open the existing Purchase Report page/panel without hiding submenu. */
-        const reportsBtn=tabs.querySelector('button[data-page="reports"]');
-        if(reportsBtn)reportsBtn.click();
-        setTimeout(function(){
-          const report=document.getElementById('purchaseReportPanel');
-          if(report)report.scrollIntoView({behavior:'smooth',block:'start'});
-        },80);
-        menu.style.display='block';
-      });
-    }
-
-    /* Parent Purchase click only toggles submenu and opens Purchase page. */
-    if(!purchaseBtn.dataset.v197){
-      purchaseBtn.dataset.v197='1';
-      purchaseBtn.addEventListener('click',function(e){
-        e.preventDefault();
-        e.stopImmediatePropagation();
-
-        const isOpen=menu.style.display!=='none';
-        menu.style.display=isOpen?'none':'block';
-
-        /* Keep Purchase page active. */
-        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-        sec.classList.add('active');
-
-        try{sessionStorage.setItem('sentidosLastPage','purchase')}catch(_){}
-        window.scrollTo({top:0,behavior:'smooth'});
+    /* Rebind the selected-party call sites to the patched function. */
+    const input=document.getElementById('mergedPartyFilter');
+    if(input){
+      input.addEventListener('change',function(){
+        const party=String(input.dataset.selectedParty||input.value||'').trim();
+        if(party)window.renderMergedPartyDetailV96(party);
       },true);
     }
   }
 
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
-  else setup();
-  [300,800,1500].forEach(t=>setTimeout(setup,t));
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(setup,700));
+  else setTimeout(setup,700);
+  [1500,3000].forEach(ms=>setTimeout(setup,ms));
 })();
 </script>
 </body></html>
