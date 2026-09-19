@@ -264,7 +264,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V255</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V256</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -5365,6 +5365,45 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   z-index:20!important;
 }
 #rawmaterials .v183-head-row > .v183-x:hover{background:#eee!important;color:#c00!important}
+</style>
+
+<style id="v256SidebarOrderStyle">
+/* V256: Side menu sequence + bold/heavier appearance */
+.tabs{display:flex!important;flex-direction:column!important;gap:5px!important;}
+.tabs > [data-page="dashboard"]{order:1!important;}
+.tabs > [data-page="stock"]{order:2!important;}
+.tabs > [data-page="rawmaterials"]{order:3!important;}
+.tabs > [data-page="purchase"]{order:4!important;}
+.tabs > .v225SideMenuGroup{order:5!important;}
+.tabs > [data-page="production"]{order:6!important;}
+.tabs > [data-page="dispatch"]{order:7!important;}
+.tabs > .v212SideMenuGroup{order:8!important;}
+.tabs > [data-page="rawSale"]{order:9!important;}
+.tabs > .v220MasterSideGroup{order:10!important;}
+.tabs > .v231ReportSideGroup{order:11!important;}
+.tabs > .v255BackupSideGroup{order:12!important;}
+.tabs > button,
+.tabs > div > .v220MasterSideBtn,
+.tabs > div > .v212AccountingSideBtn,
+.tabs > div > .v225JobWorkBtn,
+.tabs > div > .v231ReportSideBtn,
+.tabs > div > .v255BackupSideBtn{
+  font-weight:800!important;
+  font-size:15px!important;
+  min-height:42px!important;
+  padding:11px 10px!important;
+  letter-spacing:.1px;
+}
+.tabs > button:hover,
+.tabs > div > .v220MasterSideBtn:hover,
+.tabs > div > .v212AccountingSideBtn:hover,
+.tabs > div > .v225JobWorkBtn:hover,
+.tabs > div > .v231ReportSideBtn:hover,
+.tabs > div > .v255BackupSideBtn:hover{
+  font-weight:800!important;
+  box-shadow:0 1px 5px rgba(0,0,0,.10);
+}
+.tabs > .v255BackupSideGroup{margin-top:2px!important;}
 </style>
 </head><body>'+clone.innerHTML+'</body></html>');
     w.document.close();
