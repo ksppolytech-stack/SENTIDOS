@@ -6534,6 +6534,10 @@ button:not(.no-style):active {transform:translateY(0); box-shadow:0 2px 5px rgba
    sub.hidden=false;
    stockBtn.setAttribute('aria-expanded','true');
    showItems();
+   setTimeout(function(){
+     const search=document.getElementById('v260StockSearch');
+     if(search){search.focus(); search.select();}
+   },50);
  });
  txBtn.addEventListener('click',function(e){
    e.preventDefault();e.stopPropagation();
