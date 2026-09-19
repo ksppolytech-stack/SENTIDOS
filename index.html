@@ -3517,8 +3517,23 @@ function initStockFilterV260(){
  if(!sel)return;
  const cats=[...new Set(items.map(i=>String(i.cat||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
  sel.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${String(c).replace(/\"/g,'&quot;')}">${c}</option>`).join('');
- if(search)search.oninput=renderStockTableV260;
- if(sel)sel.onchange=renderStockTableV260;
+ if(search){
+   search.oninput=function(){
+     const q=String(this.value||'').trim().toLowerCase();
+     const rows=document.querySelectorAll('#stockTable tr');
+     rows.forEach(row=>{
+       const txt=String(row.textContent||'').toLowerCase();
+       const match=!q || txt.includes(q);
+       row.style.display=match?'':'none';
+       if(match && q){
+         row.style.fontWeight='800';
+         row.querySelectorAll('td').forEach(td=>td.style.fontWeight='800');
+       }
+     });
+     if(!q) renderStockTableV260();
+   };
+ }
+ if(sel)sel.onchange=function(){ renderStockTableV260(); if(search && search.value) search.oninput(); };
  if(clear)clear.onclick=()=>{if(search)search.value='';if(sel)sel.value='';renderStockTableV260();search?.focus();};
 }
 
