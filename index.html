@@ -114,6 +114,15 @@ tr.low-stock-row td * {
 #vendorRawMaterialBalanceV230 h3 { font-size:24px !important; }
 #vendorRawMaterialBalanceV230 th, #vendorRawMaterialBalanceV230 td { color:#d00000 !important; font-size:20px !important; font-weight:800 !important; }
 </style>
+
+/* V231: Reports parent menu with all report modules as submenus. */
+.v231ReportSideGroup{display:inline-flex;flex-direction:column;vertical-align:top;gap:4px;position:relative}
+.v231ReportSideBtn{border:0;padding:10px;border-radius:7px;background:#fff;cursor:pointer}
+.v231ReportSideBtn.active{background:#17324d;color:#fff}
+.v231ReportSubMenu{display:flex;flex-direction:column;gap:4px;padding:4px;background:#fff;border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,.12);min-width:240px}
+.v231ReportSubMenu[hidden]{display:none}
+.v231ReportSubMenu button{border:0;padding:9px 10px;border-radius:6px;background:#f7f9fb;text-align:left;white-space:nowrap;cursor:pointer}
+.v231ReportSubMenu button:hover{background:#eef5ff}
 </head>
 <body>
 <button id="globalRefreshBtn" type="button" title="Refresh Page" aria-label="Refresh Page" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
@@ -157,7 +166,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V230</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V231</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -187,7 +196,16 @@ tr.low-stock-row td * {
 <button type="button" id="openJWIssueBtnV225">🧱 Raw Material Issue to Vendor</button>
 <button type="button" id="openJWReceiveBtnV225">🔩 Component Receive from Vendor</button>
 </div>
-</div><button data-page="reports">📄 Reports</button><button data-page="stock">📊 Stock</button>
+</div><div class="v231ReportSideGroup">
+<button type="button" id="v231ReportBtn" class="v231ReportSideBtn" aria-expanded="false">📄 Report</button>
+<div id="v231ReportSubMenu" class="v231ReportSubMenu" hidden>
+<button type="button" id="v231DispatchReportBtn">🚚 Dispatch Report</button>
+<button type="button" id="v231PurchaseReportBtn">🧾 Purchase Report</button>
+<button type="button" id="v231ProductionReportBtn">🏭 Production Report</button>
+<button type="button" id="v231JWReportBtn">🏭 Job Work Monthly Report</button>
+<button type="button" id="v231GSTReportBtn">🧾 GST Report</button>
+</div>
+</div><button data-page="stock">📊 Stock</button>
 </div>
 
 
@@ -5977,6 +5995,80 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   font-weight: 800 !important;
 }
 </style>
+
+<script id="v231ReportMenuScript">
+/* V231: Report is the main menu; all report modules are submenus. */
+(function(){
+  function initV231(){
+    const btn=document.getElementById('v231ReportBtn');
+    const menu=document.getElementById('v231ReportSubMenu');
+    if(!btn||!menu||btn.dataset.ready==='1')return;
+    btn.dataset.ready='1';
+
+    const panels={
+      dispatch:document.getElementById('dispatchReportPanel'),
+      purchase:document.getElementById('purchaseReportPanel'),
+      production:document.getElementById('productionReportPanel'),
+      jobwork:document.getElementById('jobWorkMonthlyReportPanel')
+    };
+
+    function openReportsPage(){
+      const page=document.getElementById('reports');
+      if(page){
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+        page.classList.add('active');
+      }
+      document.querySelectorAll('.tabs>button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function hideReportPanels(){
+      Object.values(panels).forEach(p=>{if(p)p.style.display='none';});
+      const gst=document.getElementById('v168GSTReport');
+      if(gst)gst.style.display='none';
+      const gstOpen=document.getElementById('v168OpenGST');
+      if(gstOpen)gstOpen.style.display='none';
+    }
+
+    function show(which){
+      openReportsPage();
+      menu.hidden=false; menu.style.display='flex';
+      btn.setAttribute('aria-expanded','true');
+      hideReportPanels();
+      const p=panels[which];
+      if(p)p.style.display='block';
+      if(which==='jobwork' && typeof renderJobWorkMonthlyReport==='function')renderJobWorkMonthlyReport();
+    }
+
+    btn.addEventListener('click',function(e){
+      e.preventDefault(); e.stopImmediatePropagation();
+      const opening=menu.hidden===true;
+      menu.hidden=!opening; menu.style.display=opening?'flex':'none';
+      btn.setAttribute('aria-expanded',opening?'true':'false');
+      btn.classList.toggle('active',opening);
+      if(opening)openReportsPage();
+    },true);
+
+    document.getElementById('v231DispatchReportBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();show('dispatch');},true);
+    document.getElementById('v231PurchaseReportBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();show('purchase');},true);
+    document.getElementById('v231ProductionReportBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();show('production');},true);
+    document.getElementById('v231JWReportBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();show('jobwork');},true);
+    document.getElementById('v231GSTReportBtn')?.addEventListener('click',e=>{
+      e.preventDefault(); e.stopImmediatePropagation(); openReportsPage();
+      menu.hidden=false; menu.style.display='flex'; btn.setAttribute('aria-expanded','true');
+      hideReportPanels();
+      if(typeof window.renderV168GSTReport==='function')window.renderV168GSTReport();
+      const gst=document.getElementById('v168GSTReport');
+      if(gst)gst.style.display='block';
+    },true);
+
+    menu.hidden=true; menu.style.display='none';
+    btn.setAttribute('aria-expanded','false');
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV231);
+  else initV231();
+})();
+</script>
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
