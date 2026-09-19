@@ -29,6 +29,11 @@ main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-w
 .v220MasterSubMenu[hidden]{display:none}
 .v220MasterSubMenu button{border:0;padding:9px 10px;border-radius:6px;background:#f7f9fb;text-align:left;white-space:nowrap}
 .v220MasterSubMenu button:hover{background:#eef5ff}
+
+/* V252: Payable GST = Purchase GST - Sale GST */
+.v252PayableGST{font-weight:700;}
+.v252PayableGST.v252Positive{color:#178a43 !important;}
+.v252PayableGST.v252Negative{color:#c62828 !important;}
 </style>
 <style>
 .payment-due{color:#c62828;font-weight:700}
@@ -4951,7 +4956,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         <table>
           <thead><tr>
             <th>Month</th><th>Purchase Taxable</th><th>Sale Taxable</th>
-            <th>Sale GST</th><th>Purchase GST</th>
+            <th>Sale GST</th><th>Purchase GST</th><th>Payable GST</th>
           </tr></thead>
           <tbody id="v243GSTMonthBody"></tbody>
           <tfoot id="v243GSTMonthFoot"></tfoot>
@@ -5098,7 +5103,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         return `<tr data-gst-month="${m}" style="cursor:pointer">
           <td style="text-align:left;font-weight:700">${esc(label)}</td>
           <td>${money(x.purchase)}</td><td>${money(x.sale)}</td>
-          <td>${money(x.saleGST)}</td><td>${money(x.purchaseGST)}</td>
+          <td>${money(x.saleGST)}</td><td>${money(x.purchaseGST)}</td><td class="v252PayableGST">${money(x.purchaseGST-x.saleGST)}</td>
         </tr>`;
       }).join('') || '<tr><td colspan="6">No GST entries found.</td></tr>';
 
@@ -5108,13 +5113,25 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       }),{purchase:0,sale:0,saleGST:0,purchaseTotal:0,purchaseGST:0});
       $('v243GSTMonthFoot').innerHTML=`<tr>
         <th>Total</th><th>${money(totals.purchase)}</th><th>${money(totals.sale)}</th>
-        <th>${money(totals.saleGST)}</th><th>${money(totals.purchaseGST)}</th>
+        <th>${money(totals.saleGST)}</th><th>${money(totals.purchaseGST)}</th><th class="v252PayableGST">${money(totals.purchaseGST-totals.saleGST)}</th>
       </tr>`;
 
       $('v243GSTCustomerSection').style.display='none';
       $('v243GSTSummaryTitle').textContent='Month Wise Summary';
+      v252ColorPayableGST();
       document.querySelectorAll('#v243GSTMonthBody tr[data-gst-month]').forEach(tr=>{
         tr.onclick=()=>showCustomerWise(tr.getAttribute('data-gst-month'));
+      });
+    }
+
+
+    function v252ColorPayableGST(){
+      document.querySelectorAll('.v252PayableGST').forEach(td=>{
+        const raw=String(td.textContent||'').replace(/[^0-9.\-]/g,'');
+        const n=Number(raw);
+        td.classList.remove('v252Positive','v252Negative');
+        if(n>0) td.classList.add('v252Positive');
+        else if(n<0) td.classList.add('v252Negative');
       });
     }
 
@@ -5128,7 +5145,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         <tr>
           <td style="text-align:left;font-weight:600">${esc(x.key)}</td>
           <td>${money(x.purchase)}</td><td>${money(x.sale)}</td>
-          <td>${money(x.saleGST)}</td><td>${money(x.purchaseGST)}</td>
+          <td>${money(x.saleGST)}</td><td>${money(x.purchaseGST)}</td><td class="v252PayableGST">${money(x.purchaseGST-x.saleGST)}</td>
         </tr>`).join('') || '<tr><td colspan="6">No GST entries found.</td></tr>';
 
       const totals=rows.reduce((a,x)=>({
@@ -5137,11 +5154,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       }),{purchase:0,sale:0,saleGST:0,purchaseTotal:0,purchaseGST:0});
       $('v243GSTCustomerFoot').innerHTML=`<tr>
         <th>Total</th><th>${money(totals.purchase)}</th><th>${money(totals.sale)}</th>
-        <th>${money(totals.saleGST)}</th><th>${money(totals.purchaseGST)}</th>
+        <th>${money(totals.saleGST)}</th><th>${money(totals.purchaseGST)}</th><th class="v252PayableGST">${money(totals.purchaseGST-totals.saleGST)}</th>
       </tr>`;
 
       $('v243GSTSummaryTitle').textContent=label+' — Customer Wise Summary';
       $('v243GSTCustomerSection').style.display='block';
+      v252ColorPayableGST();
       document.getElementById('v243GSTCustomerSection').scrollIntoView({behavior:'smooth',block:'start'});
     }
 
@@ -6375,3 +6393,4 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <!-- V215: Accounting click toggles submenu; Receive Payment and Pay Supplier/Vendor each toggle their own fields. Based on V214. -->
 
 <!-- V249: GST close X moved higher above Purchase GST heading. -->
+  <!-- V252: Added Payable GST = Purchase GST - Sale GST with green positive / red negative styling. -->
