@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V235 - Firebase Online Sync</title>
+<title>Sentidos ERP V236 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -135,7 +135,7 @@ tr.low-stock-row td * {
 .v231ReportSubMenu button:hover{background:#eef5ff;}
 </style>
 <!-- V233: Fixed Report CSS block so CSS source is not displayed on the page. -->
-<!-- V235: Report main menu opens a dashboard matching the supplied reference image. -->
+<!-- V236: GST month names are clickable and open month-wise transaction detail. -->
 </head>
 <body>
 <button id="globalRefreshBtn" type="button" title="Refresh Page" aria-label="Refresh Page" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
@@ -179,7 +179,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V235</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V236</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -4878,7 +4878,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
       const isSale=type==='DISPATCH'||type==='RAW MATERIAL SALE';
       const isPurchase=!isSale;
-      rows.push({date,type,amount,gst,total,isSale,isPurchase});
+      rows.push({
+        date,type,amount,gst,total,isSale,isPurchase,
+        customer:String(t.customer||t.customerName||''),
+        supplier:String(t.supplier||t.supplierName||''),
+        itemName:String(t.itemName||t.material||t.item||'').replace(/^RM:/,''),
+        ref:String(t.billNo||t.invoiceNo||t.invoice||t.ref||'')
+      });
     });
     return rows;
   }
@@ -4948,9 +4954,61 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           <tbody id="v168GSTBody"></tbody>
           <tfoot id="v168GSTFoot"></tfoot>
         </table>
-      </div>`;
+      </div>
+      <div id="v168GSTMonthDetail" style="display:none;margin-top:18px"></div>`;
+
+    function showMonthDetail(key,allRows){
+      const box=$('v168GSTMonthDetail');
+      if(!box)return;
+      const list=allRows.filter(r=>r.date.slice(0,7)===key);
+      const sales=list.filter(r=>r.isSale);
+      const purchases=list.filter(r=>r.isPurchase);
+      const outGST=sales.reduce((a,r)=>a+r.gst,0);
+      const inGST=purchases.reduce((a,r)=>a+r.gst,0);
+      const due=outGST-inGST;
+
+      const rowsHtml=list.slice().reverse().map(r=>{
+        const party=r.isSale?(r.customer||'-'):(r.supplier||'-');
+        return `<tr>
+          <td>${esc(r.date)}</td>
+          <td>${esc(r.type)}</td>
+          <td>${esc(party)}</td>
+          <td>${esc(r.itemName||'-')}</td>
+          <td>${esc(r.ref||'-')}</td>
+          <td style="text-align:right">${money(r.amount)}</td>
+          <td style="text-align:right">${money(r.gst)}</td>
+          <td style="text-align:right">${money(r.total)}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="8">No entries found for this month.</td></tr>';
+
+      box.style.display='block';
+      box.innerHTML=`
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <h3 style="margin:0">📋 ${esc(label(key))} — GST Detail</h3>
+          <button type="button" id="v236GSTDetailClose"
+            style="border:0;background:transparent;font-size:24px;font-weight:700;cursor:pointer">×</button>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+          <div class="card"><small>Output GST</small><b>${money(outGST)}</b></div>
+          <div class="card"><small>Input GST</small><b>${money(inGST)}</b></div>
+          <div class="card"><small>Due GST</small><b>${money(due)} ${due>0?'Payable':due<0?'Credit':'Nil'}</b></div>
+        </div>
+        <div style="overflow:auto;margin-top:12px">
+          <table style="width:100%;border-collapse:collapse;min-width:900px">
+            <thead><tr>
+              <th>Date</th><th>Type</th><th>Customer / Supplier</th><th>Item / Material</th>
+              <th>Bill / Ref</th><th>Taxable Amount</th><th>GST</th><th>Total</th>
+            </tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>`;
+      $('v236GSTDetailClose').onclick=()=>{box.style.display='none';box.innerHTML='';};
+      box.scrollIntoView({behavior:'smooth',block:'start'});
+    }
 
     const fill=(filter)=>{
+      const detail=$('v168GSTMonthDetail');
+      if(detail){detail.style.display='none';detail.innerHTML='';}
       const list=filter==='ALL'?ms:ms.filter(x=>x.key===filter);
       const s=list.reduce((a,x)=>a+x.salesGST,0);
       const p=list.reduce((a,x)=>a+x.purchaseGST,0);
@@ -4958,13 +5016,22 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       $('v168GSTBody').innerHTML=list.map(x=>{
         const d=x.salesGST-x.purchaseGST;
         return `<tr>
-          <td>${esc(label(x.key))}</td>
+          <td>
+            <button type="button" class="v236GSTMonthBtn" data-gst-month="${esc(x.key)}"
+              style="border:0;background:transparent;color:#1565c0;text-decoration:underline;font-weight:700;cursor:pointer;padding:2px 4px">
+              ${esc(label(x.key))}
+            </button>
+          </td>
           <td>${money(x.sales)}</td><td>${money(x.salesGST)}</td><td>${money(x.salesTotal)}</td>
           <td>${money(x.purchase)}</td><td>${money(x.purchaseGST)}</td><td>${money(x.purchaseTotal)}</td>
           <td>${money(x.purchaseGST)}</td><td>${money(x.salesGST)}</td>
           <td class="v168-gst-net">${money(d)} ${d>0?'Payable':d<0?'Credit':'Nil'}</td>
         </tr>`;
       }).join('')||'<tr><td colspan="10">No GST entries found.</td></tr>';
+
+      document.querySelectorAll('.v236GSTMonthBtn').forEach(b=>{
+        b.onclick=()=>showMonthDetail(b.getAttribute('data-gst-month'),rows);
+      });
       $('v168GSTFoot').innerHTML=`<tr>
         <th>Selected Total</th><th>${money(list.reduce((a,x)=>a+x.sales,0))}</th><th>${money(s)}</th><th>${money(list.reduce((a,x)=>a+x.salesTotal,0))}</th>
         <th>${money(list.reduce((a,x)=>a+x.purchase,0))}</th><th>${money(p)}</th><th>${money(list.reduce((a,x)=>a+x.purchaseTotal,0))}</th>
