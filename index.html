@@ -822,6 +822,16 @@ tr.low-stock-row td * {
 </div>
 </section>
 <section id="stock" class="page"><div class="panel"><h2>Stock & Transaction History</h2>
+<div id="v260StockFilterBar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0 14px;padding:12px;background:#f7f9fc;border:1px solid #dfe5ee;border-radius:12px">
+  <div style="flex:1;min-width:240px;position:relative">
+    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:18px">🔎</span>
+    <input id="v260StockSearch" type="search" placeholder="Search Item / Code..." autocomplete="off" style="width:100%;box-sizing:border-box;padding:11px 14px 11px 40px;border:1px solid #cfd7e3;border-radius:9px;font-size:15px;font-weight:600;background:#fff">
+  </div>
+  <select id="v260StockCategory" style="min-width:180px;padding:11px 12px;border:1px solid #cfd7e3;border-radius:9px;font-size:15px;font-weight:600;background:#fff">
+    <option value="">All Categories</option>
+  </select>
+  <button type="button" id="v260StockClear" style="padding:11px 16px;border:0;border-radius:9px;background:#455a64;color:#fff;font-weight:700;cursor:pointer">✖ Clear</button>
+</div>
 <table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Unit</th><th>Weight g</th><th>Stock</th><th>Action</th></tr></thead><tbody id="stockTable"></tbody></table>
 <hr><table><thead><tr><th>Date</th><th>Type</th><th>Ref</th><th>Item</th><th>Qty</th><th>Action</th></tr></thead><tbody id="transactionTable"></tbody></table>
 </div></section>
@@ -3487,9 +3497,35 @@ function pmAutoRate(){
    Number(x.rate||0)>0);
  if(match && $('purchaseRate'))$('purchaseRate').value=Number(match.rate).toFixed(2);
 }
+function renderStockTableV260(){
+ const body=$('stockTable');
+ if(!body)return;
+ const search=String($('v260StockSearch')?.value||'').trim().toLowerCase();
+ const cat=String($('v260StockCategory')?.value||'').trim().toLowerCase();
+ const filtered=items.filter(i=>{
+   const code=String(i.code||'').toLowerCase();
+   const name=String(i.name||'').toLowerCase();
+   const category=String(i.cat||'').toLowerCase();
+   return (!search || code.includes(search) || name.includes(search)) && (!cat || category===cat);
+ });
+ body.innerHTML=filtered.map(i=>`<tr><td>${i.code}</td><td>${i.name}</td><td>${i.cat}</td><td>${i.unit}</td><td>${i.weight}</td><td>${i.stock}</td><td><button data-stock-edit="${i.code}">✏️ Edit</button> <button data-stock-del="${i.code}">🗑 Delete</button></td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:18px;font-weight:700;color:#777">No item found</td></tr>';
+ body.querySelectorAll('[data-stock-edit]').forEach(b=>b.onclick=()=>editItem(b.dataset.stockEdit));
+ body.querySelectorAll('[data-stock-del]').forEach(b=>b.onclick=()=>deleteItem(b.dataset.stockDel));
+}
+function initStockFilterV260(){
+ const sel=$('v260StockCategory'),search=$('v260StockSearch'),clear=$('v260StockClear');
+ if(!sel)return;
+ const cats=[...new Set(items.map(i=>String(i.cat||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ sel.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${String(c).replace(/\"/g,'&quot;')}">${c}</option>`).join('');
+ if(search)search.oninput=renderStockTableV260;
+ if(sel)sel.onchange=renderStockTableV260;
+ if(clear)clear.onclick=()=>{if(search)search.value='';if(sel)sel.value='';renderStockTableV260();search?.focus();};
+}
+
 function render(){
  $('itemTable').innerHTML=items.map(i=>`<tr><td>${i.code}</td><td>${i.name}</td><td>${i.cat}</td><td>${i.unit}</td><td>${i.weight}</td><td>${i.stock}</td><td><button data-edit="${i.code}">✏️ Edit</button> <button data-del="${i.code}">🗑 Delete</button></td></tr>`).join('');
- $('stockTable').innerHTML=$('itemTable').innerHTML;
+ initStockFilterV260();
+ renderStockTableV260();
  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editItem(b.dataset.edit));
  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteItem(b.dataset.del));
  const products=[...new Set(boms.map(b=>b.product))];
