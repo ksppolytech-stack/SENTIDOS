@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V240 - Firebase Online Sync</title>
+<title>Sentidos ERP V241 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -220,7 +220,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V240</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V241</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -1152,26 +1152,7 @@ function printRawSaleInvoice(rows,invoiceNo,customer,date){
  const w=window.open('','_blank','width=900,height=700');if(!w)return alert('Popup blocked. Browserમાં popup allow કરો.');
  w.document.write(`<!doctype html><html><head><title>Raw Material Invoice ${invoiceNo}</title><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #333;padding:8px;text-align:left}td.num,th.num{text-align:right}.tot{margin-top:20px;text-align:right;font-size:18px}</style></head><body><h1>RAW MATERIAL SALES INVOICE</h1><p><b>Invoice No:</b> ${invoiceNo}<br><b>Date:</b> ${date}<br><b>Customer:</b> ${customer}</p><table><thead><tr><th>Raw Material</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate</th><th class="num">Taxable</th><th class="num">GST</th><th class="num">Total</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.name}</td><td class="num">${x.qty.toFixed(3)}</td><td>${x.unit}</td><td class="num">₹${x.rate.toFixed(2)}</td><td class="num">₹${x.amount.toFixed(2)}</td><td class="num">₹${x.tax.toFixed(2)}</td><td class="num">₹${x.grandTotal.toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="tot">Taxable: ₹${totals.taxable.toFixed(2)}<br>GST: ₹${totals.tax.toFixed(2)}<br><b>Grand Total: ₹${totals.grand.toFixed(2)}</b></div><script>window.onload=()=>window.print()<\/script><!-- V232: Report main menu with GST, Dispatch, Purchase, Production and Job Work submenus. Based on V231. -->
 
-<script id="v240ReportDashboardKeeper">
-(function(){
-  function keepReportDashboard(){
-    const page=document.getElementById('reports');
-    const dash=document.getElementById('v235ReportDashboard');
-    if(page && dash && page.classList.contains('active')){
-      dash.classList.add('v240-force-visible');
-      dash.style.display='block';
-      dash.hidden=false;
-    }
-  }
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',keepReportDashboard);
-  }else{
-    keepReportDashboard();
-  }
-  setInterval(keepReportDashboard,500);
-  new MutationObserver(keepReportDashboard).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style','hidden']});
-})();
-</script>
+
 </body></html>`);w.document.close();
 }
 function saveRawSaleInvoice(){
@@ -6335,6 +6316,27 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV231);
   else initV231();
+})();
+</script>
+
+<script id="v240ReportDashboardKeeper">
+(function(){
+  function keepReportDashboard(){
+    const page=document.getElementById('reports');
+    const dash=document.getElementById('v235ReportDashboard');
+    if(page && dash && page.classList.contains('active')){
+      dash.classList.add('v240-force-visible');
+      dash.style.display='block';
+      dash.hidden=false;
+    }
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',keepReportDashboard);
+  }else{
+    keepReportDashboard();
+  }
+  setInterval(keepReportDashboard,500);
+  new MutationObserver(keepReportDashboard).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style','hidden']});
 })();
 </script>
 </body></html>
