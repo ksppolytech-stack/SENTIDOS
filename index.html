@@ -5036,14 +5036,16 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
             <td style="text-align:right">${money(r.gst)}</td><td style="text-align:right">${money(r.total)}</td>
           </tr>`).join('') || '<tr><td colspan="7">No transactions found.</td></tr>';
 
-        const dbox=$('v238GSTPartyDetail');
+        // V239: When a customer/supplier is clicked, show ONLY that party's detail.
+        // Hide the month-wide summary/transaction list and reuse the same detail panel.
+        const dbox=$('v168GSTMonthDetail');
         if(!dbox)return;
         dbox.style.display='block';
         dbox.innerHTML=`
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
             <h3 style="margin:0">👤 ${esc(party)} — ${esc(kind)} Detail</h3>
-            <button type="button" id="v238GSTPartyClose"
-              style="border:0;background:transparent;font-size:24px;font-weight:700;cursor:pointer">×</button>
+            <button type="button" id="v239GSTPartyBack"
+              style="border:0;background:transparent;color:#1565c0;font-weight:700;cursor:pointer;font-size:15px">← Back to Summary</button>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
             <div class="card"><small>Entries</small><b>${rows2.length}</b></div>
@@ -5060,7 +5062,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
               <tbody>${detail}</tbody>
             </table>
           </div>`;
-        $('v238GSTPartyClose').onclick=()=>{dbox.style.display='none';dbox.innerHTML='';};
+        $('v239GSTPartyBack').onclick=()=>showMonthDetail(key,allRows);
         dbox.scrollIntoView({behavior:'smooth',block:'start'});
       }
 
@@ -5153,6 +5155,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     $('v168GSTClose').onclick=()=>panel.style.display='none';
   }
 
+  // V239: Customer/Supplier click now shows only the selected party detail.
   // V234: Expose GST renderer so the Report submenu can open the GST report.
   window.renderV168GSTReport=render;
 
