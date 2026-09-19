@@ -4745,27 +4745,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 }
 .v167-report-result.v167-hidden{display:none!important}
 </style>
-<style id="v248-gst-close-position">
-/* V249: Move the GST Report close X higher into the blank area above the heading/table. */
-#v168GSTReport{position:relative!important;}
-#v168GSTReport #v168GSTClose{
-  position:absolute!important;
-  top:-92px!important;
-  right:4px!important;
-  z-index:9999!important;
-  width:30px!important;
-  height:30px!important;
-  padding:0!important;
-  margin:0!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  font-size:25px!important;
-  line-height:30px!important;
-}
-#v168GSTReport > div:first-child{
-  padding-right:0!important;
-}
+<style id="v250-gst-close-removed">
+/* V250: GST Report close X removed. */
 #v168GSTReport table th:last-child,
 #v168GSTReport table td:last-child{
   white-space:nowrap!important;
@@ -4936,8 +4917,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     panel.innerHTML=`
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
         <h3 style="margin:0">🧾 GST Report</h3>
-        <button type="button" id="v168GSTClose" title="Hide GST Report"
-          style="border:0;background:transparent;font-size:25px;font-weight:700;cursor:pointer">×</button>
       </div>
       <div class="grid" style="margin-top:10px">
         <div>
@@ -5169,7 +5148,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     $('v243GSTMonth').onchange=fillMonthWise;
     $('v168GSTGenerate').onclick=fillMonthWise;
     $('v243GSTBack').onclick=fillMonthWise;
-    $('v168GSTClose').onclick=()=>panel.style.display='none';
+    const gstCloseBtn=$('v168GSTClose');
+    if(gstCloseBtn) gstCloseBtn.onclick=()=>panel.style.display='none';
     renderInvalidDateEntries();
     fillMonthWise();
   }
