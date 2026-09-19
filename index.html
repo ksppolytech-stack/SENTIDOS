@@ -264,7 +264,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V256</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V257</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -6487,6 +6487,48 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     if(gd)gd.onclick=function(){ if(typeof window.saveSentidosToDrive==='function') window.saveSentidosToDrive(); };
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
+<style id="v257SideMenuStyle">
+/* V257: fixed side menu order and stronger menu look */
+.tabs > button, .tabs > div > button {
+  font-weight: 800 !important;
+  font-size: 15px !important;
+  min-height: 44px;
+  border-radius: 8px !important;
+}
+.v257-side-ordered { display:flex !important; flex-direction:column !important; gap:5px !important; }
+.v257-side-ordered > button, .v257-side-ordered > div { width:100%; box-sizing:border-box; }
+.v257-side-ordered > div > button { font-weight:800 !important; font-size:15px !important; min-height:44px; }
+</style>
+<script id="v257SideMenuOrderScript">
+(function(){
+  function arrange(){
+    const tabs=document.querySelector('.tabs');
+    if(!tabs || tabs.dataset.v257Done==='1') return;
+    const children=Array.from(tabs.children);
+    const findBtn=page=>children.find(el=>el.matches && el.matches('button[data-page="'+page+'"]'));
+    const findGroup=id=>document.getElementById(id)?.parentElement;
+    const dashboard=findBtn('dashboard');
+    const stock=findBtn('stock');
+    const raw=findBtn('rawmaterials');
+    const purchase=findBtn('purchase');
+    const job=findGroup('v225JobWorkBtn');
+    const production=findBtn('production');
+    const dispatch=findBtn('dispatch');
+    const accounting=findBtn('accounting');
+    const rawSale=findBtn('rawSale');
+    const master=findGroup('v220MasterBtn');
+    const report=findGroup('v231ReportBtn');
+    const backup=findGroup('v255BackupBtn');
+    const order=[dashboard,stock,raw,purchase,job,production,dispatch,accounting,rawSale,master,report,backup].filter(Boolean);
+    order.forEach(el=>tabs.appendChild(el));
+    tabs.classList.add('v257-side-ordered');
+    tabs.dataset.v257Done='1';
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',arrange);
+  else arrange();
 })();
 </script>
 </body></html>
