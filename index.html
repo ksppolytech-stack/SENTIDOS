@@ -840,10 +840,9 @@ tr.low-stock-row td * {
     <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:18px">🔎</span>
     <input id="v260StockSearch" type="search" placeholder="Search Item / Code..." autocomplete="off" style="width:100%;box-sizing:border-box;padding:11px 14px 11px 40px;border:1px solid #cfd7e3;border-radius:9px;font-size:15px;font-weight:600;background:#fff">
   </div>
-  <button type="button" id="v260StockCategoryBtn" style="padding:11px 16px;border:1px solid #cfd7e3;border-radius:9px;background:#fff;color:#263238;font-size:15px;font-weight:700;cursor:pointer">📂 Category: All</button>
   <button type="button" id="v260StockClear" style="padding:11px 16px;border:0;border-radius:9px;background:#455a64;color:#fff;font-weight:700;cursor:pointer">✖ Clear</button>
 </div>
-<div id="v260StockCategoryMenu" style="display:none;margin-top:8px;padding:8px;background:#fff;border:1px solid #d7dee8;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.10);max-height:220px;overflow:auto"></div>
+<div id="v260StockCategoryMenu" style="display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px;padding:8px;background:#fff;border:1px solid #d7dee8;border-radius:10px"></div>
 <div style="display:none"><select id="v260StockCategory"><option value="">All Categories</option></select></div>
 <div id="v266StockItemsPanel">
 <table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Unit</th><th>Stock</th><th>Action</th></tr></thead><tbody id="stockTable"></tbody></table>
@@ -3530,17 +3529,21 @@ function renderStockTableV260(){
  body.querySelectorAll('[data-stock-del]').forEach(b=>b.onclick=()=>deleteItem(b.dataset.stockDel));
 }
 function initStockFilterV260(){
- const sel=$('v260StockCategory'),search=$('v260StockSearch'),clear=$('v260StockClear'),btn=$('v260StockCategoryBtn'),menu=$('v260StockCategoryMenu');
+ const sel=$('v260StockCategory'),search=$('v260StockSearch'),clear=$('v260StockClear'),menu=$('v260StockCategoryMenu');
  if(!sel)return;
  const cats=[...new Set(items.map(i=>String(i.cat||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
- sel.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${String(c).replace(/\"/g,'&quot;')}">${c}</option>`).join('');
+ sel.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option value="${String(c).replace(/"/g,'&quot;')}">${c}</option>`).join('');
  if(menu){
-  menu.innerHTML=['<button type="button" data-cat="" style="display:block;width:100%;text-align:left;padding:9px 11px;border:0;border-radius:7px;background:#f5f7fa;font-weight:700;cursor:pointer">All Categories</button>',...cats.map(c=>`<button type="button" data-cat="${String(c).replace(/"/g,'&quot;')}" style="display:block;width:100%;text-align:left;padding:9px 11px;border:0;border-radius:7px;background:#fff;font-weight:600;cursor:pointer">${c}</button>`)].join('');
-  menu.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{sel.value=b.dataset.cat||'';if(btn)btn.textContent='📂 Category: '+(b.dataset.cat||'All');menu.style.display='none';renderStockTableV260();search?.focus();});
+  menu.innerHTML=['<button type="button" data-cat="" style="padding:9px 15px;border:1px solid #b9c6d6;border-radius:20px;background:#eef3f8;font-weight:800;cursor:pointer">All</button>',...cats.map(c=>`<button type="button" data-cat="${String(c).replace(/"/g,'&quot;')}" style="padding:9px 15px;border:1px solid #b9c6d6;border-radius:20px;background:#fff;font-weight:700;cursor:pointer">${c}</button>`)].join('');
+  menu.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{
+   sel.value=b.dataset.cat||'';
+   menu.querySelectorAll('[data-cat]').forEach(x=>{x.style.background=x===b?'#d32f2f':'#fff';x.style.color=x===b?'#fff':'#263238';});
+   renderStockTableV260();
+   search?.focus();
+  });
  }
- if(btn)btn.onclick=()=>{menu.style.display=menu.style.display==='none'?'block':'none';};
  if(search)search.oninput=renderStockTableV260;
- if(clear)clear.onclick=()=>{if(search)search.value='';if(sel)sel.value='';if(btn)btn.textContent='📂 Category: All';if(menu)menu.style.display='none';renderStockTableV260();search?.focus();};
+ if(clear)clear.onclick=()=>{if(search)search.value='';if(sel)sel.value='';menu?.querySelectorAll('[data-cat]').forEach(x=>{x.style.background=x.dataset.cat===''?'#eef3f8':'#fff';x.style.color='#263238';});renderStockTableV260();search?.focus();};
 }
 
 function render(){
