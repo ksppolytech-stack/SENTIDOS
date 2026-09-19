@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V245 - Firebase Online Sync</title>
+<title>Sentidos ERP V248 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -221,7 +221,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V245</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V248</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -4745,15 +4745,26 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 }
 .v167-report-result.v167-hidden{display:none!important}
 </style>
-<style id="v247-gst-close-position">
-/* V247: Move GST Report close X slightly upward so the last GST heading stays readable. */
+<style id="v248-gst-close-position">
+/* V248: Put the GST Report close X clearly above the report heading/table. */
 #v168GSTReport{position:relative!important;}
 #v168GSTReport #v168GSTClose{
-  position:relative!important;
-  top:-8px!important;
-  z-index:30!important;
-  flex:0 0 auto!important;
-  line-height:1!important;
+  position:absolute!important;
+  top:-42px!important;
+  right:4px!important;
+  z-index:9999!important;
+  width:30px!important;
+  height:30px!important;
+  padding:0!important;
+  margin:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:25px!important;
+  line-height:30px!important;
+}
+#v168GSTReport > div:first-child{
+  padding-right:0!important;
 }
 #v168GSTReport table th:last-child,
 #v168GSTReport table td:last-child{
