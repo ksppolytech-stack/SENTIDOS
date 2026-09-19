@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V236 - Firebase Online Sync</title>
+<title>Sentidos ERP V237 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -142,8 +142,30 @@ tr.low-stock-row td * {
 .v235-report-hero-icon{font-size:38px}.v235-report-hero h2{margin:0 0 4px;font-size:28px}.v235-report-hero p{margin:0;color:#555}
 .v235-report-cards{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:12px;padding:14px}
 .v235-report-card{border:1px solid #ddd;border-radius:9px;padding:16px;text-align:center;box-shadow:0 2px 7px rgba(0,0,0,.08);background:#fff}
-.v235-report-card .ico{font-size:32px;margin-bottom:7px}.v235-report-card h3{margin:4px 0 8px;font-size:19px}.v235-report-card p{margin:0 0 12px;color:#555;font-size:14px;min-height:34px}
-.v235-report-card button{border:0;border-radius:6px;padding:9px 16px;color:#fff;background:#17324d;cursor:pointer;font-weight:700;width:100%}
+.v235-report-card .ico{font-size:32px;margin-bottom:7px}.v235-report-card h3{margin:4px 0 8px;font-size:19px}.v235-report-card p{margin:0 0 12px;color:#26364a;font-size:14px;min-height:34px}
+.v235-report-card button{border:0;border-radius:6px;padding:9px 16px;color:#fff;cursor:pointer;font-weight:700;width:100%}
+
+/* V237: Report cards use the same pastel colour scheme as the reference image. */
+.v235-report-card:nth-child(1){background:#e8f8ed;border-color:#c9ecd4}
+.v235-report-card:nth-child(1) .ico{color:#178a43}
+.v235-report-card:nth-child(1) button{background:#148a3c}
+
+.v235-report-card:nth-child(2){background:#e8f2ff;border-color:#c9ddfb}
+.v235-report-card:nth-child(2) .ico{color:#1265c4}
+.v235-report-card:nth-child(2) button{background:#1976d2}
+
+.v235-report-card:nth-child(3){background:#fff4df;border-color:#f4dfb2}
+.v235-report-card:nth-child(3) .ico{color:#e98a00}
+.v235-report-card:nth-child(3) button{background:#f58b00}
+
+.v235-report-card:nth-child(4){background:#f1eaff;border-color:#dfd0fb}
+.v235-report-card:nth-child(4) .ico{color:#673ab7}
+.v235-report-card:nth-child(4) button{background:#6734d6}
+
+.v235-report-card:nth-child(5){background:#ffe9eb;border-color:#f5cbd0}
+.v235-report-card:nth-child(5) .ico{color:#b51e32}
+.v235-report-card:nth-child(5) h3{color:#9e172a}
+.v235-report-card:nth-child(5) button{background:#e52d3f}
 @media(max-width:900px){.v235-report-cards{grid-template-columns:repeat(2,minmax(150px,1fr))}}
 @media(max-width:600px){.v235-report-cards{grid-template-columns:1fr}}
 </style>
@@ -190,7 +212,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V236</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V237</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
