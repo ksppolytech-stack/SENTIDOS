@@ -210,6 +210,17 @@ tr.low-stock-row td * {
   visibility:visible !important;
 }
 </style>
+
+<style id="v255BackupSideMenuStyle">
+#sentidosBackupBox{display:none !important;}
+.v255BackupSideGroup{display:flex;flex-direction:column;gap:4px;position:relative;width:100%;}
+.v255BackupSideBtn{width:100%;text-align:left;box-sizing:border-box;border:0;padding:10px;border-radius:7px;background:#fff;cursor:pointer;}
+.v255BackupSideBtn.active{background:#17324d;color:#fff;}
+.v255BackupSubMenu{display:flex;flex-direction:column;gap:3px;padding:5px 5px 5px 18px;background:transparent;width:100%;box-sizing:border-box;}
+.v255BackupSubMenu[hidden]{display:none;}
+.v255BackupSubMenu button,.v255BackupSubMenu label{width:100%;text-align:left;border:0;padding:9px 10px;border-radius:6px;background:#f7f9fb;white-space:nowrap;cursor:pointer;box-sizing:border-box;font:inherit;}
+.v255BackupSubMenu button:hover,.v255BackupSubMenu label:hover{background:#eef5ff;}
+</style>
 </head>
 <body>
 <button id="globalRefreshBtn" type="button" title="Refresh Page" aria-label="Refresh Page" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
@@ -253,7 +264,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V248</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V255</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -282,6 +293,13 @@ tr.low-stock-row td * {
 <div id="jobWorkSubMenuV225" class="v225JobWorkSubMenu" hidden>
 <button type="button" id="openJWIssueBtnV225">🧱 Raw Material Issue to Vendor</button>
 <button type="button" id="openJWReceiveBtnV225">🔩 Component Receive from Vendor</button>
+</div>
+</div><div class="v255BackupSideGroup">
+<button type="button" id="v255BackupBtn" class="v255BackupSideBtn" aria-expanded="false">💾 Backup / Restore</button>
+<div id="v255BackupSubMenu" class="v255BackupSubMenu" hidden>
+<button type="button" id="v255DownloadBackupBtn">💾 Download Backup</button>
+<label for="v255RestoreBackupInput">♻️ Restore Backup<input id="v255RestoreBackupInput" type="file" accept=".json" style="display:none" onchange="restoreSentidosBackup(this)"></label>
+<button type="button" id="v255DriveBackupBtn">☁️ Save to Google Drive</button>
 </div>
 </div><div class="v231ReportSideGroup">
 <button type="button" id="v231ReportBtn" class="v231ReportSideBtn" aria-expanded="false">📄 Report</button>
@@ -6411,6 +6429,27 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 
+
+<script id="v255BackupSideMenuScript">
+(function(){
+  function init(){
+    const btn=document.getElementById('v255BackupBtn');
+    const sub=document.getElementById('v255BackupSubMenu');
+    if(!btn||!sub)return;
+    btn.onclick=function(){
+      const open=sub.hasAttribute('hidden');
+      sub.toggleAttribute('hidden',!open);
+      btn.setAttribute('aria-expanded',String(open));
+      btn.classList.toggle('active',open);
+    };
+    const dl=document.getElementById('v255DownloadBackupBtn');
+    if(dl)dl.onclick=function(){ if(typeof window.downloadSentidosBackup==='function') window.downloadSentidosBackup(); };
+    const gd=document.getElementById('v255DriveBackupBtn');
+    if(gd)gd.onclick=function(){ if(typeof window.saveSentidosToDrive==='function') window.saveSentidosToDrive(); };
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
