@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V235 - Firebase Online Sync</title>
+<title>Sentidos ERP V236 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -190,7 +190,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V235</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V236</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -5069,6 +5069,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     $('v168GSTClose').onclick=()=>panel.style.display='none';
   }
 
+  // V236: expose GST report renderer for Report submenu/card buttons.
+  window.renderV168GSTReport=render;
+
   function addButton(){
     // Add a separate GST Report button to the Reports module controls.
     const reports=$('reports'); if(!reports)return;
@@ -6200,6 +6203,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       menu.hidden=false; menu.style.display='flex';
       btn.setAttribute('aria-expanded','true');
       hideReportPanels();
+      const dash=document.getElementById('v235ReportDashboard');
+      if(dash)dash.style.display='none';
       const p=panels[which];
       if(p)p.style.display='block';
       if(which==='jobwork' && typeof renderJobWorkMonthlyReport==='function')renderJobWorkMonthlyReport();
@@ -6211,7 +6216,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       menu.hidden=!opening; menu.style.display=opening?'flex':'none';
       btn.setAttribute('aria-expanded',opening?'true':'false');
       btn.classList.toggle('active',opening);
-      if(opening){openReportsPage(); hideReportPanels(); if(typeof window.renderV168GSTReport==='function')window.renderV168GSTReport(); const gst=document.getElementById('v168GSTReport'); if(gst)gst.style.display='block';}
+      if(opening){
+        openReportsPage();
+        hideReportPanels();
+        const dash=document.getElementById('v235ReportDashboard');
+        if(dash)dash.style.display='block';
+      }
     },true);
 
     document.getElementById('v231DispatchReportBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();show('dispatch');},true);
@@ -6222,7 +6232,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       e.preventDefault(); e.stopImmediatePropagation(); openReportsPage();
       menu.hidden=false; menu.style.display='flex'; btn.setAttribute('aria-expanded','true');
       hideReportPanels();
+      const dash=document.getElementById('v235ReportDashboard');
+      if(dash)dash.style.display='none';
       if(typeof window.renderV168GSTReport==='function')window.renderV168GSTReport();
+      else document.getElementById('v168OpenGST')?.click();
       const gst=document.getElementById('v168GSTReport');
       if(gst)gst.style.display='block';
     },true);
@@ -6230,7 +6243,18 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     document.querySelectorAll('[data-v235-report]').forEach(b=>b.addEventListener('click',function(e){
       e.preventDefault(); e.stopImmediatePropagation();
       const which=this.getAttribute('data-v235-report');
-      if(which==='gst'){document.getElementById('v231GSTReportBtn')?.click();}
+      if(which==='gst'){
+        openReportsPage();
+        menu.hidden=false; menu.style.display='flex';
+        btn.setAttribute('aria-expanded','true');
+        hideReportPanels();
+        const dash=document.getElementById('v235ReportDashboard');
+        if(dash)dash.style.display='none';
+        if(typeof window.renderV168GSTReport==='function')window.renderV168GSTReport();
+        else document.getElementById('v168OpenGST')?.click();
+        const gst=document.getElementById('v168GSTReport');
+        if(gst)gst.style.display='block';
+      }
       else if(which==='dispatch'){document.getElementById('v231DispatchReportBtn')?.click();}
       else if(which==='purchase'){document.getElementById('v231PurchaseReportBtn')?.click();}
       else if(which==='production'){document.getElementById('v231ProductionReportBtn')?.click();}
@@ -6238,6 +6262,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     },true));
 
     menu.hidden=true; menu.style.display='none';
+    const dash=document.getElementById('v235ReportDashboard'); if(dash)dash.style.display='block';
     btn.setAttribute('aria-expanded','false');
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV231);
