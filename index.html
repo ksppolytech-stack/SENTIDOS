@@ -221,6 +221,16 @@ tr.low-stock-row td * {
 .v255BackupSubMenu button,.v255BackupSubMenu label{width:100%;text-align:left;border:0;padding:9px 10px;border-radius:6px;background:#f7f9fb;white-space:nowrap;cursor:pointer;box-sizing:border-box;font:inherit;}
 .v255BackupSubMenu button:hover,.v255BackupSubMenu label:hover{background:#eef5ff;}
 </style>
+
+<style id="v264StockSubmenuStyle">
+.v264StockSideGroup{display:flex;flex-direction:column;width:100%;}
+.v264StockSideBtn{width:100%;}
+.v264StockSubMenu{display:flex;flex-direction:column;gap:3px;padding:5px 5px 5px 18px;background:transparent;width:100%;box-sizing:border-box;}
+.v264StockSubMenu[hidden]{display:none;}
+.v264StockSubMenu button{width:100%;text-align:left;border:0;padding:9px 10px;border-radius:6px;background:#f7f9fb;white-space:nowrap;cursor:pointer;font:inherit;}
+.v264StockSubMenu button:hover{background:#eef5ff;}
+.v264StockSubMenu button.active{font-weight:800;background:#e8f0ff;}
+</style>
 </head>
 <body>
 <button id="globalRefreshBtn" type="button" title="Refresh Page" aria-label="Refresh Page" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
@@ -264,7 +274,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V255</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V265</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -310,7 +320,13 @@ tr.low-stock-row td * {
 <button type="button" id="v231ProductionReportBtn">🏭 Production Report</button>
 <button type="button" id="v231JWReportBtn">🏭 Job Work Report</button>
 </div>
-</div><button data-page="stock">📊 Stock</button>
+</div><div class="v264StockSideGroup">
+<button type="button" id="v264StockBtn" class="v264StockSideBtn" data-page="stock" aria-expanded="false">📊 Stock</button>
+<div id="v264StockSubMenu" class="v264StockSubMenu" hidden>
+<button type="button" id="v264StockSubBtn">📦 Stock</button>
+<button type="button" id="v264TransactionSubBtn">📋 Transaction</button>
+</div>
+</div>
 </div>
 
 
@@ -832,8 +848,12 @@ tr.low-stock-row td * {
   </select>
   <button type="button" id="v260StockClear" style="padding:11px 16px;border:0;border-radius:9px;background:#455a64;color:#fff;font-weight:700;cursor:pointer">✖ Clear</button>
 </div>
+<div id="v264StockSection">
 <table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Unit</th><th>Weight g</th><th>Stock</th><th>Action</th></tr></thead><tbody id="stockTable"></tbody></table>
+</div>
+<div id="v264TransactionSection" style="display:none">
 <hr><table><thead><tr><th>Date</th><th>Type</th><th>Ref</th><th>Item</th><th>Qty</th><th>Action</th></tr></thead><tbody id="transactionTable"></tbody></table>
+</div>
 </div></section>
 </main>
 <script>function fmtRate2(v){const n=Number(v);return Number.isFinite(n)?n.toFixed(2):'0.00';}
@@ -6494,6 +6514,42 @@ button:not(.no-style):active {transform:translateY(0); box-shadow:0 2px 5px rgba
     if(gd)gd.onclick=function(){ if(typeof window.saveSentidosToDrive==='function') window.saveSentidosToDrive(); };
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
+<script>
+/* V265: Stock submenu with Stock and Transaction. */
+(function(){
+ function initV264StockMenu(){
+  const btn=document.getElementById('v264StockBtn');
+  const menu=document.getElementById('v264StockSubMenu');
+  const stockBtn=document.getElementById('v264StockSubBtn');
+  const txBtn=document.getElementById('v264TransactionSubBtn');
+  const stockSection=document.getElementById('v264StockSection');
+  const txSection=document.getElementById('v264TransactionSection');
+  if(!btn||!menu||!stockBtn||!txBtn||!stockSection||!txSection||btn.dataset.v264Ready==='1')return;
+  btn.dataset.v264Ready='1';
+  function show(which){
+    const isTx=which==='transaction';
+    stockSection.style.display=isTx?'none':'block';
+    txSection.style.display=isTx?'block':'none';
+    stockBtn.classList.toggle('active',!isTx);
+    txBtn.classList.toggle('active',isTx);
+  }
+  show('stock');
+  btn.addEventListener('click',function(e){
+    e.preventDefault(); e.stopImmediatePropagation();
+    const opening=menu.hidden===true;
+    menu.hidden=!opening;
+    btn.setAttribute('aria-expanded',opening?'true':'false');
+    btn.classList.toggle('active',opening);
+    if(opening) show('stock');
+  },true);
+  stockBtn.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();show('stock');},true);
+  txBtn.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();show('transaction');},true);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV264StockMenu);
+ else initV264StockMenu();
 })();
 </script>
 </body></html>
