@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V233 - Firebase Online Sync</title>
+<title>Sentidos ERP V235 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -135,6 +135,18 @@ tr.low-stock-row td * {
 .v231ReportSubMenu button:hover{background:#eef5ff;}
 </style>
 <!-- V233: Fixed Report CSS block so CSS source is not displayed on the page. -->
+
+<style id="v235ReportDashboardStyle">
+.v235-report-dashboard{margin-bottom:18px}
+.v235-report-hero{display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid #ddd}
+.v235-report-hero-icon{font-size:38px}.v235-report-hero h2{margin:0 0 4px;font-size:28px}.v235-report-hero p{margin:0;color:#555}
+.v235-report-cards{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:12px;padding:14px}
+.v235-report-card{border:1px solid #ddd;border-radius:9px;padding:16px;text-align:center;box-shadow:0 2px 7px rgba(0,0,0,.08);background:#fff}
+.v235-report-card .ico{font-size:32px;margin-bottom:7px}.v235-report-card h3{margin:4px 0 8px;font-size:19px}.v235-report-card p{margin:0 0 12px;color:#555;font-size:14px;min-height:34px}
+.v235-report-card button{border:0;border-radius:6px;padding:9px 16px;color:#fff;background:#17324d;cursor:pointer;font-weight:700;width:100%}
+@media(max-width:900px){.v235-report-cards{grid-template-columns:repeat(2,minmax(150px,1fr))}}
+@media(max-width:600px){.v235-report-cards{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <button id="globalRefreshBtn" type="button" title="Refresh Page" aria-label="Refresh Page" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
@@ -178,7 +190,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V233</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V235</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -642,6 +654,20 @@ tr.low-stock-row td * {
 </section>
 
 <section id="reports" class="page">
+<div id="v235ReportDashboard" class="panel v235-report-dashboard">
+  <div class="v235-report-hero">
+    <div class="v235-report-hero-icon">📄</div>
+    <div><h2>Reports Dashboard</h2><p>Select a report from the menu or use the quick buttons below.</p></div>
+  </div>
+  <div class="v235-report-cards">
+    <div class="v235-report-card"><div class="ico">🧾</div><h3>GST Report</h3><p>View GST summary and details</p><button type="button" data-v235-report="gst">Open Report</button></div>
+    <div class="v235-report-card"><div class="ico">🚚</div><h3>Despatch Report</h3><p>View sales / despatch details</p><button type="button" data-v235-report="dispatch">Open Report</button></div>
+    <div class="v235-report-card"><div class="ico">🛒</div><h3>Purchase Report</h3><p>View purchase inward details</p><button type="button" data-v235-report="purchase">Open Report</button></div>
+    <div class="v235-report-card"><div class="ico">🏭</div><h3>Production Report</h3><p>View production details</p><button type="button" data-v235-report="production">Open Report</button></div>
+    <div class="v235-report-card"><div class="ico">👥</div><h3>Job Work Report</h3><p>View job work transactions</p><button type="button" data-v235-report="jobwork">Open Report</button></div>
+  </div>
+</div>
+
 <section id="dispatchReportPanel" class="panel">
 <h2>🚚 Dispatch Report</h2>
 <div class="grid">
@@ -4847,73 +4873,199 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       host.appendChild(panel);
     }
 
-    const rows=getRows(), ms=months(rows);
-    const salesGST=ms.reduce((a,x)=>a+x.salesGST,0);
-    const purchaseGST=ms.reduce((a,x)=>a+x.purchaseGST,0);
-    const net=salesGST-purchaseGST;
+    const rows=getRows();
+
+    // Photo પ્રમાણે party/customer-wise GST summary.
+    const partyMap=new Map();
+    rows.forEach(r=>{
+      let party='';
+      const tx=read('adr_tx_v2').find(t=>{
+        const d=String(t.date||'').slice(0,10);
+        const type=String(t.type||'').toUpperCase();
+        return d===r.date && (
+          type==='DISPATCH' || type==='RAW MATERIAL SALE' ||
+          type==='PURCHASE' || type==='RAW MATERIAL PURCHASE' ||
+          type==='RAW MATERIAL COMPANY INWARD' || type==='JOB WORK RECEIVE'
+        );
+      });
+      if(tx){
+        party=String(
+          tx.customer || tx.supplier || tx.vendor || tx.party ||
+          tx.customerName || tx.supplierName || tx.vendorName || ''
+        ).trim();
+      }
+      if(!party) party='Cash / Other';
+
+      if(!partyMap.has(party)){
+        partyMap.set(party,{
+          party,
+          purchase:0,
+          sale:0,
+          saleGST:0,
+          purchaseTotal:0,
+          purchaseGST:0
+        });
+      }
+
+      const x=partyMap.get(party);
+      if(r.isSale){
+        x.sale+=r.amount;
+        x.saleGST+=r.gst;
+      }else{
+        x.purchase+=r.amount;
+        x.purchaseTotal+=r.total;
+        x.purchaseGST+=r.gst;
+      }
+    });
+
+    const list=[...partyMap.values()].sort((a,b)=>
+      a.party.localeCompare(b.party,undefined,{numeric:true,sensitivity:'base'})
+    );
 
     panel.innerHTML=`
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-        <h3 style="margin:0">🧾 GST Report — Month Wise</h3>
+        <h3 style="margin:0">🧾 GST Report</h3>
         <button type="button" id="v168GSTClose" title="Hide GST Report"
           style="border:0;background:transparent;font-size:25px;font-weight:700;cursor:pointer">×</button>
       </div>
+
       <div class="grid" style="margin-top:10px">
         <div>
-          <label>Month Filter</label>
-          <select id="v168GSTMonth">
-            <option value="ALL">All Months</option>
-            ${ms.map(x=>`<option value="${esc(x.key)}">${esc(label(x.key))}</option>`).join('')}
-          </select>
+          <label>From Date</label>
+          <input type="date" id="v234GSTFrom">
+        </div>
+        <div>
+          <label>To Date</label>
+          <input type="date" id="v234GSTTo">
         </div>
         <div style="align-self:end">
           <button type="button" id="v168GSTGenerate">Generate GST Report</button>
         </div>
       </div>
-      <div id="v168GSTSummary" style="margin-top:12px"></div>
+
       <div style="overflow:auto;margin-top:12px">
         <table>
           <thead><tr>
-            <th>Month</th>
-            <th>Sales Taxable</th><th>Sales GST</th><th>Sales Total</th>
-            <th>Purchase Taxable</th><th>Purchase GST</th><th>Purchase Total</th>
-            <th>Input GST</th><th>Output GST</th><th>Due GST</th>
+            <th>Customer</th>
+            <th>Purchase Taxable</th>
+            <th>Sale Taxable</th>
+            <th>Sale GST</th>
+            <th>Purchase Total</th>
+            <th>Purchase GST</th>
           </tr></thead>
           <tbody id="v168GSTBody"></tbody>
           <tfoot id="v168GSTFoot"></tfoot>
         </table>
       </div>`;
 
-    const fill=(filter)=>{
-      const list=filter==='ALL'?ms:ms.filter(x=>x.key===filter);
-      const s=list.reduce((a,x)=>a+x.salesGST,0);
-      const p=list.reduce((a,x)=>a+x.purchaseGST,0);
-      const due=s-p;
-      $('v168GSTBody').innerHTML=list.map(x=>{
-        const d=x.salesGST-x.purchaseGST;
-        return `<tr>
-          <td>${esc(label(x.key))}</td>
-          <td>${money(x.sales)}</td><td>${money(x.salesGST)}</td><td>${money(x.salesTotal)}</td>
-          <td>${money(x.purchase)}</td><td>${money(x.purchaseGST)}</td><td>${money(x.purchaseTotal)}</td>
-          <td>${money(x.purchaseGST)}</td><td>${money(x.salesGST)}</td>
-          <td class="v168-gst-net">${money(d)} ${d>0?'Payable':d<0?'Credit':'Nil'}</td>
+    const today=new Date();
+    const yyyy=today.getFullYear();
+    const mm=String(today.getMonth()+1).padStart(2,'0');
+    const dd=String(today.getDate()).padStart(2,'0');
+    const todayStr=`${yyyy}-${mm}-${dd}`;
+    $('v234GSTFrom').value=`${yyyy}-${mm}-01`;
+    $('v234GSTTo').value=todayStr;
+
+    function fill(){
+      const from=$('v234GSTFrom').value;
+      const to=$('v234GSTTo').value;
+
+      const tx=read('adr_tx_v2');
+      const filtered=tx.filter(t=>{
+        const type=String(t.type||'').toUpperCase();
+        return ['DISPATCH','RAW MATERIAL SALE','PURCHASE','RAW MATERIAL PURCHASE',
+          'RAW MATERIAL COMPANY INWARD','JOB WORK RECEIVE'].includes(type);
+      }).filter(t=>{
+        const d=String(t.date||'').slice(0,10);
+        return (!from||d>=from)&&(!to||d<=to);
+      });
+
+      const map=new Map();
+
+      filtered.forEach(t=>{
+        const type=String(t.type||'').toUpperCase();
+        const isSale=type==='DISPATCH'||type==='RAW MATERIAL SALE';
+
+        const party=String(
+          t.customer || t.supplier || t.vendor || t.party ||
+          t.customerName || t.supplierName || t.vendorName || ''
+        ).trim() || 'Cash / Other';
+
+        let amount=Number(t.amount);
+        const qty=Math.abs(Number(t.qty)||0);
+        let rate=Number(t.rate)||0;
+
+        if(type==='DISPATCH')rate=Number(t.dispatchRate??t.rate)||0;
+        else if(type==='RAW MATERIAL SALE')rate=Number(t.saleRate??t.rate)||0;
+        else if(type==='PURCHASE')rate=Number(t.purchaseRate??t.rate)||0;
+        else if(type==='RAW MATERIAL PURCHASE'||type==='RAW MATERIAL COMPANY INWARD')
+          rate=Number(t.purchaseRate??t.inwardRate??t.rate)||0;
+        else if(type==='JOB WORK RECEIVE')rate=Number(t.jobRate??t.rate)||0;
+
+        if(!Number.isFinite(amount)||amount===0)amount=qty*rate;
+
+        let gst=Number(t.tax);
+        if(!Number.isFinite(gst)||gst===0){
+          const tr=Number(t.taxRate);
+          if(Number.isFinite(tr))gst=amount*tr/100;
+        }
+
+        let total=Number(t.grandTotal??t.billTotal??t.total);
+        if(!Number.isFinite(total)||total===0)total=amount+gst;
+
+        if(!map.has(party)){
+          map.set(party,{
+            party,purchase:0,sale:0,saleGST:0,purchaseTotal:0,purchaseGST:0
+          });
+        }
+
+        const x=map.get(party);
+        if(isSale){
+          x.sale+=amount;
+          x.saleGST+=gst;
+        }else{
+          x.purchase+=amount;
+          x.purchaseTotal+=total;
+          x.purchaseGST+=gst;
+        }
+      });
+
+      const data=[...map.values()].sort((a,b)=>
+        a.party.localeCompare(b.party,undefined,{numeric:true,sensitivity:'base'})
+      );
+
+      $('v168GSTBody').innerHTML=data.map(x=>`
+        <tr>
+          <td style="text-align:left;font-weight:600">${esc(x.party)}</td>
+          <td>${money(x.purchase)}</td>
+          <td>${money(x.sale)}</td>
+          <td>${money(x.saleGST)}</td>
+          <td>${money(x.purchaseTotal)}</td>
+          <td>${money(x.purchaseGST)}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="6">No GST entries found.</td></tr>';
+
+      const totals=data.reduce((a,x)=>({
+        purchase:a.purchase+x.purchase,
+        sale:a.sale+x.sale,
+        saleGST:a.saleGST+x.saleGST,
+        purchaseTotal:a.purchaseTotal+x.purchaseTotal,
+        purchaseGST:a.purchaseGST+x.purchaseGST
+      }),{purchase:0,sale:0,saleGST:0,purchaseTotal:0,purchaseGST:0});
+
+      $('v168GSTFoot').innerHTML=`
+        <tr>
+          <th>Total</th>
+          <th>${money(totals.purchase)}</th>
+          <th>${money(totals.sale)}</th>
+          <th>${money(totals.saleGST)}</th>
+          <th>${money(totals.purchaseTotal)}</th>
+          <th>${money(totals.purchaseGST)}</th>
         </tr>`;
-      }).join('')||'<tr><td colspan="10">No GST entries found.</td></tr>';
-      $('v168GSTFoot').innerHTML=`<tr>
-        <th>Selected Total</th><th>${money(list.reduce((a,x)=>a+x.sales,0))}</th><th>${money(s)}</th><th>${money(list.reduce((a,x)=>a+x.salesTotal,0))}</th>
-        <th>${money(list.reduce((a,x)=>a+x.purchase,0))}</th><th>${money(p)}</th><th>${money(list.reduce((a,x)=>a+x.purchaseTotal,0))}</th>
-        <th>${money(p)}</th><th>${money(s)}</th><th>${money(due)} ${due>0?'Payable':due<0?'Credit':'Nil'}</th>
-      </tr>`;
-      $('v168GSTSummary').innerHTML=`
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <div class="card"><small>Output GST (Sales)</small><b>${money(s)}</b></div>
-          <div class="card"><small>Input GST (Purchase)</small><b>${money(p)}</b></div>
-          <div class="card"><small>Due GST</small><b>${money(due)}</b></div>
-        </div>`;
-    };
-    fill('ALL');
-    $('v168GSTMonth').onchange=e=>fill(e.target.value);
-    $('v168GSTGenerate').onclick=()=>fill($('v168GSTMonth').value);
+    }
+
+    fill();
+    $('v168GSTGenerate').onclick=fill;
     $('v168GSTClose').onclick=()=>panel.style.display='none';
   }
 
@@ -6059,7 +6211,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       menu.hidden=!opening; menu.style.display=opening?'flex':'none';
       btn.setAttribute('aria-expanded',opening?'true':'false');
       btn.classList.toggle('active',opening);
-      if(opening)openReportsPage();
+      if(opening){openReportsPage(); hideReportPanels(); if(typeof window.renderV168GSTReport==='function')window.renderV168GSTReport(); const gst=document.getElementById('v168GSTReport'); if(gst)gst.style.display='block';}
     },true);
 
     document.getElementById('v231DispatchReportBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();show('dispatch');},true);
@@ -6074,6 +6226,16 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const gst=document.getElementById('v168GSTReport');
       if(gst)gst.style.display='block';
     },true);
+
+    document.querySelectorAll('[data-v235-report]').forEach(b=>b.addEventListener('click',function(e){
+      e.preventDefault(); e.stopImmediatePropagation();
+      const which=this.getAttribute('data-v235-report');
+      if(which==='gst'){document.getElementById('v231GSTReportBtn')?.click();}
+      else if(which==='dispatch'){document.getElementById('v231DispatchReportBtn')?.click();}
+      else if(which==='purchase'){document.getElementById('v231PurchaseReportBtn')?.click();}
+      else if(which==='production'){document.getElementById('v231ProductionReportBtn')?.click();}
+      else if(which==='jobwork'){document.getElementById('v231JWReportBtn')?.click();}
+    },true));
 
     menu.hidden=true; menu.style.display='none';
     btn.setAttribute('aria-expanded','false');
