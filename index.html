@@ -4776,7 +4776,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <style id="v168-gst-style">
 #v168GSTReport{margin-top:18px}
 #v168GSTReport table{width:100%;border-collapse:collapse;min-width:1050px}
-#v168GSTReport th,#v168GSTReport td{border:1px solid #ddd;padding:10px;text-align:right;font-size:15px}
+#v168GSTReport th,#v168GSTReport td{border:1px solid #ddd;padding:7px;text-align:right}
 #v168GSTReport th:first-child,#v168GSTReport td:first-child{text-align:left}
 #v168GSTReport .v168-gst-net{font-weight:700}
 </style>
@@ -4812,12 +4812,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
       const isSale=type==='DISPATCH'||type==='RAW MATERIAL SALE';
       const isPurchase=!isSale;
-      const party=String(
-        isSale
-          ? (t.customer||t.customerName||t.party||'')
-          : (t.supplier||t.supplierName||t.vendor||t.party||'')
-      ).trim();
-      rows.push({date,type,amount,gst,total,isSale,isPurchase,party});
+      rows.push({date,type,amount,gst,total,isSale,isPurchase});
     });
     return rows;
   }
@@ -4853,31 +4848,79 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     }
 
     const rows=getRows();
-    const parties=[...new Set(rows.map(r=>r.party).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+
+    // Photo પ્રમાણે party/customer-wise GST summary.
+    const partyMap=new Map();
+    rows.forEach(r=>{
+      let party='';
+      const tx=read('adr_tx_v2').find(t=>{
+        const d=String(t.date||'').slice(0,10);
+        const type=String(t.type||'').toUpperCase();
+        return d===r.date && (
+          type==='DISPATCH' || type==='RAW MATERIAL SALE' ||
+          type==='PURCHASE' || type==='RAW MATERIAL PURCHASE' ||
+          type==='RAW MATERIAL COMPANY INWARD' || type==='JOB WORK RECEIVE'
+        );
+      });
+      if(tx){
+        party=String(
+          tx.customer || tx.supplier || tx.vendor || tx.party ||
+          tx.customerName || tx.supplierName || tx.vendorName || ''
+        ).trim();
+      }
+      if(!party) party='Cash / Other';
+
+      if(!partyMap.has(party)){
+        partyMap.set(party,{
+          party,
+          purchase:0,
+          sale:0,
+          saleGST:0,
+          purchaseTotal:0,
+          purchaseGST:0
+        });
+      }
+
+      const x=partyMap.get(party);
+      if(r.isSale){
+        x.sale+=r.amount;
+        x.saleGST+=r.gst;
+      }else{
+        x.purchase+=r.amount;
+        x.purchaseTotal+=r.total;
+        x.purchaseGST+=r.gst;
+      }
+    });
+
+    const list=[...partyMap.values()].sort((a,b)=>
+      a.party.localeCompare(b.party,undefined,{numeric:true,sensitivity:'base'})
+    );
 
     panel.innerHTML=`
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-        <h3 style="margin:0">🧾 GST Report — Party Wise</h3>
+        <h3 style="margin:0">🧾 GST Report</h3>
         <button type="button" id="v168GSTClose" title="Hide GST Report"
           style="border:0;background:transparent;font-size:25px;font-weight:700;cursor:pointer">×</button>
       </div>
+
       <div class="grid" style="margin-top:10px">
         <div>
-          <label>Party / Customer Filter</label>
-          <select id="v168GSTParty">
-            <option value="ALL">All</option>
-            ${parties.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}
-          </select>
+          <label>From Date</label>
+          <input type="date" id="v234GSTFrom">
+        </div>
+        <div>
+          <label>To Date</label>
+          <input type="date" id="v234GSTTo">
         </div>
         <div style="align-self:end">
           <button type="button" id="v168GSTGenerate">Generate GST Report</button>
         </div>
       </div>
-      <div id="v168GSTSummary" style="margin-top:12px"></div>
+
       <div style="overflow:auto;margin-top:12px">
         <table>
           <thead><tr>
-            <th>Customer / Party</th>
+            <th>Customer</th>
             <th>Purchase Taxable</th>
             <th>Sale Taxable</th>
             <th>Sale GST</th>
@@ -4889,21 +4932,94 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         </table>
       </div>`;
 
-    const fill=(filter)=>{
-      const list=filter==='ALL'?parties:parties.filter(x=>x===filter);
-      const grouped=list.map(p=>{
-        const rr=rows.filter(r=>r.party===p);
-        return {
-          party:p,
-          purchase:rr.filter(r=>r.isPurchase).reduce((a,r)=>a+r.amount,0),
-          sale:rr.filter(r=>r.isSale).reduce((a,r)=>a+r.amount,0),
-          saleGST:rr.filter(r=>r.isSale).reduce((a,r)=>a+r.gst,0),
-          purchaseTotal:rr.filter(r=>r.isPurchase).reduce((a,r)=>a+r.total,0),
-          purchaseGST:rr.filter(r=>r.isPurchase).reduce((a,r)=>a+r.gst,0)
-        };
+    const today=new Date();
+    const yyyy=today.getFullYear();
+    const mm=String(today.getMonth()+1).padStart(2,'0');
+    const dd=String(today.getDate()).padStart(2,'0');
+    const todayStr=`${yyyy}-${mm}-${dd}`;
+    $('v234GSTFrom').value=`${yyyy}-${mm}-01`;
+    $('v234GSTTo').value=todayStr;
+
+    function fill(){
+      const from=$('v234GSTFrom').value;
+      const to=$('v234GSTTo').value;
+
+      const tx=read('adr_tx_v2');
+      const filtered=tx.filter(t=>{
+        const type=String(t.type||'').toUpperCase();
+        return ['DISPATCH','RAW MATERIAL SALE','PURCHASE','RAW MATERIAL PURCHASE',
+          'RAW MATERIAL COMPANY INWARD','JOB WORK RECEIVE'].includes(type);
+      }).filter(t=>{
+        const d=String(t.date||'').slice(0,10);
+        return (!from||d>=from)&&(!to||d<=to);
       });
 
-      const totals=grouped.reduce((a,x)=>({
+      const map=new Map();
+
+      filtered.forEach(t=>{
+        const type=String(t.type||'').toUpperCase();
+        const isSale=type==='DISPATCH'||type==='RAW MATERIAL SALE';
+
+        const party=String(
+          t.customer || t.supplier || t.vendor || t.party ||
+          t.customerName || t.supplierName || t.vendorName || ''
+        ).trim() || 'Cash / Other';
+
+        let amount=Number(t.amount);
+        const qty=Math.abs(Number(t.qty)||0);
+        let rate=Number(t.rate)||0;
+
+        if(type==='DISPATCH')rate=Number(t.dispatchRate??t.rate)||0;
+        else if(type==='RAW MATERIAL SALE')rate=Number(t.saleRate??t.rate)||0;
+        else if(type==='PURCHASE')rate=Number(t.purchaseRate??t.rate)||0;
+        else if(type==='RAW MATERIAL PURCHASE'||type==='RAW MATERIAL COMPANY INWARD')
+          rate=Number(t.purchaseRate??t.inwardRate??t.rate)||0;
+        else if(type==='JOB WORK RECEIVE')rate=Number(t.jobRate??t.rate)||0;
+
+        if(!Number.isFinite(amount)||amount===0)amount=qty*rate;
+
+        let gst=Number(t.tax);
+        if(!Number.isFinite(gst)||gst===0){
+          const tr=Number(t.taxRate);
+          if(Number.isFinite(tr))gst=amount*tr/100;
+        }
+
+        let total=Number(t.grandTotal??t.billTotal??t.total);
+        if(!Number.isFinite(total)||total===0)total=amount+gst;
+
+        if(!map.has(party)){
+          map.set(party,{
+            party,purchase:0,sale:0,saleGST:0,purchaseTotal:0,purchaseGST:0
+          });
+        }
+
+        const x=map.get(party);
+        if(isSale){
+          x.sale+=amount;
+          x.saleGST+=gst;
+        }else{
+          x.purchase+=amount;
+          x.purchaseTotal+=total;
+          x.purchaseGST+=gst;
+        }
+      });
+
+      const data=[...map.values()].sort((a,b)=>
+        a.party.localeCompare(b.party,undefined,{numeric:true,sensitivity:'base'})
+      );
+
+      $('v168GSTBody').innerHTML=data.map(x=>`
+        <tr>
+          <td style="text-align:left;font-weight:600">${esc(x.party)}</td>
+          <td>${money(x.purchase)}</td>
+          <td>${money(x.sale)}</td>
+          <td>${money(x.saleGST)}</td>
+          <td>${money(x.purchaseTotal)}</td>
+          <td>${money(x.purchaseGST)}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="6">No GST entries found.</td></tr>';
+
+      const totals=data.reduce((a,x)=>({
         purchase:a.purchase+x.purchase,
         sale:a.sale+x.sale,
         saleGST:a.saleGST+x.saleGST,
@@ -4911,35 +5027,19 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         purchaseGST:a.purchaseGST+x.purchaseGST
       }),{purchase:0,sale:0,saleGST:0,purchaseTotal:0,purchaseGST:0});
 
-      $('v168GSTBody').innerHTML=grouped.map(x=>`<tr>
-        <td style="text-align:left;font-weight:600">${esc(x.party)}</td>
-        <td>${money(x.purchase)}</td>
-        <td>${money(x.sale)}</td>
-        <td>${money(x.saleGST)}</td>
-        <td>${money(x.purchaseTotal)}</td>
-        <td>${money(x.purchaseGST)}</td>
-      </tr>`).join('')||'<tr><td colspan="6">No GST entries found.</td></tr>';
+      $('v168GSTFoot').innerHTML=`
+        <tr>
+          <th>Total</th>
+          <th>${money(totals.purchase)}</th>
+          <th>${money(totals.sale)}</th>
+          <th>${money(totals.saleGST)}</th>
+          <th>${money(totals.purchaseTotal)}</th>
+          <th>${money(totals.purchaseGST)}</th>
+        </tr>`;
+    }
 
-      $('v168GSTFoot').innerHTML=`<tr>
-        <th>Total</th>
-        <th>${money(totals.purchase)}</th>
-        <th>${money(totals.sale)}</th>
-        <th>${money(totals.saleGST)}</th>
-        <th>${money(totals.purchaseTotal)}</th>
-        <th>${money(totals.purchaseGST)}</th>
-      </tr>`;
-
-      $('v168GSTSummary').innerHTML=`
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <div class="card"><small>Sale GST</small><b>${money(totals.saleGST)}</b></div>
-          <div class="card"><small>Purchase GST</small><b>${money(totals.purchaseGST)}</b></div>
-          <div class="card"><small>Net GST</small><b>${money(totals.saleGST-totals.purchaseGST)}</b></div>
-        </div>`;
-    };
-
-    fill('ALL');
-    $('v168GSTParty').onchange=e=>fill(e.target.value);
-    $('v168GSTGenerate').onclick=()=>fill($('v168GSTParty').value);
+    fill();
+    $('v168GSTGenerate').onclick=fill;
     $('v168GSTClose').onclick=()=>panel.style.display='none';
   }
 
