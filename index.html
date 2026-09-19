@@ -4983,7 +4983,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         return `<tr>
           <td>${esc(x.kind)}</td>
           <td>
-            <button type="button" class="v238GSTPartyBtn" data-party-key="${partyKey}"
+            <button type="button" class="v238GSTPartyBtn" data-party-key="${partyKey}" onclick="window.v240OpenGSTParty && window.v240OpenGSTParty(this.getAttribute('data-party-key'))"
               style="border:0;background:transparent;color:#1565c0;text-decoration:underline;font-weight:700;cursor:pointer;padding:2px 4px">
               ${esc(x.party)}
             </button>
@@ -5066,6 +5066,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         dbox.scrollIntoView({behavior:'smooth',block:'start'});
       }
 
+      // Expose the current month party-detail opener so dynamically rendered customer buttons always work.
+      window.v240OpenGSTParty = showPartyDetail;
+
       box.style.display='block';
       box.innerHTML=`
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
@@ -5134,7 +5137,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         b.onclick=()=>showMonthDetail(b.getAttribute('data-gst-month'),rows);
       });
       document.querySelectorAll('.v238GSTPartyBtn').forEach(b=>{
-        b.onclick=()=>showPartyDetail(b.getAttribute('data-party-key'));
+        b.onclick=(e)=>{ e.preventDefault(); showPartyDetail(b.getAttribute('data-party-key')); };
       });
 
       $('v168GSTFoot').innerHTML=`<tr>
