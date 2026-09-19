@@ -109,15 +109,10 @@ tr.low-stock-row td * {
 #mergedPartySuggest>div{display:block!important;width:100%!important;box-sizing:border-box!important;padding:10px 12px!important;min-height:40px!important;color:#111!important;background:#fff!important;font-size:15px!important;line-height:20px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 #mergedPartySuggest>div:hover{background:#f1f5f9!important}
 </style>
-
-/* V229: Vendor Raw Material Balance - all content red and larger */
-<style id="v229VendorRawBalanceStyle">
-#vendorRawMaterialBalance,
-#vendorRawMaterialBalance * {
-  color:#d00 !important;
-  font-size:18px !important;
-  font-weight:700 !important;
-}
+<style id="v230VendorRawBalanceStyle">
+#vendorRawMaterialBalanceV230, #vendorRawMaterialBalanceV230 * { color:#d00000 !important; font-size:20px !important; font-weight:800 !important; }
+#vendorRawMaterialBalanceV230 h3 { font-size:24px !important; }
+#vendorRawMaterialBalanceV230 th, #vendorRawMaterialBalanceV230 td { color:#d00000 !important; font-size:20px !important; font-weight:800 !important; }
 </style>
 </head>
 <body>
@@ -162,7 +157,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V221</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V230</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -482,12 +477,12 @@ tr.low-stock-row td * {
 </div>
 <p class="small">Raw Material Consumption = Component Weight × Receive Qty. Vendor પાસે issue થયેલા Raw Materialમાંથી આ quantity automatic deduct થશે.</p>
 <div class="msg" id="jwConsumption"></div><div class="msg" id="jwJobAmount"></div>
-<button class="primary" id="jwReceiveBtn">Receive Component</button><div class="msg" id="jwReceiveMsg" style="color:#d00 !important;font-size:18px !important;font-weight:700 !important;"></div>
+<button class="primary" id="jwReceiveBtn">Receive Component</button><div class="msg" id="jwReceiveMsg"></div>
 
 </div>
 
-<hr><h3 style="font-size:22px;font-weight:800">Vendor Raw Material Balance</h3>
-<table><thead><tr><th>Vendor</th><th>Raw Material</th><th style="color:red;font-size:19px;font-weight:800">Qty at Vendor</th><th>Unit</th></tr></thead><tbody id="jwTable"></tbody></table>
+<hr><div id="vendorRawMaterialBalanceV230"><h3 style="font-size:22px;font-weight:800">Vendor Raw Material Balance</h3>
+<table><thead><tr><th>Vendor</th><th>Raw Material</th><th>Qty at Vendor</th><th>Unit</th></tr></thead><tbody id="jwTable"></tbody></table></div>
 </div></section>
 
 
@@ -5975,7 +5970,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <!-- V227: Job Work module now shows Raw Material Issue to Vendor last transaction history. Based on V226. -->
 
 <style id="v228VendorRawBalanceStyle">
-/* V229: Vendor Raw Material Balance red + bold + larger font. */
+/* V228: Vendor Raw Material Balance red + bold + larger font. */
 #jwTable td:nth-child(3), #jwTable td:nth-child(4) {
   color: red !important;
   font-size: 20px !important;
