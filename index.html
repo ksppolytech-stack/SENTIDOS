@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V236 - Firebase Online Sync</title>
+<title>Sentidos ERP V237 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -135,7 +135,7 @@ tr.low-stock-row td * {
 .v231ReportSubMenu button:hover{background:#eef5ff;}
 </style>
 <!-- V233: Fixed Report CSS block so CSS source is not displayed on the page. -->
-<!-- V236: GST month names are clickable and open month-wise transaction detail. -->
+<!-- V237: GST month click shows customer/supplier-wise Sale/Input GST summary and transaction detail. -->
 </head>
 <body>
 <button id="globalRefreshBtn" type="button" title="Refresh Page" aria-label="Refresh Page" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
@@ -179,7 +179,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V236</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V237</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -4967,7 +4967,29 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const inGST=purchases.reduce((a,r)=>a+r.gst,0);
       const due=outGST-inGST;
 
-      const rowsHtml=list.slice().reverse().map(r=>{
+      // Customer-wise Sales and Supplier-wise Purchase GST summary.
+      const partyMap=new Map();
+      list.slice().forEach(r=>{
+        const party=r.isSale?(r.customer||'Customer Not Specified'):(r.supplier||'Supplier Not Specified');
+        const key2=(r.isSale?'SALE|':'PURCHASE|')+party;
+        if(!partyMap.has(key2))partyMap.set(key2,{kind:r.isSale?'Sale':'Purchase',party,sales:0,purchase:0,gst:0,total:0,count:0});
+        const x=partyMap.get(key2);
+        if(r.isSale)x.sales+=r.amount; else x.purchase+=r.amount;
+        x.gst+=r.gst; x.total+=r.total; x.count++;
+      });
+      const summaryRows=[...partyMap.values()].sort((a,b)=>a.kind.localeCompare(b.kind)||a.party.localeCompare(b.party)).map(x=>{
+        return `<tr>
+          <td>${esc(x.kind)}</td>
+          <td>${esc(x.party)}</td>
+          <td style="text-align:right">${x.count}</td>
+          <td style="text-align:right">${money(x.sales)}</td>
+          <td style="text-align:right">${money(x.purchase)}</td>
+          <td style="text-align:right">${money(x.gst)}</td>
+          <td style="text-align:right">${money(x.total)}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="7">No entries found for this month.</td></tr>';
+
+      const detailRows=list.slice().reverse().map(r=>{
         const party=r.isSale?(r.customer||'-'):(r.supplier||'-');
         return `<tr>
           <td>${esc(r.date)}</td>
@@ -4984,25 +5006,39 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       box.style.display='block';
       box.innerHTML=`
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-          <h3 style="margin:0">📋 ${esc(label(key))} — GST Detail</h3>
-          <button type="button" id="v236GSTDetailClose"
+          <h3 style="margin:0">📋 ${esc(label(key))} — GST Summary</h3>
+          <button type="button" id="v237GSTDetailClose"
             style="border:0;background:transparent;font-size:24px;font-weight:700;cursor:pointer">×</button>
         </div>
+
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
-          <div class="card"><small>Output GST</small><b>${money(outGST)}</b></div>
-          <div class="card"><small>Input GST</small><b>${money(inGST)}</b></div>
+          <div class="card"><small>Sale GST / Output GST</small><b>${money(outGST)}</b></div>
+          <div class="card"><small>Purchase GST / Input GST</small><b>${money(inGST)}</b></div>
           <div class="card"><small>Due GST</small><b>${money(due)} ${due>0?'Payable':due<0?'Credit':'Nil'}</b></div>
         </div>
-        <div style="overflow:auto;margin-top:12px">
+
+        <h4 style="margin:16px 0 8px">Customer / Supplier Wise GST Summary</h4>
+        <div style="overflow:auto">
+          <table style="width:100%;border-collapse:collapse;min-width:850px">
+            <thead><tr>
+              <th>Type</th><th>Customer / Supplier</th><th>Entries</th>
+              <th>Sale Taxable</th><th>Purchase Taxable</th><th>GST</th><th>Total</th>
+            </tr></thead>
+            <tbody>${summaryRows}</tbody>
+          </table>
+        </div>
+
+        <h4 style="margin:18px 0 8px">Transaction Detail</h4>
+        <div style="overflow:auto">
           <table style="width:100%;border-collapse:collapse;min-width:900px">
             <thead><tr>
               <th>Date</th><th>Type</th><th>Customer / Supplier</th><th>Item / Material</th>
               <th>Bill / Ref</th><th>Taxable Amount</th><th>GST</th><th>Total</th>
             </tr></thead>
-            <tbody>${rowsHtml}</tbody>
+            <tbody>${detailRows}</tbody>
           </table>
         </div>`;
-      $('v236GSTDetailClose').onclick=()=>{box.style.display='none';box.innerHTML='';};
+      $('v237GSTDetailClose').onclick=()=>{box.style.display='none';box.innerHTML='';};
       box.scrollIntoView({behavior:'smooth',block:'start'});
     }
 
