@@ -4929,7 +4929,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           <button type="button" id="v168GSTGenerate">Generate GST Report</button>
         </div>
       </div>
-      <div id="v245InvalidDateBox" style="margin-top:14px;padding:12px;border:1px solid #f0c36d;background:#fff8e6;border-radius:8px">
+      <div id="v245InvalidDateBox" style="display:none;margin-top:14px;padding:12px;border:1px solid #f0c36d;background:#fff8e6;border-radius:8px">
         <div style="font-weight:700;color:#9a6500">⚠️ Invalid / Missing Date Entries</div>
         <div class="small" style="margin:4px 0 8px">જે transaction ની date ખોટી છે તે અહીં દેખાશે. અહીંથી સીધી સાચી Date નાખીને Save કરી શકો છો.</div>
         <div style="overflow:auto">
@@ -5034,10 +5034,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const all=read('adr_tx_v2');
       const bad=all.map((t,index)=>({t,index})).filter(x=>!isValidISODate(String(x.t.date||'').slice(0,10)));
 
+      const box=$('v245InvalidDateBox');
       if(!bad.length){
-        body.innerHTML='<tr><td colspan="7">✅ No invalid / missing date entries.</td></tr>';
+        if(box)box.style.display='none';
+        body.innerHTML='';
         return;
       }
+      if(box)box.style.display='block';
 
       body.innerHTML=bad.map(x=>{
         const t=x.t;
