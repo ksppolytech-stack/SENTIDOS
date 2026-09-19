@@ -37,6 +37,30 @@ main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-w
 .v253GSTBalance{font-weight:700;}
 .v253GSTBalance.v253Positive{color:#178a43 !important;}
 .v253GSTBalance.v253Negative{color:#c62828 !important;}
+
+/* V254: GST total rows and Generate button visual upgrade */
+#v168GSTGenerate{
+  background:linear-gradient(135deg,#168a3d,#0f6f31) !important;
+  color:#fff !important; border:0 !important; border-radius:9px !important;
+  padding:11px 20px !important; font-size:15px !important; font-weight:800 !important;
+  box-shadow:0 4px 10px rgba(22,138,61,.22) !important; cursor:pointer;
+  transition:transform .15s ease,box-shadow .15s ease;
+}
+#v168GSTGenerate:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(22,138,61,.28) !important}
+#v168GSTGenerate:active{transform:translateY(0)}
+#v243GSTMonthFoot tr, #v243GSTCustomerFoot tr{
+  background:linear-gradient(90deg,#f4f8ff,#eef6ff) !important;
+  border-top:2px solid #9bbbe0 !important;
+}
+#v243GSTMonthFoot th, #v243GSTCustomerFoot th{
+  font-size:16px !important; font-weight:900 !important;
+  padding:12px 10px !important; color:#172b4d !important;
+}
+#v243GSTMonthFoot th:first-child, #v243GSTCustomerFoot th:first-child{
+  font-size:17px !important; text-transform:uppercase; letter-spacing:.3px;
+}
+#v243GSTMonthFoot .v252PayableGST, #v243GSTMonthFoot .v253GSTBalance,
+#v243GSTCustomerFoot .v252PayableGST{font-size:17px !important;font-weight:900 !important}
 </style>
 <style>
 .payment-due{color:#c62828;font-weight:700}
@@ -6411,3 +6435,4 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <!-- V249: GST close X moved higher above Purchase GST heading. -->
   <!-- V252: Added Payable GST = Purchase GST - Sale GST with green positive / red negative styling. -->
 <!-- V253: Added cumulative GST Balance month-wise. Each month adds/subtracts its Payable GST from the previous balance. -->
+<!-- V254: GST Total rows made bold/big with enhanced look; Generate button upgraded. -->
