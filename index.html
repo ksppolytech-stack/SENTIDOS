@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V234 - Firebase Online Sync</title>
+<title>Sentidos ERP V235 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -135,7 +135,7 @@ tr.low-stock-row td * {
 .v231ReportSubMenu button:hover{background:#eef5ff;}
 </style>
 <!-- V233: Fixed Report CSS block so CSS source is not displayed on the page. -->
-<!-- V234: GST Report submenu now opens the existing Month-wise GST Report renderer. -->
+<!-- V235: Report main menu opens a dashboard matching the supplied reference image. -->
 </head>
 <body>
 <button id="globalRefreshBtn" type="button" title="Refresh Page" aria-label="Refresh Page" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
@@ -179,7 +179,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V234</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V235</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -642,7 +642,72 @@ tr.low-stock-row td * {
 </section>
 </section>
 
+
+<style id="v235ReportDashboardStyle">
+#v235ReportDashboard{background:#fff;border:1px solid #dfe5ec;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.05);padding:16px}
+.v235ReportCard{border:1px solid #dfe5ec;border-radius:9px;padding:14px 12px;text-align:center;min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+.v235ReportCard h3{margin:7px 0 6px;font-size:19px}
+.v235ReportCard>div:not(.v235ReportIcon){font-size:14px;line-height:1.35;min-height:40px}
+.v235ReportIcon{font-size:34px;line-height:1}
+.v235ReportCard button{margin-top:auto;width:100%;border:0;border-radius:6px;padding:9px 10px;color:#fff;font-weight:700;cursor:pointer}
+.v235GST{background:#f1fff7}.v235GST button{background:#15803d}
+.v235Dispatch{background:#f0f7ff}.v235Dispatch button{background:#1677e8}
+.v235Purchase{background:#fff9ea}.v235Purchase button{background:#f59e0b}
+.v235Production{background:#f7f1ff}.v235Production button{background:#6d28d9}
+.v235Jobwork{background:#fff0f1}.v235Jobwork button{background:#dc2638}
+@media(max-width:900px){
+  #v235ReportCards{grid-template-columns:repeat(2,minmax(150px,1fr))!important}
+}
+@media(max-width:600px){
+  #v235ReportCards{grid-template-columns:1fr!important}
+}
+</style>
+
 <section id="reports" class="page">
+
+<section id="v235ReportDashboard" class="panel" style="margin-bottom:16px">
+  <div style="display:flex;align-items:center;gap:12px;border-bottom:1px solid #e2e8f0;padding:4px 4px 14px">
+    <div style="font-size:34px">📄</div>
+    <div>
+      <h2 style="margin:0;font-size:28px">Reports Dashboard</h2>
+      <div class="small" style="margin-top:4px">Select a report from the menu or use the quick buttons below.</div>
+    </div>
+  </div>
+
+  <div id="v235ReportCards" style="display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:12px;margin-top:14px">
+    <div class="v235ReportCard v235GST">
+      <div class="v235ReportIcon">🧾</div>
+      <h3>GST Report</h3>
+      <div>View GST summary and details</div>
+      <button type="button" data-v235-report="gst">Open Report</button>
+    </div>
+    <div class="v235ReportCard v235Dispatch">
+      <div class="v235ReportIcon">🚚</div>
+      <h3>Despatch Report</h3>
+      <div>View sales / despatch details</div>
+      <button type="button" data-v235-report="dispatch">Open Report</button>
+    </div>
+    <div class="v235ReportCard v235Purchase">
+      <div class="v235ReportIcon">🛒</div>
+      <h3>Purchase Report</h3>
+      <div>View purchase inward details</div>
+      <button type="button" data-v235-report="purchase">Open Report</button>
+    </div>
+    <div class="v235ReportCard v235Production">
+      <div class="v235ReportIcon">🏭</div>
+      <h3>Production Report</h3>
+      <div>View production details</div>
+      <button type="button" data-v235-report="production">Open Report</button>
+    </div>
+    <div class="v235ReportCard v235Jobwork">
+      <div class="v235ReportIcon">👥</div>
+      <h3>Job Work Report</h3>
+      <div>View job work transactions</div>
+      <button type="button" data-v235-report="jobwork">Open Report</button>
+    </div>
+  </div>
+</section>
+
 <section id="dispatchReportPanel" class="panel">
 <h2>🚚 Dispatch Report</h2>
 <div class="grid">
@@ -6013,14 +6078,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 }
 </style>
 
-<script id="v231ReportMenuScript">
-/* V231: Report is the main menu; all report modules are submenus. */
+<script id="v235ReportMenuScript">
+/* V235: Report click opens a dashboard like the reference design. */
 (function(){
-  function initV231(){
+  function initV235(){
     const btn=document.getElementById('v231ReportBtn');
     const menu=document.getElementById('v231ReportSubMenu');
-    if(!btn||!menu||btn.dataset.ready==='1')return;
-    btn.dataset.ready='1';
+    const dash=document.getElementById('v235ReportDashboard');
+    if(!btn||!menu||!dash||btn.dataset.v235Ready==='1')return;
+    btn.dataset.v235Ready='1';
 
     const panels={
       dispatch:document.getElementById('dispatchReportPanel'),
@@ -6036,7 +6102,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         page.classList.add('active');
       }
       document.querySelectorAll('.tabs>button').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
     }
 
     function hideReportPanels(){
@@ -6047,11 +6112,30 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       if(gstOpen)gstOpen.style.display='none';
     }
 
-    function show(which){
+    function showDashboard(){
       openReportsPage();
+      hideReportPanels();
+      dash.style.display='block';
       menu.hidden=false; menu.style.display='flex';
       btn.setAttribute('aria-expanded','true');
+      btn.classList.add('active');
+    }
+
+    function show(which){
+      openReportsPage();
+      dash.style.display='none';
+      menu.hidden=false; menu.style.display='flex';
+      btn.setAttribute('aria-expanded','true');
+      btn.classList.add('active');
       hideReportPanels();
+
+      if(which==='gst'){
+        if(typeof window.renderV168GSTReport==='function')window.renderV168GSTReport();
+        const gst=document.getElementById('v168GSTReport');
+        if(gst)gst.style.display='block';
+        return;
+      }
+
       const p=panels[which];
       if(p)p.style.display='block';
       if(which==='jobwork' && typeof renderJobWorkMonthlyReport==='function')renderJobWorkMonthlyReport();
@@ -6060,30 +6144,42 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     btn.addEventListener('click',function(e){
       e.preventDefault(); e.stopImmediatePropagation();
       const opening=menu.hidden===true;
-      menu.hidden=!opening; menu.style.display=opening?'flex':'none';
+      menu.hidden=!opening;
+      menu.style.display=opening?'flex':'none';
       btn.setAttribute('aria-expanded',opening?'true':'false');
       btn.classList.toggle('active',opening);
-      if(opening)openReportsPage();
+      if(opening)showDashboard();
+      else{
+        dash.style.display='none';
+        hideReportPanels();
+      }
     },true);
 
-    document.getElementById('v231DispatchReportBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();show('dispatch');},true);
-    document.getElementById('v231PurchaseReportBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();show('purchase');},true);
-    document.getElementById('v231ProductionReportBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();show('production');},true);
-    document.getElementById('v231JWReportBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();show('jobwork');},true);
-    document.getElementById('v231GSTReportBtn')?.addEventListener('click',e=>{
-      e.preventDefault(); e.stopImmediatePropagation(); openReportsPage();
-      menu.hidden=false; menu.style.display='flex'; btn.setAttribute('aria-expanded','true');
-      hideReportPanels();
-      if(typeof window.renderV168GSTReport==='function')window.renderV168GSTReport();
-      const gst=document.getElementById('v168GSTReport');
-      if(gst)gst.style.display='block';
-    },true);
+    const bind=(id,which)=>{
+      document.getElementById(id)?.addEventListener('click',function(e){
+        e.preventDefault();e.stopImmediatePropagation();show(which);
+      },true);
+    };
+    bind('v231GSTReportBtn','gst');
+    bind('v231DispatchReportBtn','dispatch');
+    bind('v231PurchaseReportBtn','purchase');
+    bind('v231ProductionReportBtn','production');
+    bind('v231JWReportBtn','jobwork');
 
+    dash.querySelectorAll('[data-v235-report]').forEach(b=>{
+      b.addEventListener('click',function(e){
+        e.preventDefault();e.stopImmediatePropagation();show(this.getAttribute('data-v235-report'));
+      },true);
+    });
+
+    // Start with all report content hidden until Report is clicked.
+    dash.style.display='none';
     menu.hidden=true; menu.style.display='none';
     btn.setAttribute('aria-expanded','false');
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV231);
-  else initV231();
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV235);
+  else initV235();
 })();
 </script>
 </body></html>
