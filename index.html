@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V241 - Firebase Online Sync</title>
+<title>Sentidos ERP V242 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -170,9 +170,10 @@ tr.low-stock-row td * {
 @media(max-width:600px){.v235-report-cards{grid-template-columns:1fr}}
 </style>
 
-<style id="v240ReportDashboardAlwaysVisible">
-#reports.page.active #v235ReportDashboard,
-#reports #v235ReportDashboard.v240-force-visible {
+
+
+<style id="v242ReportDashboardVisible">
+#reports.page.active #v235ReportDashboard{
   display:block !important;
   visibility:visible !important;
 }
@@ -220,7 +221,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V241</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V242</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -6319,26 +6320,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
-<script id="v240ReportDashboardKeeper">
-(function(){
-  function keepReportDashboard(){
-    const page=document.getElementById('reports');
-    const dash=document.getElementById('v235ReportDashboard');
-    if(page && dash && page.classList.contains('active')){
-      dash.classList.add('v240-force-visible');
-      dash.style.display='block';
-      dash.hidden=false;
-    }
-  }
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',keepReportDashboard);
-  }else{
-    keepReportDashboard();
-  }
-  setInterval(keepReportDashboard,500);
-  new MutationObserver(keepReportDashboard).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style','hidden']});
-})();
-</script>
+
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
