@@ -3508,7 +3508,7 @@ function renderStockTableV260(){
    const category=String(i.cat||'').toLowerCase();
    return (!search || code.includes(search) || name.includes(search)) && (!cat || category===cat);
  });
- body.innerHTML=filtered.map(i=>`<tr><td>${i.code}</td><td>${i.name}</td><td>${i.cat}</td><td>${i.unit}</td><td>${i.weight}</td><td>${i.stock}</td><td><button data-stock-edit="${i.code}">✏️ Edit</button> <button data-stock-del="${i.code}">🗑 Delete</button></td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:18px;font-weight:700;color:#777">No item found</td></tr>';
+ body.innerHTML=filtered.map(i=>`<tr class="v263-stock-result" style="font-weight:700"><td style="font-weight:700">${i.code}</td><td style="font-weight:800">${i.name}</td><td style="font-weight:700">${i.cat}</td><td style="font-weight:700">${i.unit}</td><td style="font-weight:700">${i.weight}</td><td style="font-weight:800">${i.stock}</td><td><button data-stock-edit="${i.code}">✏️ Edit</button> <button data-stock-del="${i.code}">🗑 Delete</button></td></tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:18px;font-weight:700;color:#777">No item found</td></tr>';
  body.querySelectorAll('[data-stock-edit]').forEach(b=>b.onclick=()=>editItem(b.dataset.stockEdit));
  body.querySelectorAll('[data-stock-del]').forEach(b=>b.onclick=()=>deleteItem(b.dataset.stockDel));
 }
