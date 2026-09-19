@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V243 - Firebase Online Sync</title>
+<title>Sentidos ERP V245 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -221,7 +221,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V243</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V245</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -4929,6 +4929,17 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
           <button type="button" id="v168GSTGenerate">Generate GST Report</button>
         </div>
       </div>
+      <div id="v245InvalidDateBox" style="margin-top:14px;padding:12px;border:1px solid #f0c36d;background:#fff8e6;border-radius:8px">
+        <div style="font-weight:700;color:#9a6500">⚠️ Invalid / Missing Date Entries</div>
+        <div class="small" style="margin:4px 0 8px">જે transaction ની date ખોટી છે તે અહીં દેખાશે. અહીંથી સીધી સાચી Date નાખીને Save કરી શકો છો.</div>
+        <div style="overflow:auto">
+          <table>
+            <thead><tr><th>Date</th><th>Type</th><th>Party</th><th>Item</th><th>Reference</th><th>Enter Date</th><th>Action</th></tr></thead>
+            <tbody id="v245InvalidDateBody"></tbody>
+          </table>
+        </div>
+      </div>
+
       <div id="v243GSTSummaryTitle" style="margin-top:12px;font-weight:700">Month Wise Summary</div>
       <div style="overflow:auto;margin-top:8px">
         <table>
@@ -4966,8 +4977,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     function getTx(){
       return read('adr_tx_v2').filter(t=>{
         const type=String(t.type||'').toUpperCase();
+        const d=String(t.date||'').slice(0,10);
         return ['DISPATCH','RAW MATERIAL SALE','PURCHASE','RAW MATERIAL PURCHASE',
-          'RAW MATERIAL COMPANY INWARD','JOB WORK RECEIVE'].includes(type);
+          'RAW MATERIAL COMPANY INWARD','JOB WORK RECEIVE'].includes(type)
+          && /^\d{4}-\d{2}-\d{2}$/.test(d)
+          && !isNaN(new Date(d+'T00:00:00').getTime());
       });
     }
 
@@ -5009,6 +5023,59 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       return [...map.values()];
     }
 
+    function isValidISODate(v){
+      return /^\d{4}-\d{2}-\d{2}$/.test(String(v||'')) &&
+        !isNaN(new Date(String(v)+'T00:00:00').getTime());
+    }
+
+    function renderInvalidDateEntries(){
+      const body=$('v245InvalidDateBody');
+      if(!body)return;
+      const all=read('adr_tx_v2');
+      const bad=all.map((t,index)=>({t,index})).filter(x=>!isValidISODate(String(x.t.date||'').slice(0,10)));
+
+      if(!bad.length){
+        body.innerHTML='<tr><td colspan="7">✅ No invalid / missing date entries.</td></tr>';
+        return;
+      }
+
+      body.innerHTML=bad.map(x=>{
+        const t=x.t;
+        const party=String(t.customer||t.supplier||t.vendor||t.party||t.customerName||t.supplierName||t.vendorName||'').trim();
+        const item=String(t.itemName||t.item||t.material||'');
+        const ref=String(t.ref||t.billNo||t.invoiceNo||'');
+        const oldDate=String(t.date||'').trim()||'Missing';
+        return `<tr>
+          <td style="color:#c62828;font-weight:700">${esc(oldDate)}</td>
+          <td>${esc(t.type||'')}</td>
+          <td>${esc(party)}</td>
+          <td>${esc(item)}</td>
+          <td>${esc(ref)}</td>
+          <td><input type="date" id="v245date_${x.index}"></td>
+          <td><button type="button" data-v245-save-date="${x.index}" class="primary">💾 Save Date</button></td>
+        </tr>`;
+      }).join('');
+
+      body.querySelectorAll('[data-v245-save-date]').forEach(btn=>{
+        btn.onclick=()=>{
+          const index=Number(btn.getAttribute('data-v245-save-date'));
+          const input=$('v245date_'+index);
+          const value=input?.value||'';
+          if(!isValidISODate(value)){
+            alert('કૃપા કરીને સાચી Date select કરો.');
+            return;
+          }
+          const tx=read('adr_tx_v2');
+          if(!tx[index])return;
+          tx[index].date=value;
+          localStorage.setItem('adr_tx_v2',JSON.stringify(tx));
+          renderInvalidDateEntries();
+          fillMonthWise();
+          alert('Date save થઈ ગઈ.');
+        };
+      });
+    }
+
     function fillMonthWise(){
       const selected=$('v243GSTMonth').value;
       const tx=getTx().filter(t=>selected==='ALL'||String(t.date||'').slice(5,7)===selected);
@@ -5016,7 +5083,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
       $('v243GSTMonthBody').innerHTML=rows.map(x=>{
         const [y,m]=x.key.split('-');
-        const label=new Date(Number(y),Number(m)-1,1).toLocaleString('en-IN',{month:'long',year:'numeric'});
+        const label=(y && m && Number(y)>1900 && Number(m)>=1 && Number(m)<=12)
+          ? new Date(Number(y),Number(m)-1,1).toLocaleString('en-IN',{month:'long',year:'numeric'})
+          : 'Unknown Month';
         return `<tr data-gst-month="${m}" style="cursor:pointer">
           <td style="text-align:left;font-weight:700">${esc(label)}</td>
           <td>${money(x.purchase)}</td><td>${money(x.sale)}</td>
@@ -5071,6 +5140,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     $('v168GSTGenerate').onclick=fillMonthWise;
     $('v243GSTBack').onclick=fillMonthWise;
     $('v168GSTClose').onclick=()=>panel.style.display='none';
+    renderInvalidDateEntries();
     fillMonthWise();
   }
 
