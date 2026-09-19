@@ -1,6 +1,7 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="gu"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>Sentidos ERP V253 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
@@ -67,7 +68,6 @@ main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-w
 .payment-received{color:#1b8a3a;font-weight:700}
 .payment-clear{color:#1b8a3a;font-weight:700}
 </style>
-
 <style id="partyMergedSuggestionV98Style">
 #mergedPartySuggest > div{
   display:block !important;
@@ -87,7 +87,6 @@ main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-w
   background:#f1f5f9 !important;
 }
 </style>
-
 <style id="lowStockHighlightV100">
 .low-stock-row td, .low-stock-row td * {
   color: #c00 !important;
@@ -97,7 +96,6 @@ main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-w
   background: #fff1f1 !important;
 }
 </style>
-
 <style id="lowStockHighlightV101">
 .low-stock-highlight,
 .low-stock-highlight td,
@@ -110,7 +108,6 @@ tr.low-stock-row td * {
   background:#fff0f0 !important;
 }
 </style>
-
 <!-- SENTIDOS ERP V103 - Firebase Online Ready -->
 <script type="module">
   // Paste your Firebase Web App configuration here after creating the Firebase project.
@@ -135,7 +132,6 @@ tr.low-stock-row td * {
     return !!(c.apiKey && c.projectId && c.appId);
   };
 </script>
-
 <style id="sentidosMergedSuggestionFix">
 #mergedPartySuggest{z-index:99999!important;width:100%!important;box-sizing:border-box!important;max-height:260px!important;overflow-y:auto!important;overflow-x:hidden!important;background:#fff!important;color:#111!important}
 #mergedPartySuggest>div{display:block!important;width:100%!important;box-sizing:border-box!important;padding:10px 12px!important;min-height:40px!important;color:#111!important;background:#fff!important;font-size:15px!important;line-height:20px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
@@ -146,7 +142,6 @@ tr.low-stock-row td * {
 #vendorRawMaterialBalanceV230 h3 { font-size:24px !important; }
 #vendorRawMaterialBalanceV230 th, #vendorRawMaterialBalanceV230 td { color:#d00000 !important; font-size:20px !important; font-weight:800 !important; }
 </style>
-
 <style id="v231ReportMenuBaseStyle">
 /* V231: Reports parent menu with all report modules as submenus. */
 .v231ReportSideGroup{display:inline-flex;flex-direction:column;vertical-align:top;gap:4px;position:relative}
@@ -157,7 +152,6 @@ tr.low-stock-row td * {
 .v231ReportSubMenu button{border:0;padding:9px 10px;border-radius:6px;background:#f7f9fb;text-align:left;white-space:nowrap;cursor:pointer}
 .v231ReportSubMenu button:hover{background:#eef5ff}
 </style>
-
 <style id="v232ReportMenuStyle">
 .v231ReportSideGroup{display:flex;flex-direction:column;gap:4px;position:relative;width:100%;}
 .v231ReportSideBtn{width:100%;text-align:left;box-sizing:border-box;}
@@ -167,7 +161,6 @@ tr.low-stock-row td * {
 .v231ReportSubMenu button:hover{background:#eef5ff;}
 </style>
 <!-- V233: Fixed Report CSS block so CSS source is not displayed on the page. -->
-
 <style id="v235ReportDashboardStyle">
 .v235-report-dashboard{margin-bottom:18px}
 .v235-report-hero{display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid #ddd}
@@ -201,16 +194,12 @@ tr.low-stock-row td * {
 @media(max-width:900px){.v235-report-cards{grid-template-columns:repeat(2,minmax(150px,1fr))}}
 @media(max-width:600px){.v235-report-cards{grid-template-columns:1fr}}
 </style>
-
-
-
 <style id="v242ReportDashboardVisible">
 #reports.page.active #v235ReportDashboard{
   display:block !important;
   visibility:visible !important;
 }
 </style>
-
 <style id="v255BackupSideMenuStyle">
 #sentidosBackupBox{display:none !important;}
 .v255BackupSideGroup{display:flex;flex-direction:column;gap:4px;position:relative;width:100%;}
@@ -221,100 +210,81 @@ tr.low-stock-row td * {
 .v255BackupSubMenu button,.v255BackupSubMenu label{width:100%;text-align:left;border:0;padding:9px 10px;border-radius:6px;background:#f7f9fb;white-space:nowrap;cursor:pointer;box-sizing:border-box;font:inherit;}
 .v255BackupSubMenu button:hover,.v255BackupSubMenu label:hover{background:#eef5ff;}
 </style>
-</head>
+<style id="v258SideMenuStyle">
+/* V258: exact side menu order */
+.v257-side-ordered > button, .v257-side-ordered > div > button { font-weight:900 !important; font-size:16px !important; min-height:46px !important; letter-spacing:.1px; }
+.v257-side-ordered > div > button { width:100%; }
+</style></head>
 <body>
-<button id="globalRefreshBtn" type="button" title="Refresh Page" aria-label="Refresh Page" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
-<button id="globalLogoutBtn" type="button" title="Logout" aria-label="Logout" style="display:none;position:fixed;top:10px;right:100px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#b71c1c;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🚪 Logout</button>
+<button aria-label="Refresh Page" id="globalRefreshBtn" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;" title="Refresh Page" type="button">🔄 Refresh</button>
+<button aria-label="Logout" id="globalLogoutBtn" style="display:none;position:fixed;top:10px;right:100px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#b71c1c;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;" title="Logout" type="button">🚪 Logout</button>
 <div id="loginScreen" style="position:fixed;inset:0;background:#f3f5f7;z-index:99999;display:flex;align-items:center;justify-content:center;">
-  <div style="background:#fff;padding:30px;border-radius:12px;width:360px;max-width:90%;box-shadow:0 4px 20px rgba(0,0,0,.15);">
-    
-    <h2 style="text-align:center;margin:0 0 20px 0;">
+<div style="background:#fff;padding:30px;border-radius:12px;width:360px;max-width:90%;box-shadow:0 4px 20px rgba(0,0,0,.15);">
+<h2 style="text-align:center;margin:0 0 20px 0;">
       Sentidos ERP
     </h2>
-
-    <div style="margin-bottom:10px;">
-      <input
-        id="loginEmail"
-        type="email"
-        placeholder="User ID / Email"
-        autocomplete="username"
-        style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccc;border-radius:6px;">
-    </div>
-
-    <div style="margin-bottom:10px;">
-      <input
-        id="loginPassword"
-        type="password"
-        placeholder="Password"
-        autocomplete="current-password"
-        style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccc;border-radius:6px;">
-    </div>
-
-    <button
-      id="loginBtn"
-      style="width:100%;padding:12px;border:0;border-radius:6px;background:#17324d;color:#fff;font-size:16px;cursor:pointer;">
+<div style="margin-bottom:10px;">
+<input autocomplete="username" id="loginEmail" placeholder="User ID / Email" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccc;border-radius:6px;" type="email"/>
+</div>
+<div style="margin-bottom:10px;">
+<input autocomplete="current-password" id="loginPassword" placeholder="Password" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccc;border-radius:6px;" type="password"/>
+</div>
+<button id="loginBtn" style="width:100%;padding:12px;border:0;border-radius:6px;background:#17324d;color:#fff;font-size:16px;cursor:pointer;">
       Login
     </button>
-
-    <div
-      id="loginError"
-      style="color:#c62828;text-align:center;margin-top:12px;min-height:20px;">
-    </div>
-
-  </div>
+<div id="loginError" style="color:#c62828;text-align:center;margin-top:12px;min-height:20px;">
 </div>
- 
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V257</b> — Firebase Online Sync enabled.</div>
+</div>
+</div>
+<div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V257</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
-<div class="tabs">
-<button class="active" data-page="dashboard">🏠 Dashboard</button>
-<div class="v220MasterSideGroup">
-<button type="button" id="v220MasterBtn" class="v220MasterSideBtn" aria-expanded="false">📚 Master</button>
-<div id="v220MasterSubMenu" class="v220MasterSubMenu" hidden>
-<button type="button" data-page="items">📦 Item Master</button>
-<button type="button" data-page="bom">🔧 BOM Master</button>
-<button type="button" data-page="purchaseMaster">🏢 Supplier Master</button>
-<button type="button" data-page="customerMaster">👤 Customer Master</button>
-<button type="button" data-page="fgRateMaster">💰 Finished Goods Rate Master</button>
-<button type="button" data-page="vendorMaster">👷 Vendor Master</button>
-<button type="button" data-page="jwrates">💰 Job Work Rate Master</button>
+<div class="tabs v257-side-ordered">
+
+
+
+
+<button class="active" data-page="dashboard">🏠 Dashboard</button><button data-page="stock">📊 Stock</button><button data-page="rawmaterials">🧱 Raw Material</button><button data-page="purchase">🛒 Purchase</button><div class="v225SideMenuGroup">
+<button aria-expanded="false" data-page="jobwork" id="v225JobWorkBtn" type="button">🏭 Job Work</button>
+<div class="v225JobWorkSubMenu" hidden="" id="jobWorkSubMenuV225">
+<button id="openJWIssueBtnV225" type="button">🧱 Raw Material Issue to Vendor</button>
+<button id="openJWReceiveBtnV225" type="button">🔩 Component Receive from Vendor</button>
 </div>
+</div><button data-page="production">🏭 Production</button><button data-page="dispatch">🚚 Dispatch</button><div class="v212SideMenuGroup">
+<button aria-expanded="false" class="v212AccountingSideBtn" data-page="accounting" type="button">💰 Accounting</button>
+<div class="v212AccountingSubMenu" id="accountingSubMenuV211">
+<button data-subpage="receive" id="openReceivePaymentBtn" type="button">🧾 Receive Payment</button>
+<button data-subpage="pay" id="openPaySupplierBtn" type="button">💸 Pay Supplier / Vendor</button>
 </div>
-<button data-page="rawmaterials">🧱 Raw Material Master</button><button data-page="purchase">🛒 Purchase</button><button data-page="production">🏭 Production</button>
-<button data-page="dispatch">🚚 Dispatch</button><button data-page="rawSale">🧾 Raw Material Sale</button><div class="v212SideMenuGroup">
-<button type="button" class="v212AccountingSideBtn" data-page="accounting" aria-expanded="false">💰 Accounting</button>
-<div id="accountingSubMenuV211" class="v212AccountingSubMenu">
-<button type="button" id="openReceivePaymentBtn" data-subpage="receive">🧾 Receive Payment</button>
-<button type="button" id="openPaySupplierBtn" data-subpage="pay">💸 Pay Supplier / Vendor</button>
-</div>
-</div><div class="v225SideMenuGroup">
-<button type="button" id="v225JobWorkBtn" data-page="jobwork" aria-expanded="false">🏭 Job Work</button>
-<div id="jobWorkSubMenuV225" class="v225JobWorkSubMenu" hidden>
-<button type="button" id="openJWIssueBtnV225">🧱 Raw Material Issue to Vendor</button>
-<button type="button" id="openJWReceiveBtnV225">🔩 Component Receive from Vendor</button>
-</div>
-</div><div class="v255BackupSideGroup">
-<button type="button" id="v255BackupBtn" class="v255BackupSideBtn" aria-expanded="false">💾 Backup / Restore</button>
-<div id="v255BackupSubMenu" class="v255BackupSubMenu" hidden>
-<button type="button" id="v255DownloadBackupBtn">💾 Download Backup</button>
-<label for="v255RestoreBackupInput">♻️ Restore Backup<input id="v255RestoreBackupInput" type="file" accept=".json" style="display:none" onchange="restoreSentidosBackup(this)"></label>
-<button type="button" id="v255DriveBackupBtn">☁️ Save to Google Drive</button>
+</div><button data-page="rawSale">🧾 Raw Material Sale</button><div class="v220MasterSideGroup">
+<button aria-expanded="false" class="v220MasterSideBtn" id="v220MasterBtn" type="button">📚 Master</button>
+<div class="v220MasterSubMenu" hidden="" id="v220MasterSubMenu">
+<button data-page="items" type="button">📦 Item Master</button>
+<button data-page="bom" type="button">🔧 BOM Master</button>
+<button data-page="purchaseMaster" type="button">🏢 Supplier Master</button>
+<button data-page="customerMaster" type="button">👤 Customer Master</button>
+<button data-page="fgRateMaster" type="button">💰 Finished Goods Rate Master</button>
+<button data-page="vendorMaster" type="button">👷 Vendor Master</button>
+<button data-page="jwrates" type="button">💰 Job Work Rate Master</button>
 </div>
 </div><div class="v231ReportSideGroup">
-<button type="button" id="v231ReportBtn" class="v231ReportSideBtn" aria-expanded="false">📄 Report</button>
-<div id="v231ReportSubMenu" class="v231ReportSubMenu" hidden>
-<button type="button" id="v231GSTReportBtn">🧾 GST Report</button>
-<button type="button" id="v231DispatchReportBtn">🚚 Dispatch Report</button>
-<button type="button" id="v231PurchaseReportBtn">🧾 Purchase Report</button>
-<button type="button" id="v231ProductionReportBtn">🏭 Production Report</button>
-<button type="button" id="v231JWReportBtn">🏭 Job Work Report</button>
+<button aria-expanded="false" class="v231ReportSideBtn" id="v231ReportBtn" type="button">📄 Report</button>
+<div class="v231ReportSubMenu" hidden="" id="v231ReportSubMenu">
+<button id="v231GSTReportBtn" type="button">🧾 GST Report</button>
+<button id="v231DispatchReportBtn" type="button">🚚 Dispatch Report</button>
+<button id="v231PurchaseReportBtn" type="button">🧾 Purchase Report</button>
+<button id="v231ProductionReportBtn" type="button">🏭 Production Report</button>
+<button id="v231JWReportBtn" type="button">🏭 Job Work Report</button>
 </div>
-</div><button data-page="stock">📊 Stock</button>
+</div><div class="v255BackupSideGroup">
+<button aria-expanded="false" class="v255BackupSideBtn" id="v255BackupBtn" type="button">💾 Backup / Restore</button>
+<div class="v255BackupSubMenu" hidden="" id="v255BackupSubMenu">
+<button id="v255DownloadBackupBtn" type="button">💾 Download Backup</button>
+<label for="v255RestoreBackupInput">♻️ Restore Backup<input accept=".json" id="v255RestoreBackupInput" onchange="restoreSentidosBackup(this)" style="display:none" type="file"/></label>
+<button id="v255DriveBackupBtn" type="button">☁️ Save to Google Drive</button>
 </div>
-
-
-<section id="dashboard" class="page active">
+</div></div>
+<section class="page active" id="dashboard">
 <div class="panel" id="sentidosOnlineStatus" style="margin-bottom:12px">
 <b>🌐 Sentidos ERP Online Status:</b>
 <span id="sentidosOnlineStatusText">Local / Offline</span>
@@ -333,47 +303,43 @@ tr.low-stock-row td * {
 <tbody id="dashboardDetailsTable"></tbody></table>
 </div>
 </section>
-
-
-<section id="rawmaterials" class="page"><div class="panel"><h2>Raw Material Master</h2><p class="small"><b>આ જ Raw Material stockનું main source છે.</b> અહીં Add/Purchase કરેલા materialમાંથી Purchase, Vendor Job Work Issue અને Vendor Consumption બધું deduct/add થશે.</p>
+<section class="page" id="rawmaterials"><div class="panel"><h2>Raw Material Master</h2><p class="small"><b>આ જ Raw Material stockનું main source છે.</b> અહીં Add/Purchase કરેલા materialમાંથી Purchase, Vendor Job Work Issue અને Vendor Consumption બધું deduct/add થશે.</p>
 <div id="rawMaterialMasterAddBox" style="display:none">
 <div class="grid">
-<input id="rmCode" placeholder="Material Code"><input id="rmName" placeholder="Material Name">
+<input id="rmCode" placeholder="Material Code"/><input id="rmName" placeholder="Material Name"/>
 <select id="rmUnit"><option>KG</option><option>G</option></select>
-<input id="rmRate" type="number" step="0.001" placeholder="Rate / KG">
-<input id="rmOpening" type="number" step="0.001" placeholder="Opening Stock">
-<input id="rmMin" type="number" step="0.001" placeholder="Minimum Stock">
-</div><br><button class="primary" id="addRM">➕ Save Raw Material</button>
+<input id="rmRate" placeholder="Rate / KG" step="0.001" type="number"/>
+<input id="rmOpening" placeholder="Opening Stock" step="0.001" type="number"/>
+<input id="rmMin" placeholder="Minimum Stock" step="0.001" type="number"/>
+</div><br/><button class="primary" id="addRM">➕ Save Raw Material</button>
 </div>
-<button type="button" id="showRawMaterialMasterBtn" class="primary" style="display:none;margin-bottom:12px">➕ Add Raw Material</button>
-<table><thead><tr><th>Material Name</th><th>Total Stock</th><th>Action</th></tr></thead><tbody id="rmTable"></tbody></table><div id="rawLotDetails" class="small"></div>
-<hr>
+<button class="primary" id="showRawMaterialMasterBtn" style="display:none;margin-bottom:12px" type="button">➕ Add Raw Material</button>
+<table><thead><tr><th>Material Name</th><th>Total Stock</th><th>Action</th></tr></thead><tbody id="rmTable"></tbody></table><div class="small" id="rawLotDetails"></div>
+<hr/>
 <h3>Company Raw Material Inward / Stock Add</h3><p class="small">ઉપરની listમાં માત્ર Material Name અને Total Stock દેખાશે. નીચેની Inward listમાં દરેક batchનો Rate અલગ દેખાશે.</p>
 <div class="grid">
-<input id="rmPurchaseDate" type="date" title="Inward Date">
-<div class="autowrap" style="position:relative"><input id="rmPurchaseSupplier" placeholder="Type Supplier Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearRMPurchaseSupplier" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer">×</button><div id="rmPurchaseSupplierSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
-<div class="autowrap" style="position:relative"><input id="rmPurchase" placeholder="Type Material Name"><div id="rmPurchaseSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
-<input id="rmPurchaseQty" type="number" step="0.001" placeholder="Quantity">
-<input id="rmPurchaseRate" type="number" step="0.001" placeholder="Rate / KG">
-<input id="rmPurchaseTaxRate" type="number" step="0.01" value="18" placeholder="GST %">
-<input id="rmPurchaseRef" placeholder="Invoice / Ref">
-</div><br>
+<input id="rmPurchaseDate" title="Inward Date" type="date"/>
+<div class="autowrap" style="position:relative"><input autocomplete="off" id="rmPurchaseSupplier" placeholder="Type Supplier Name" style="padding-right:36px"/><button id="clearRMPurchaseSupplier" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer" type="button">×</button><div class="suggestbox" id="rmPurchaseSupplierSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<div class="autowrap" style="position:relative"><input id="rmPurchase" placeholder="Type Material Name"/><div class="suggestbox" id="rmPurchaseSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<input id="rmPurchaseQty" placeholder="Quantity" step="0.001" type="number"/>
+<input id="rmPurchaseRate" placeholder="Rate / KG" step="0.001" type="number"/>
+<input id="rmPurchaseTaxRate" placeholder="GST %" step="0.01" type="number" value="18"/>
+<input id="rmPurchaseRef" placeholder="Invoice / Ref"/>
+</div><br/>
 <button class="primary" id="rmPurchaseBtn">➕ Add Stock</button>
 <div class="msg" id="rmPurchaseMsg"></div>
-<hr><h3>Company Raw Material Inward Entries</h3>
+<hr/><h3>Company Raw Material Inward Entries</h3>
 <table><thead><tr><th>Date</th><th>Inward No.</th><th>Supplier</th><th>Material</th><th>Qty</th><th>Rate</th><th>Taxable</th><th>GST %</th><th>GST</th><th>Total</th><th>Unit</th><th>Action</th></tr></thead>
 <tbody id="rmPurchaseTable"></tbody></table>
-
-
 </div></section>
-<section id="items" class="page"><div class="panel"><h2>Item / Material Master</h2>
+<section class="page" id="items"><div class="panel"><h2>Item / Material Master</h2>
 <div class="grid">
-<input id="itemCode" placeholder="Item Code"><input id="itemName" placeholder="Item Name">
+<input id="itemCode" placeholder="Item Code"/><input id="itemName" placeholder="Item Name"/>
 <select id="itemCat"><option>Raw Material</option><option>Component</option><option>Finished Goods</option><option>Packing</option></select>
 <select id="itemUnit"><option>KG</option><option>PCS</option><option>BOX</option></select>
-<input id="itemWeight" type="number" step="0.001" placeholder="Weight / PCS (gram)">
-<input id="itemOpening" type="number" placeholder="Opening Stock"><input id="itemMin" type="number" placeholder="Minimum Stock">
-</div><br><button class="primary" id="addItemBtn">Add Item</button>
+<input id="itemWeight" placeholder="Weight / PCS (gram)" step="0.001" type="number"/>
+<input id="itemOpening" placeholder="Opening Stock" type="number"/><input id="itemMin" placeholder="Minimum Stock" type="number"/>
+</div><br/><button class="primary" id="addItemBtn">Add Item</button>
 <table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Unit</th><th>Weight g</th><th>Stock</th><th>Action</th></tr></thead><tbody id="itemTable"></tbody></table>
 <div class="panel" id="itemDependencyBox" style="display:none">
 <h3 id="itemDependencyTitle">Linked Entries</h3>
@@ -381,38 +347,35 @@ tr.low-stock-row td * {
 <table><thead><tr><th>Type</th><th>Product/Date</th><th>Component/Ref</th><th>Qty</th><th>Next Action</th></tr></thead>
 <tbody id="itemDependencyBody"></tbody></table>
 </div>
-
 </div></section>
-
-<section id="bom" class="page"><div class="panel"><h2>Multi-Component BOM</h2><p class="small"><b>Unit મહત્વનું છે:</b> Item Masterમાં Raw Material KG હોય અને BOMમાં quantity gram હોય તો software gram→KG automatic convert કરશે.</p><p class="small">Product/Component/Materialનું નામ type કરતાં નીચે આખું Name + Code suggestion દેખાશે; suggestion પસંદ કરતાં આખું Product/Component Name fieldમાં રહેશે.</p>
-<div class="autowrap"><input id="bomProduct" placeholder="Type Product Name / Code"><div class="suggestbox" id="productSuggest"></div></div>
+<section class="page" id="bom"><div class="panel"><h2>Multi-Component BOM</h2><p class="small"><b>Unit મહત્વનું છે:</b> Item Masterમાં Raw Material KG હોય અને BOMમાં quantity gram હોય તો software gram→KG automatic convert કરશે.</p><p class="small">Product/Component/Materialનું નામ type કરતાં નીચે આખું Name + Code suggestion દેખાશે; suggestion પસંદ કરતાં આખું Product/Component Name fieldમાં રહેશે.</p>
+<div class="autowrap"><input id="bomProduct" placeholder="Type Product Name / Code"/><div class="suggestbox" id="productSuggest"></div></div>
 <table><thead><tr><th>Component / Material Code</th><th>Qty</th><th>Unit</th><th>Action</th></tr></thead><tbody id="bomEntry"></tbody></table>
-<br><button id="addBomRow">➕ Add Component</button> <button class="primary" id="saveBom">💾 Save Complete BOM</button>
-<div class="msg" id="bomMsg"></div><hr>
+<br/><button id="addBomRow">➕ Add Component</button> <button class="primary" id="saveBom">💾 Save Complete BOM</button>
+<div class="msg" id="bomMsg"></div><hr/>
 <table><thead><tr><th>Product</th><th>Component</th><th>Qty</th><th>Unit</th><th>Action</th></tr></thead><tbody id="bomTable"></tbody></table>
-<br><input id="deleteBomProduct" placeholder="Product Code"><button id="deleteBom">🗑 Delete BOM</button>
+<br/><input id="deleteBomProduct" placeholder="Product Code"/><button id="deleteBom">🗑 Delete BOM</button>
 </div></section>
-
-<section id="purchase" class="page"><div class="panel"><h2>🛒 Purchase</h2>
+<section class="page" id="purchase"><div class="panel"><h2>🛒 Purchase</h2>
 <div class="grid">
-<input id="purchaseDate" type="date" title="Purchase Date">
-<div class="autowrap" style="position:relative"><input id="purchaseSupplier" placeholder="Supplier Name"><div id="purchaseSupplierSuggest" class="suggestbox" style="display:none"></div></div>
-<input id="purchaseRef" placeholder="Invoice / Bill No. / Ref">
-<div class="autowrap" style="position:relative"><input id="purchaseCode" placeholder="Type Item Name / Code"><div id="itemSuggestPurchase" class="suggestbox" style="display:none"></div></div>
-<input id="purchaseQty" type="number" step="0.001" placeholder="Quantity">
+<input id="purchaseDate" title="Purchase Date" type="date"/>
+<div class="autowrap" style="position:relative"><input id="purchaseSupplier" placeholder="Supplier Name"/><div class="suggestbox" id="purchaseSupplierSuggest" style="display:none"></div></div>
+<input id="purchaseRef" placeholder="Invoice / Bill No. / Ref"/>
+<div class="autowrap" style="position:relative"><input id="purchaseCode" placeholder="Type Item Name / Code"/><div class="suggestbox" id="itemSuggestPurchase" style="display:none"></div></div>
+<input id="purchaseQty" placeholder="Quantity" step="0.001" type="number"/>
 <select id="purchaseUnit"><option value="KG">KG</option><option value="PCS">PCS</option></select>
-<input id="purchaseRate" type="number" step="0.01" placeholder="Rate ₹0.00 (Editable)">
-<input id="purchaseTaxRate" type="number" step="0.01" value="18" placeholder="GST %">
-</div><br>
-<button type="button" id="addPurchaseItem">➕ Add Item</button>
-<button type="button" id="openPurchaseMaster">🏢 Supplier Master</button>
+<input id="purchaseRate" placeholder="Rate ₹0.00 (Editable)" step="0.01" type="number"/>
+<input id="purchaseTaxRate" placeholder="GST %" step="0.01" type="number" value="18"/>
+</div><br/>
+<button id="addPurchaseItem" type="button">➕ Add Item</button>
+<button id="openPurchaseMaster" type="button">🏢 Supplier Master</button>
 <button class="primary" id="purchaseBtn">💾 Save Purchase</button>
 <div class="small" style="margin-top:8px">એક જ Supplier અને એક જ Bill/Invoiceમાં ઘણી Items હોય તો દરેક Item <b>Add Item</b> કરો અને અંતે એક વખત <b>Save Purchase</b> કરો.</div>
 <div style="overflow:auto;margin-top:12px">
 <table id="purchaseCartTable"><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Taxable</th><th>GST %</th><th>GST</th><th>Total</th><th>Action</th></tr></thead><tbody><tr><td colspan="9">No items added</td></tr></tbody></table>
 </div>
 <div class="msg" id="purchaseMsg"></div>
-<hr>
+<hr/>
 <h3>📋 Purchase Entries</h3>
 <div style="overflow:auto">
 <table id="purchaseEntryTable">
@@ -420,13 +383,13 @@ tr.low-stock-row td * {
 <tbody><tr><td colspan="9">No purchase entries</td></tr></tbody>
 </table>
 </div>
-<hr>
+<hr/>
 <h3>📊 Purchase Report</h3>
 <div class="grid">
-<input id="purchaseInlineFrom" type="date">
-<input id="purchaseInlineTo" type="date">
-<div style="position:relative"><input id="purchaseInlineSupplier" placeholder="Type Supplier Name" autocomplete="off"><div id="purchaseInlineSupplierSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:200px;overflow:auto"></div></div>
-<button type="button" class="primary" id="purchaseInlineReportBtn">Generate Report</button>
+<input id="purchaseInlineFrom" type="date"/>
+<input id="purchaseInlineTo" type="date"/>
+<div style="position:relative"><input autocomplete="off" id="purchaseInlineSupplier" placeholder="Type Supplier Name"/><div id="purchaseInlineSupplierSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:200px;overflow:auto"></div></div>
+<button class="primary" id="purchaseInlineReportBtn" type="button">Generate Report</button>
 </div>
 <div class="msg" id="purchaseInlineReportMsg"></div>
 <div style="overflow:auto"><table id="purchaseInlineReportTable">
@@ -434,32 +397,31 @@ tr.low-stock-row td * {
 <tbody><tr><td colspan="8">Click Generate Report</td></tr></tbody>
 <tfoot><tr><th colspan="3">Total</th><th id="purchaseInlineQty">0.000</th><th></th><th></th><th id="purchaseInlineAmount">₹0.00</th><th></th></tr></tfoot>
 </table></div></div></section>
-
-<section id="purchaseMaster" class="page"><div class="panel"><h2>🏢 Supplier Master</h2>
+<section class="page" id="purchaseMaster"><div class="panel"><h2>🏢 Supplier Master</h2>
 <p style="margin:0 0 10px">Supplier પાસેથી આવતા <b>O Ring, Packaging Material, Plastic Bag</b> વગેરે માટે Supplier + Item + Rate set કરો.</p>
 <div class="grid">
-<div class="autowrap" style="position:relative"><input id="pmSupplier" placeholder="Type Supplier Name"><div id="pmSupplierSuggest" class="suggestbox" style="display:none"></div></div>
-<div class="autowrap" style="position:relative"><input id="pmItem" placeholder="Type Item Name" autocomplete="off"><div id="pmItemSuggest" style="display:none"></div></div>
-<input id="pmRate" type="number" step="0.01" placeholder="Rate ₹0.00 (Optional)">
-<button type="button" class="primary" id="pmAddBtn">➕ Add Supplier Master</button>
+<div class="autowrap" style="position:relative"><input id="pmSupplier" placeholder="Type Supplier Name"/><div class="suggestbox" id="pmSupplierSuggest" style="display:none"></div></div>
+<div class="autowrap" style="position:relative"><input autocomplete="off" id="pmItem" placeholder="Type Item Name"/><div id="pmItemSuggest" style="display:none"></div></div>
+<input id="pmRate" placeholder="Rate ₹0.00 (Optional)" step="0.01" type="number"/>
+<button class="primary" id="pmAddBtn" type="button">➕ Add Supplier Master</button>
 </div>
 <div class="msg" id="pmMsg"></div>
 <div style="overflow:auto"><table><thead><tr><th>Supplier</th><th>Item</th><th>Rate</th><th>Action</th></tr></thead><tbody id="pmTable"></tbody>
 </table></div>
-<hr>
+<hr/>
 <h3>📊 Dispatch Report</h3>
 <div class="grid">
-<input id="dispatchReportFrom" type="date">
-<input id="dispatchReportTo" type="date">
+<input id="dispatchReportFrom" type="date"/>
+<input id="dispatchReportTo" type="date"/>
 <div style="position:relative">
-<input id="dispatchReportCustomer" placeholder="Type Customer Name" autocomplete="off">
+<input autocomplete="off" id="dispatchReportCustomer" placeholder="Type Customer Name"/>
 <div id="dispatchReportCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div>
 </div>
 <div style="position:relative">
-<input id="dispatchReportItem" placeholder="Type Finished Good" autocomplete="off">
+<input autocomplete="off" id="dispatchReportItem" placeholder="Type Finished Good"/>
 <div id="dispatchReportItemSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div>
 </div>
-<button type="button" class="primary" id="dispatchReportBtn">Generate Report</button>
+<button class="primary" id="dispatchReportBtn" type="button">Generate Report</button>
 </div>
 <div class="msg" id="dispatchReportMsg"></div>
 <div style="overflow:auto">
@@ -470,190 +432,170 @@ tr.low-stock-row td * {
 </table>
 </div>
 </div></section>
-<section id="customerMaster" class="page">
+<section class="page" id="customerMaster">
 <div class="panel">
 <h2>👤 Customer Master</h2>
 <div class="grid">
-<input id="customerCode" placeholder="Customer Code (Optional)">
-<input id="customerName" placeholder="Customer Name">
-</div><br>
+<input id="customerCode" placeholder="Customer Code (Optional)"/>
+<input id="customerName" placeholder="Customer Name"/>
+</div><br/>
 <button class="primary" id="addCustomerBtn" type="button">➕ Add Customer</button>
 <div class="msg" id="customerMsg"></div>
-<hr>
+<hr/>
 <table id="customerTable">
 <thead><tr><th>Code</th><th>Customer Name</th><th>Action</th></tr></thead>
 <tbody></tbody>
 </table>
 </div>
 </section>
-<section id="production" class="page"><div class="panel"><h2>Production</h2><p>Finish Productનું નામ type કરો. નીચે <b>BOM Masterમાં બનાવેલા Product names</b>માંથી suggestion આવશે.</p>
-<div class="grid"><input id="productionDate" type="date" title="Production Date"><div class="autowrap"><div class="autowrap" style="position:relative"><input id="productionCode" placeholder="Type Finish Product Name"><div id="productionProductSuggestions" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><input id="productionQty" type="number" placeholder="Quantity"></div>
-<p>Material/component quantities defined in BOM will be deducted automatically.</p><button class="primary" id="productionBtn">Save Production</button> <button id="openProductionReport">📄 Production Report</button><div class="msg" id="productionMsg"></div></div></section>
-
-
-<section id="fgRateMaster" class="page">
+<section class="page" id="production"><div class="panel"><h2>Production</h2><p>Finish Productનું નામ type કરો. નીચે <b>BOM Masterમાં બનાવેલા Product names</b>માંથી suggestion આવશે.</p>
+<div class="grid"><input id="productionDate" title="Production Date" type="date"/><div class="autowrap"><div class="autowrap" style="position:relative"><input id="productionCode" placeholder="Type Finish Product Name"/><div class="suggestbox" id="productionProductSuggestions" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><input id="productionQty" placeholder="Quantity" type="number"/></div>
+<p>Material/component quantities defined in BOM will be deducted automatically.</p><button class="primary" id="productionBtn">Save Production</button> <button id="openProductionReport">📄 Production Report</button><div class="msg" id="productionMsg"></div></section>
+<section class="page" id="fgRateMaster">
 <div class="panel">
 <h2>💰 Finished Goods Rate Master</h2>
 <p class="small">Finished Goods Item Masterમાંથી પસંદ કરો. અહીંનો Rate Dispatchમાં Finished Good select કરતાં automatic આવશે.</p>
 <div class="grid">
 <div style="position:relative">
-<input id="fgRateItem" placeholder="Type Finished Good Name / Code" autocomplete="off">
+<input autocomplete="off" id="fgRateItem" placeholder="Type Finished Good Name / Code"/>
 <div id="fgRateItemSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div>
 </div>
-<input id="fgRateValue" type="number" step="0.01" placeholder="Sale Rate ₹0.00">
-</div><br>
+<input id="fgRateValue" placeholder="Sale Rate ₹0.00" step="0.01" type="number"/>
+</div><br/>
 <button class="primary" id="addFgRateBtn" type="button">➕ Add / Update Rate</button>
 <div class="msg" id="fgRateMsg"></div>
-<hr>
+<hr/>
 <table id="fgRateTable">
 <thead><tr><th>Finished Good</th><th>Code</th><th>Rate</th><th>Action</th></tr></thead>
 <tbody></tbody>
 </table>
 </div>
 </section>
-<section id="rawSale" class="page">
+<section class="page" id="rawSale">
 <div class="panel"><h2>🧾 Raw Material Sale / Invoice</h2>
 <p class="small">Customerને Raw Material વેચવા માટે અહીં Invoice બનાવો. એક જ Invoiceમાં ઘણી Raw Material items ઉમેરી શકાય છે.</p>
 <div class="grid">
-<input id="rawSaleDate" type="date" title="Sale Date">
-<div style="position:relative"><input id="rawSaleCustomer" placeholder="Type Customer Name" autocomplete="off"><div id="rawSaleCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
-<input id="rawSaleInvoiceNo" placeholder="Invoice No." readonly>
+<input id="rawSaleDate" title="Sale Date" type="date"/>
+<div style="position:relative"><input autocomplete="off" id="rawSaleCustomer" placeholder="Type Customer Name"/><div id="rawSaleCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
+<input id="rawSaleInvoiceNo" placeholder="Invoice No." readonly=""/>
 </div>
 <div class="grid" style="margin-top:10px">
-<div style="position:relative"><input id="rawSaleMaterial" placeholder="Type Raw Material" autocomplete="off"><div id="rawSaleMaterialSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
-<input id="rawSaleQty" type="number" step="0.001" placeholder="Quantity">
-<input id="rawSaleRate" type="number" step="0.01" placeholder="Sale Rate / KG">
-<input id="rawSaleTaxRate" type="number" step="0.01" placeholder="GST %">
+<div style="position:relative"><input autocomplete="off" id="rawSaleMaterial" placeholder="Type Raw Material"/><div id="rawSaleMaterialSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
+<input id="rawSaleQty" placeholder="Quantity" step="0.001" type="number"/>
+<input id="rawSaleRate" placeholder="Sale Rate / KG" step="0.01" type="number"/>
+<input id="rawSaleTaxRate" placeholder="GST %" step="0.01" type="number"/>
 </div>
-<br><button type="button" id="rawSaleAddItem">➕ Add Item</button>
+<br/><button id="rawSaleAddItem" type="button">➕ Add Item</button>
 <table id="rawSaleCartTable" style="margin-top:12px"><thead><tr><th>Raw Material</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Taxable</th><th>GST</th><th>Grand Total</th><th>Action</th></tr></thead><tbody></tbody></table>
-<div style="margin-top:10px;text-align:right"><b>Taxable: ₹<span id="rawSaleTotal">0.00</span> &nbsp; GST: ₹<span id="rawSaleTaxTotal">0.00</span> &nbsp; Grand Total: ₹<span id="rawSaleGrandTotal">0.00</span></b></div>
-<input id="rawSaleRemark" placeholder="Remark (Optional)" style="margin-top:10px">
-<br><button class="primary" id="rawSaleSave">💾 Save Raw Material Invoice</button> <button type="button" id="rawSalePrint" disabled>🖨️ Print Last Invoice</button>
+<div style="margin-top:10px;text-align:right"><b>Taxable: ₹<span id="rawSaleTotal">0.00</span>   GST: ₹<span id="rawSaleTaxTotal">0.00</span>   Grand Total: ₹<span id="rawSaleGrandTotal">0.00</span></b></div>
+<input id="rawSaleRemark" placeholder="Remark (Optional)" style="margin-top:10px"/>
+<br/><button class="primary" id="rawSaleSave">💾 Save Raw Material Invoice</button> <button disabled="" id="rawSalePrint" type="button">🖨️ Print Last Invoice</button>
 <div class="msg" id="rawSaleMsg"></div>
-<hr><h3>📋 Raw Material Sale Invoices</h3>
+<hr/><h3>📋 Raw Material Sale Invoices</h3>
 <div style="overflow:auto"><table id="rawSaleTable"><thead><tr><th>Date</th><th>Invoice No.</th><th>Customer</th><th>Raw Material</th><th>Qty</th><th>Rate</th><th>Taxable</th><th>GST</th><th>Grand Total</th><th>Action</th></tr></thead><tbody></tbody><tfoot><tr id="rawSaleTableTotal" style="font-weight:700;border-top:2px solid #333;background:#f5f5f5"><td colspan="4" style="text-align:right">Total</td><td id="rawSaleListTotalQty">0.000</td><td>—</td><td id="rawSaleListTotalTaxable">₹0.00</td><td id="rawSaleListTotalGst">₹0.00</td><td id="rawSaleListTotalGrand">₹0.00</td><td></td></tr></tfoot></table></div>
 </div></section>
-
-<section id="dispatch" class="page"><div class="panel"><h2>🚚 Dispatch</h2>
+<section class="page" id="dispatch"><div class="panel"><h2>🚚 Dispatch</h2>
 <div class="grid">
-<input id="dispatchDate" type="date" title="Dispatch Date">
-<div style="position:relative"><div style="position:relative"><input id="dispatchCustomer" placeholder="Type Customer Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearDispatchCustomer" aria-label="Clear Customer" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button></div><div id="dispatchCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:200px;overflow:auto"></div></div>
-<div class="autowrap"><div style="position:relative"><input id="dispatchCode" placeholder="Type Finish Product Name" style="padding-right:36px"><button type="button" id="clearDispatchItem" aria-label="Clear Finished Good" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button></div><div class="suggestbox" id="productSuggestDispatch"></div></div>
-<input id="dispatchQty" type="number" step="0.001" placeholder="Quantity">
-<input id="dispatchRate" type="number" step="0.01" placeholder="Rate ₹0.00">
-<input id="dispatchTaxRate" type="number" step="0.01" value="18" placeholder="GST %">
-<input id="dispatchTaxAmount" type="number" step="0.01" placeholder="Tax Amount" readonly>
-<input id="dispatchBillNo" type="text" placeholder="Bill No." readonly>
-<input id="dispatchAmount" type="number" step="0.01" placeholder="Taxable Amount" readonly>
-<input id="dispatchGrandTotal" type="number" step="0.01" placeholder="Grand Total" readonly>
-<input id="dispatchRemark" placeholder="Remark (Optional)">
-</div><br>
-<button type="button" id="dispatchAddItem">➕ Add Item</button>
+<input id="dispatchDate" title="Dispatch Date" type="date"/>
+<div style="position:relative"><div style="position:relative"><input autocomplete="off" id="dispatchCustomer" placeholder="Type Customer Name" style="padding-right:36px"/><button aria-label="Clear Customer" id="clearDispatchCustomer" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px" type="button">×</button></div><div id="dispatchCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:200px;overflow:auto"></div></div>
+<div class="autowrap"><div style="position:relative"><input id="dispatchCode" placeholder="Type Finish Product Name" style="padding-right:36px"/><button aria-label="Clear Finished Good" id="clearDispatchItem" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px" type="button">×</button></div><div class="suggestbox" id="productSuggestDispatch"></div></div>
+<input id="dispatchQty" placeholder="Quantity" step="0.001" type="number"/>
+<input id="dispatchRate" placeholder="Rate ₹0.00" step="0.01" type="number"/>
+<input id="dispatchTaxRate" placeholder="GST %" step="0.01" type="number" value="18"/>
+<input id="dispatchTaxAmount" placeholder="Tax Amount" readonly="" step="0.01" type="number"/>
+<input id="dispatchBillNo" placeholder="Bill No." readonly="" type="text"/>
+<input id="dispatchAmount" placeholder="Taxable Amount" readonly="" step="0.01" type="number"/>
+<input id="dispatchGrandTotal" placeholder="Grand Total" readonly="" step="0.01" type="number"/>
+<input id="dispatchRemark" placeholder="Remark (Optional)"/>
+</div><br/>
+<button id="dispatchAddItem" type="button">➕ Add Item</button>
 <table id="dispatchCartTable" style="margin-top:12px"><thead><tr><th>Finished Good</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Taxable</th><th>GST</th><th>Grand Total</th><th>Action</th></tr></thead><tbody></tbody></table>
-<div style="margin-top:10px;text-align:right"><b>Taxable: ₹<span id="dispatchCartTotal">0.00</span> &nbsp; GST: ₹<span id="dispatchCartTaxTotal">0.00</span> &nbsp; Grand Total: ₹<span id="dispatchCartGrandTotal">0.00</span></b></div>
-<br><button class="primary" id="dispatchBtn">Save Dispatch</button><div class="msg" id="dispatchMsg"></div>
-<hr><h3>📋 Dispatch Entries</h3>
+<div style="margin-top:10px;text-align:right"><b>Taxable: ₹<span id="dispatchCartTotal">0.00</span>   GST: ₹<span id="dispatchCartTaxTotal">0.00</span>   Grand Total: ₹<span id="dispatchCartGrandTotal">0.00</span></b></div>
+<br/><button class="primary" id="dispatchBtn">Save Dispatch</button><div class="msg" id="dispatchMsg"></div>
+<hr/><h3>📋 Dispatch Entries</h3>
 <div style="overflow:auto"><table id="dispatchTable"><thead><tr><th>Date</th><th>Bill No.</th><th>Customer</th><th>Finished Good</th><th>Qty</th><th>Rate</th><th>Taxable Amount</th><th>GST %</th><th>Tax</th><th>Grand Total</th><th>Remark</th><th>Action</th></tr></thead><tbody></tbody></table></div>
 </div></section>
-
-
-<section id="vendorMaster" class="page"><div class="panel"><h2>Vendor Master</h2>
+<section class="page" id="vendorMaster"><div class="panel"><h2>Vendor Master</h2>
 <p>Job Work Vendor Master. અહીં Vendor add, suggestion અને delete functionality રહેશે.</p>
 <div class="autowrap" style="position:relative;max-width:500px">
-<input id="jwVendor" placeholder="Type Vendor Name">
-<div id="vendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto"></div>
+<input id="jwVendor" placeholder="Type Vendor Name"/>
+<div class="suggestbox" id="vendorSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto"></div>
 </div>
-<br><button class="primary" id="addVendorBtn">➕ Add Vendor to Master</button>
+<br/><button class="primary" id="addVendorBtn">➕ Add Vendor to Master</button>
 <table><thead><tr><th>Vendor</th><th>Action</th></tr></thead><tbody id="vendorTable"></tbody></table>
 </div></section>
-
-<section id="jobwork" class="page"><div class="panel"><h2>Vendor Job Work / Subcontracting</h2>
+<section class="page" id="jobwork"><div class="panel"><h2>Vendor Job Work / Subcontracting</h2>
 <p>Vendor Master → Raw Material Issue → Component Receive. Componentનું weight Item Masterમાંથી automatic આવશે.</p>
-
 <div id="jwIssueSectionV225">
-<hr><h3>🧱 Raw Material Issue to Vendor</h3><p class="small">Challan No. software automatic generate કરશે.</p>
+<hr/><h3>🧱 Raw Material Issue to Vendor</h3><p class="small">Challan No. software automatic generate કરશે.</p>
 <div class="grid">
-<input id="jwIssueDate" type="date" title="Issue Date"><div class="autowrap" style="position:relative"><input id="jwIssueVendor" placeholder="Type Vendor Name"><div id="issueVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
-<div class="autowrap" style="position:relative"><input id="jwRaw" placeholder="Type Raw Material"><div id="rawSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
-<input id="jwIssueQty" type="number" step="0.001" placeholder="Issue Qty">
-
-</div><br><button class="primary" id="jwIssueBtn">Issue Material</button><div class="msg" id="jwIssueMsg"></div>
-
+<input id="jwIssueDate" title="Issue Date" type="date"/><div class="autowrap" style="position:relative"><input id="jwIssueVendor" placeholder="Type Vendor Name"/><div class="suggestbox" id="issueVendorSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<div class="autowrap" style="position:relative"><input id="jwRaw" placeholder="Type Raw Material"/><div class="suggestbox" id="rawSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<input id="jwIssueQty" placeholder="Issue Qty" step="0.001" type="number"/>
+</div><br/><button class="primary" id="jwIssueBtn">Issue Material</button><div class="msg" id="jwIssueMsg"></div>
 </div>
-
-<div id="jwLastIssueHistoryV227" class="card" style="margin-top:16px">
-  <h3>📋 Last Transaction History — Raw Material Issue to Vendor</h3>
-  <div id="jwLastIssueHistoryTableV227">No transactions yet.</div>
+<div class="card" id="jwLastIssueHistoryV227" style="margin-top:16px">
+<h3>📋 Last Transaction History — Raw Material Issue to Vendor</h3>
+<div id="jwLastIssueHistoryTableV227">No transactions yet.</div>
 </div>
-
 <div id="jwReceiveSectionV225">
-<hr><h3>🔩 Component Receive from Vendor</h3><p class="small">Receive Challan No. software automatic generate કરશે.</p>
+<hr/><h3>🔩 Component Receive from Vendor</h3><p class="small">Receive Challan No. software automatic generate કરશે.</p>
 <div class="grid">
-<input id="jwReceiveDate" type="date" title="Receive Date">
-<div class="autowrap" style="position:relative"><input id="jwReceiveVendor" placeholder="Type Vendor Name"><div id="receiveVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
-<div class="autowrap" style="position:relative"><input id="jwComponent" placeholder="Type Component Name"><div id="componentSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
-<input id="jwComponentWeight" readonly placeholder="Weight / PCS (gram)">
-<input id="jwReceiveQty" type="number" step="0.001" placeholder="Receive Qty"><input id="jwJobRate" type="text" readonly placeholder="Auto Rate / PCS" title="Vendor + Component rate; component-only fallback if uniquely saved">
-<input id="jwTaxRate" type="number" step="0.01" value="18" placeholder="GST %">
-
+<input id="jwReceiveDate" title="Receive Date" type="date"/>
+<div class="autowrap" style="position:relative"><input id="jwReceiveVendor" placeholder="Type Vendor Name"/><div class="suggestbox" id="receiveVendorSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<div class="autowrap" style="position:relative"><input id="jwComponent" placeholder="Type Component Name"/><div class="suggestbox" id="componentSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<input id="jwComponentWeight" placeholder="Weight / PCS (gram)" readonly=""/>
+<input id="jwReceiveQty" placeholder="Receive Qty" step="0.001" type="number"/><input id="jwJobRate" placeholder="Auto Rate / PCS" readonly="" title="Vendor + Component rate; component-only fallback if uniquely saved" type="text"/>
+<input id="jwTaxRate" placeholder="GST %" step="0.01" type="number" value="18"/>
 </div>
 <p class="small">Raw Material Consumption = Component Weight × Receive Qty. Vendor પાસે issue થયેલા Raw Materialમાંથી આ quantity automatic deduct થશે.</p>
 <div class="msg" id="jwConsumption"></div><div class="msg" id="jwJobAmount"></div>
 <button class="primary" id="jwReceiveBtn">Receive Component</button><div class="msg" id="jwReceiveMsg"></div>
-
 </div>
-
-<hr><div id="vendorRawMaterialBalanceV230"><h3 style="font-size:22px;font-weight:800">Vendor Raw Material Balance</h3>
+<hr/><div id="vendorRawMaterialBalanceV230"><h3 style="font-size:22px;font-weight:800">Vendor Raw Material Balance</h3>
 <table><thead><tr><th>Vendor</th><th>Raw Material</th><th>Qty at Vendor</th><th>Unit</th></tr></thead><tbody id="jwTable"></tbody></table></div>
 </div></section>
-
-
-<section id="jwrates" class="page"><div class="panel"><h2>Job Work Rate Master</h2>
+<section class="page" id="jwrates"><div class="panel"><h2>Job Work Rate Master</h2>
 <p>Vendor + Component પ્રમાણે rate એકવાર save કરો. પછી Job Work Receive વખતે rate automatic આવશે.</p>
 <div class="grid">
-<div class="autowrap" style="position:relative"><input id="rateVendor" placeholder="Type Vendor Name"><div id="rateVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
-<div class="autowrap" style="position:relative"><input id="rateComponent" placeholder="Type Component Name"><div id="rateComponentSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
-<input id="rateValue" type="number" step="0.001" placeholder="Rate / PCS">
-</div><br>
+<div class="autowrap" style="position:relative"><input id="rateVendor" placeholder="Type Vendor Name"/><div class="suggestbox" id="rateVendorSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<div class="autowrap" style="position:relative"><input id="rateComponent" placeholder="Type Component Name"/><div class="suggestbox" id="rateComponentSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
+<input id="rateValue" placeholder="Rate / PCS" step="0.001" type="number"/>
+</div><br/>
 <button class="primary" id="addRateBtn">➕ Save Rate</button>
 <div class="msg" id="rateMsg"></div>
 <table><thead><tr><th>Vendor</th><th>Component</th><th>Rate / PCS</th><th>Action</th></tr></thead><tbody id="rateTable"></tbody></table>
 </div></section>
-
-<section id="accounting" class="page">
+<section class="page" id="accounting">
 <div class="panel">
 <h2>💰 Accounting</h2>
-
 <div id="receivePaymentSection" style="display:none">
-<hr>
+<hr/>
 <h3>🧾 Receive Payment</h3>
 <div class="grid">
-<div style="position:relative"><input id="accPaymentCustomer" placeholder="Type Customer Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearAccPayment" aria-label="Clear Received Payment" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button><div id="accPaymentCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
-<input id="accPaymentDate" type="date" title="Payment Date (editable)">
-<input id="accPaymentAmount" type="number" step="0.01" placeholder="Payment Amount">
+<div style="position:relative"><input autocomplete="off" id="accPaymentCustomer" placeholder="Type Customer Name" style="padding-right:36px"/><button aria-label="Clear Received Payment" id="clearAccPayment" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px" type="button">×</button><div id="accPaymentCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
+<input id="accPaymentDate" title="Payment Date (editable)" type="date"/>
+<input id="accPaymentAmount" placeholder="Payment Amount" step="0.01" type="number"/>
 <select id="accPaymentMode"><option>Cash</option><option>Bank</option><option>UPI</option><option>Cheque</option></select>
-<input id="accPaymentRef" placeholder="Reference / Remark">
-<button type="button" class="primary" id="accPaymentBtn">Save Payment</button>
+<input id="accPaymentRef" placeholder="Reference / Remark"/>
+<button class="primary" id="accPaymentBtn" type="button">Save Payment</button>
 </div>
 <div class="msg" id="accMsg"></div>
 </div>
-
 <div id="paySupplierSection" style="display:none">
-<hr>
+<hr/>
 <h3>💸 Pay Supplier / Vendor</h3>
 <div class="grid">
-<div style="position:relative"><input id="accPaySupplier" placeholder="Type Supplier / Vendor Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearAccPaySupplier" aria-label="Clear Supplier Payment" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button><div id="accPaySupplierSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
-<input id="accPaySupplierDate" type="date" title="Payment Date (editable)">
-<input id="accPaySupplierAmount" type="number" step="0.01" placeholder="Payment Amount">
+<div style="position:relative"><input autocomplete="off" id="accPaySupplier" placeholder="Type Supplier / Vendor Name" style="padding-right:36px"/><button aria-label="Clear Supplier Payment" id="clearAccPaySupplier" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px" type="button">×</button><div id="accPaySupplierSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
+<input id="accPaySupplierDate" title="Payment Date (editable)" type="date"/>
+<input id="accPaySupplierAmount" placeholder="Payment Amount" step="0.01" type="number"/>
 <select id="accPaySupplierMode"><option>Cash</option><option>Bank</option><option>UPI</option><option>Cheque</option></select>
-<input id="accPaySupplierRef" placeholder="Reference / Remark">
-<button type="button" class="primary" id="accPaySupplierBtn">Save Payment</button>
+<input id="accPaySupplierRef" placeholder="Reference / Remark"/>
+<button class="primary" id="accPaySupplierBtn" type="button">Save Payment</button>
 </div>
 <div class="msg" id="accPaySupplierMsg"></div>
 </div>
-
-<hr>
+<hr/>
 <h3>📊 Customer Account Summary</h3>
 <div class="grid">
 <div><b>Total Sales (Grand Total)</b><div id="accSales">₹0.00</div></div>
@@ -661,17 +603,15 @@ tr.low-stock-row td * {
 <div><b>Payment Received</b><div id="accReceived">₹0.00</div></div>
 <div><b>Due / Outstanding</b><div id="accDue">₹0.00</div></div>
 </div>
-<hr>
+<hr/>
 <table id="accTable" style="display:none">
 <thead><tr><th>Date</th><th>Type</th><th>Customer</th><th>Bill No. / Ref</th><th>Finished Good</th><th>Qty</th><th>Taxable Amount</th><th>Tax</th><th>Grand Total</th><th>Payment Mode</th><th>Remark</th></tr></thead>
 <tbody></tbody>
 </table>
-
-
 <section class="panel" id="mergedPartyLedger">
 <h3>📚 Combined Party Ledger (Customer + Supplier + Job Work Vendor)</h3>
 <div class="grid">
-<div style="position:relative"><input id="mergedPartyFilter" placeholder="Type Party Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearMergedPartyFilter" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer">×</button><div id="mergedPartySuggest" style="position:absolute;left:0;right:0;top:100%;z-index:99999;background:#fff;color:#111;border:1px solid #999;display:none;max-height:240px;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;font-size:15px;line-height:1.4;box-shadow:0 3px 8px rgba(0,0,0,.15);"></div></div>
+<div style="position:relative"><input autocomplete="off" id="mergedPartyFilter" placeholder="Type Party Name" style="padding-right:36px"/><button id="clearMergedPartyFilter" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer" type="button">×</button><div id="mergedPartySuggest" style="position:absolute;left:0;right:0;top:100%;z-index:99999;background:#fff;color:#111;border:1px solid #999;display:none;max-height:240px;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;font-size:15px;line-height:1.4;box-shadow:0 3px 8px rgba(0,0,0,.15);"></div></div>
 </div>
 <div id="mergedPartySummaryWrap" style="overflow:auto">
 <table id="mergedPartySummaryTable"><thead><tr><th>Party</th><th>Sales Receivable</th><th>Purchase Payable</th><th>Job Work Payable</th><th>Payment Received</th><th>Payment Given</th><th>Net Balance</th></tr></thead><tbody></tbody></table>
@@ -681,11 +621,10 @@ tr.low-stock-row td * {
 <table id="mergedPartyLedgerTable"><thead><tr><th>Date</th><th>Type</th><th>Reference</th><th>Debit</th><th>Credit</th><th>Balance</th><th>Remark</th></tr></thead><tbody></tbody></table>
 </div>
 </section>
-
 <section class="panel" id="customerDueSummary" style="display:none">
-<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h3>🔗 Customer-wise Party Balance</h3><button type="button" class="primary" id="downloadCustomerLedgerPdf">📄 Download PDF</button></div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h3>🔗 Customer-wise Party Balance</h3><button class="primary" id="downloadCustomerLedgerPdf" type="button">📄 Download PDF</button></div>
 <div class="grid">
-<div style="position:relative"><input id="dueCustomerFilter" placeholder="Type Customer Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearDueCustomerFilter" aria-label="Clear Customer" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button><div id="dueCustomerFilterSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
+<div style="position:relative"><input autocomplete="off" id="dueCustomerFilter" placeholder="Type Customer Name" style="padding-right:36px"/><button aria-label="Clear Customer" id="clearDueCustomerFilter" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px" type="button">×</button><div id="dueCustomerFilterSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
 </div>
 <div style="overflow:auto">
 <table id="customerDueTable">
@@ -696,7 +635,6 @@ tr.low-stock-row td * {
 </div>
 </section>
 </div>
-
 <section class="panel" id="partyLedgers" style="display:none">
 <h3>📚 Supplier / Job Work Vendor / Combined Due</h3>
 <div class="grid">
@@ -705,10 +643,10 @@ tr.low-stock-row td * {
 <div><b>Job Work Vendor Payable</b><div id="combinedJobworkDue">₹0.00</div></div>
 <div><b>Net Balance</b><div id="combinedNetDue">₹0.00</div></div>
 </div>
-<hr>
+<hr/>
 <h4>🏭 Supplier Ledger (Purchase + Raw Material)</h4>
 <div class="grid">
-<div style="position:relative"><input id="supplierLedgerFilter" placeholder="Type Supplier Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearSupplierLedgerFilter" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer">×</button><div id="supplierLedgerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
+<div style="position:relative"><input autocomplete="off" id="supplierLedgerFilter" placeholder="Type Supplier Name" style="padding-right:36px"/><button id="clearSupplierLedgerFilter" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer" type="button">×</button><div id="supplierLedgerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
 </div>
 <table id="supplierLedgerTable">
 <thead><tr><th>Supplier</th><th>Purchase / Material Value</th><th>Payment Given</th><th>Due</th></tr></thead>
@@ -722,10 +660,10 @@ tr.low-stock-row td * {
 <tfoot><tr><th colspan="6">Balance</th><th id="supplierLedgerDetailBalance">₹0.00</th><th colspan="2"></th></tr></tfoot>
 </table>
 </div>
-<hr>
+<hr/>
 <h4>🔧 Job Work Vendor Ledger</h4>
 <div class="grid">
-<div style="position:relative"><input id="vendorLedgerFilter" placeholder="Type Job Work Vendor Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearVendorLedgerFilter" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer">×</button><div id="vendorLedgerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
+<div style="position:relative"><input autocomplete="off" id="vendorLedgerFilter" placeholder="Type Job Work Vendor Name" style="padding-right:36px"/><button id="clearVendorLedgerFilter" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer" type="button">×</button><div id="vendorLedgerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:220px;overflow:auto"></div></div>
 </div>
 <table id="jobworkVendorLedgerTable">
 <thead><tr><th>Vendor</th><th>Job Work Value</th><th>Payment Given</th><th>Due</th></tr></thead>
@@ -733,30 +671,28 @@ tr.low-stock-row td * {
 </table>
 </section>
 </section>
-
-<section id="reports" class="page">
-<div id="v235ReportDashboard" class="panel v235-report-dashboard">
-  <div class="v235-report-hero">
-    <div class="v235-report-hero-icon">📄</div>
-    <div><h2>Reports Dashboard</h2><p>Select a report from the menu or use the quick buttons below.</p></div>
-  </div>
-  <div class="v235-report-cards">
-    <div class="v235-report-card"><div class="ico">🧾</div><h3>GST Report</h3><p>View GST summary and details</p><button type="button" data-v235-report="gst">Open Report</button></div>
-    <div class="v235-report-card"><div class="ico">🚚</div><h3>Despatch Report</h3><p>View sales / despatch details</p><button type="button" data-v235-report="dispatch">Open Report</button></div>
-    <div class="v235-report-card"><div class="ico">🛒</div><h3>Purchase Report</h3><p>View purchase inward details</p><button type="button" data-v235-report="purchase">Open Report</button></div>
-    <div class="v235-report-card"><div class="ico">🏭</div><h3>Production Report</h3><p>View production details</p><button type="button" data-v235-report="production">Open Report</button></div>
-    <div class="v235-report-card"><div class="ico">👥</div><h3>Job Work Report</h3><p>View job work transactions</p><button type="button" data-v235-report="jobwork">Open Report</button></div>
-  </div>
+<section class="page" id="reports">
+<div class="panel v235-report-dashboard" id="v235ReportDashboard">
+<div class="v235-report-hero">
+<div class="v235-report-hero-icon">📄</div>
+<div><h2>Reports Dashboard</h2><p>Select a report from the menu or use the quick buttons below.</p></div>
 </div>
-
-<section id="dispatchReportPanel" class="panel">
+<div class="v235-report-cards">
+<div class="v235-report-card"><div class="ico">🧾</div><h3>GST Report</h3><p>View GST summary and details</p><button data-v235-report="gst" type="button">Open Report</button></div>
+<div class="v235-report-card"><div class="ico">🚚</div><h3>Despatch Report</h3><p>View sales / despatch details</p><button data-v235-report="dispatch" type="button">Open Report</button></div>
+<div class="v235-report-card"><div class="ico">🛒</div><h3>Purchase Report</h3><p>View purchase inward details</p><button data-v235-report="purchase" type="button">Open Report</button></div>
+<div class="v235-report-card"><div class="ico">🏭</div><h3>Production Report</h3><p>View production details</p><button data-v235-report="production" type="button">Open Report</button></div>
+<div class="v235-report-card"><div class="ico">👥</div><h3>Job Work Report</h3><p>View job work transactions</p><button data-v235-report="jobwork" type="button">Open Report</button></div>
+</div>
+</div>
+<section class="panel" id="dispatchReportPanel">
 <h2>🚚 Dispatch Report</h2>
 <div class="grid">
-<input id="dispatchReportFromMain" type="date">
-<input id="dispatchReportToMain" type="date">
-<div style="position:relative"><div style="position:relative"><input id="dispatchReportCustomerMain" placeholder="Type Customer Name" autocomplete="off" style="padding-right:34px"><button type="button" id="clearDispatchReportCustomer" aria-label="Clear Customer" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px">×</button></div><div id="dispatchReportCustomerMainSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
-<div style="position:relative"><div style="position:relative"><input id="dispatchReportItemMain" placeholder="Type Finished Good" autocomplete="off" style="padding-right:34px"><button type="button" id="clearDispatchReportItem" aria-label="Clear Finished Good" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px">×</button></div><div id="dispatchReportItemMainSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
-<button type="button" class="primary" id="dispatchReportMainBtn">Generate Dispatch Report</button><button type="button" id="printDispatchReportMain">🖨 Print / PDF</button>
+<input id="dispatchReportFromMain" type="date"/>
+<input id="dispatchReportToMain" type="date"/>
+<div style="position:relative"><div style="position:relative"><input autocomplete="off" id="dispatchReportCustomerMain" placeholder="Type Customer Name" style="padding-right:34px"/><button aria-label="Clear Customer" id="clearDispatchReportCustomer" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px" type="button">×</button></div><div id="dispatchReportCustomerMainSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
+<div style="position:relative"><div style="position:relative"><input autocomplete="off" id="dispatchReportItemMain" placeholder="Type Finished Good" style="padding-right:34px"/><button aria-label="Clear Finished Good" id="clearDispatchReportItem" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px" type="button">×</button></div><div id="dispatchReportItemMainSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
+<button class="primary" id="dispatchReportMainBtn" type="button">Generate Dispatch Report</button><button id="printDispatchReportMain" type="button">🖨 Print / PDF</button>
 </div>
 <div class="msg" id="dispatchReportMainMsg"></div>
 <div style="overflow:auto">
@@ -766,15 +702,14 @@ tr.low-stock-row td * {
 <tfoot><tr><th colspan="4">Total</th><th id="dispatchReportMainQty">0.000</th><th></th><th id="dispatchReportMainAmount">₹0.00</th><th></th></tr></tfoot>
 </table></div>
 </section>
-
-<section id="purchaseReportPanel" class="panel">
+<section class="panel" id="purchaseReportPanel">
 <h2>🧾 Purchase Report</h2>
 <div class="grid">
-<div style="position:relative"><input id="purchaseReportFrom" type="date"><button type="button" id="clear_purchaseReportFrom" aria-label="Clear" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px">×</button></div>
-<div style="position:relative"><input id="purchaseReportTo" type="date"><button type="button" id="clear_purchaseReportTo" aria-label="Clear" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px">×</button></div>
-<div style="position:relative"><div style="position:relative"><input id="purchaseReportSupplier" placeholder="Type Supplier Name" autocomplete="off" style="padding-right:34px"><button type="button" id="clear_purchaseReportSupplier" aria-label="Clear" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px">×</button></div><div id="purchaseReportSupplierSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
-<button type="button" class="primary" id="generatePurchaseReport">Generate Purchase Report</button>
-<button type="button" id="printPurchaseReport">🖨 Print</button>
+<div style="position:relative"><input id="purchaseReportFrom" type="date"/><button aria-label="Clear" id="clear_purchaseReportFrom" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px" type="button">×</button></div>
+<div style="position:relative"><input id="purchaseReportTo" type="date"/><button aria-label="Clear" id="clear_purchaseReportTo" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px" type="button">×</button></div>
+<div style="position:relative"><div style="position:relative"><input autocomplete="off" id="purchaseReportSupplier" placeholder="Type Supplier Name" style="padding-right:34px"/><button aria-label="Clear" id="clear_purchaseReportSupplier" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px" type="button">×</button></div><div id="purchaseReportSupplierSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div>
+<button class="primary" id="generatePurchaseReport" type="button">Generate Purchase Report</button>
+<button id="printPurchaseReport" type="button">🖨 Print</button>
 </div>
 <div class="msg" id="purchaseReportMsg"></div>
 <div style="overflow:auto">
@@ -786,26 +721,25 @@ tr.low-stock-row td * {
 </div>
 </section>
 <div class="panel" id="productionReportPanel">
-  <h2>🏭 Production Report</h2>
-  <div class="grid">
-    <input id="prodReportFrom" type="date" placeholder="From Date">
-    <input id="prodReportTo" type="date" placeholder="To Date">
-    <div style="position:relative"><div style="position:relative"><input id="prodReportProduct" placeholder="Type Product Name" autocomplete="off" style="padding-right:34px"><button type="button" id="clear_prodReportProduct" aria-label="Clear" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px">×</button></div><div id="prodReportProductSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto;box-shadow:0 3px 8px rgba(0,0,0,.18)"></div></div>
-    <button class="primary" id="generateProductionReport">Generate Production Report</button>
-    <button id="printProductionReport">🖨 Print</button>
-  </div>
-  <div class="msg" id="productionReportMsg"></div>
-  <div style="overflow:auto">
-    <table id="productionReportTable">
-      <thead><tr>
-        <th>Date</th><th>Challan / Ref</th><th>Finished Product</th><th>Qty</th><th>Unit</th>
-      </tr></thead>
-      <tbody><tr><td colspan="5">Generate report</td></tr></tbody>
-    </table>
-  </div>
-  <div style="margin-top:10px"><b>Total Production: <span id="productionReportTotal">0.000</span> PCS</b></div>
+<h2>🏭 Production Report</h2>
+<div class="grid">
+<input id="prodReportFrom" placeholder="From Date" type="date"/>
+<input id="prodReportTo" placeholder="To Date" type="date"/>
+<div style="position:relative"><div style="position:relative"><input autocomplete="off" id="prodReportProduct" placeholder="Type Product Name" style="padding-right:34px"/><button aria-label="Clear" id="clear_prodReportProduct" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:20px;cursor:pointer;padding:2px 7px" type="button">×</button></div><div id="prodReportProductSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;display:none;max-height:220px;overflow:auto;box-shadow:0 3px 8px rgba(0,0,0,.18)"></div></div>
+<button class="primary" id="generateProductionReport">Generate Production Report</button>
+<button id="printProductionReport">🖨 Print</button>
 </div>
-
+<div class="msg" id="productionReportMsg"></div>
+<div style="overflow:auto">
+<table id="productionReportTable">
+<thead><tr>
+<th>Date</th><th>Challan / Ref</th><th>Finished Product</th><th>Qty</th><th>Unit</th>
+</tr></thead>
+<tbody><tr><td colspan="5">Generate report</td></tr></tbody>
+</table>
+</div>
+<div style="margin-top:10px"><b>Total Production: <span id="productionReportTotal">0.000</span> PCS</b></div>
+</div>
 <div class="panel reportArea" id="jobWorkMonthlyReportPanel">
 <h2>Job Work Monthly Report</h2>
 <div class="grid noPrint">
@@ -821,9 +755,9 @@ tr.low-stock-row td * {
 </table>
 </div>
 </section>
-<section id="stock" class="page"><div class="panel"><h2>Stock & Transaction History</h2>
+<section class="page" id="stock"><div class="panel"><h2>Stock &amp; Transaction History</h2>
 <table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Unit</th><th>Weight g</th><th>Stock</th><th>Action</th></tr></thead><tbody id="stockTable"></tbody></table>
-<hr><table><thead><tr><th>Date</th><th>Type</th><th>Ref</th><th>Item</th><th>Qty</th><th>Action</th></tr></thead><tbody id="transactionTable"></tbody></table>
+<hr/><table><thead><tr><th>Date</th><th>Type</th><th>Ref</th><th>Item</th><th>Qty</th><th>Action</th></tr></thead><tbody id="transactionTable"></tbody></table>
 </div></section>
 </main>
 <script>function fmtRate2(v){const n=Number(v);return Number.isFinite(n)?n.toFixed(2):'0.00';}
@@ -3598,7 +3532,6 @@ document.addEventListener('DOMContentLoaded',function(){
   bind('generateProductionReport',window._generateProductionReport);
 });
 </script>
-
 <script>
 (function(){
  function bindPurchaseReport(){
@@ -3609,7 +3542,6 @@ document.addEventListener('DOMContentLoaded',function(){
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindPurchaseReport);else bindPurchaseReport();
 })();
 </script>
-
 <script>
 (function(){
  function bind(id,fn){
@@ -3620,7 +3552,6 @@ document.addEventListener('DOMContentLoaded',function(){
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
-
 <script>
 (function restoreSuggestionsAndDateV97(){
   function today(id){
@@ -3642,7 +3573,6 @@ document.addEventListener('DOMContentLoaded',function(){
   else run();
 })();
 </script>
-
 <script>
 (function(){
  const run=()=>{try{applyLowStockHighlightV101()}catch(e){}};
@@ -3650,7 +3580,6 @@ document.addEventListener('DOMContentLoaded',function(){
  setInterval(run,1000);
 })();
 </script>
-
 <script>
 (function(){
   function updateOnlineStatus(){
@@ -3907,8 +3836,6 @@ onAuthStateChanged(auth, user => {
   }
 });
 </script>
- 
-
 <section id="sentidosBackupPanel" style="display:none"></section>
 <script id="sentidosBackupV114">
 (function(){
@@ -3922,7 +3849,6 @@ onAuthStateChanged(auth, user => {
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){addPanel();loadGoogle();});else{addPanel();loadGoogle();}
 })();
 </script>
-
 <script>
 /* V152: Dashboard Total Sales -> Month Wise -> Customer Wise */
 (function(){
@@ -4541,7 +4467,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  setTimeout(bind,4500);
 })();
 </script>
-
 <script>
 /* V162: Hide old Complete Transaction Detail in Combined Party Ledger */
 (function(){
@@ -4581,7 +4506,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   new MutationObserver(hideOldTransactionDetail).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
-
 <script>
 /* V163: Bill/Reference Summary - hide Type, Item/Component and Qty */
 (function(){
@@ -4620,7 +4544,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   new MutationObserver(fix).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
-
 <script>
 /* V164: Ensure existing purchase/inward/job-work records also carry default 18% GST. */
 (function(){
@@ -4650,7 +4573,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   else setTimeout(init,700);
 })();
 </script>
-
 <script>
 /* V165: Historical Accounting GST backfill - default 18% */
 (function(){
@@ -4696,7 +4618,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   else setTimeout(backfillHistoricalGST,900);
 })();
 </script>
-
 <script>
 /* V166: Every generated report gets an X to hide its result without hiding
    the report/filter module. Generate again to show the report. */
@@ -4783,7 +4704,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   new MutationObserver(()=>init()).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
-
 <style id="v167-report-close-style">
 .v167-report-result{position:relative;margin-top:8px}
 .v167-report-close{
@@ -4889,7 +4809,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
-
 <style id="v168-gst-style">
 #v168GSTReport{margin-top:18px}
 #v168GSTReport table{width:100%;border-collapse:collapse;min-width:1050px}
@@ -5254,7 +5173,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   new MutationObserver(()=>{addButton()}).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
-
 <script>
 /* V169: GST Report Print + Excel/CSV download */
 (function(){
@@ -5444,7 +5362,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   new MutationObserver(addActions).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
-
 <style id="v170-vertical-module-menu">
 /* V170: Desktop module navigation -> left vertical sidebar */
 @media (min-width: 900px){
@@ -5501,7 +5418,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 }
 </style>
-
 <style id="v171-sidebar">
 /* V171: Real left sidebar; selected module opens in the main area to its right. */
 @media (min-width:900px){
@@ -5562,7 +5478,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   .tabs{display:none!important}
 }
 </style>
-
 <script>
 /* V171: module navigation */
 (function(){
@@ -5589,7 +5504,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   new MutationObserver(bindModules).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
-
 <style id="v172-item-submenu">
 @media (min-width:900px){
   #v172ItemSubmenu{
@@ -5636,7 +5550,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   #v174RawSubmenu button:hover{background:#dce5ed}
 }
 </style>
-
 <script>
 /* V172: Item Master sidebar submenu; Add Item opens the Item form. */
 (function(){
@@ -5798,7 +5711,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <script>
 /* V176: Add Stock submenu label changed to Material Inward. */
 </script>
-
 <script>
 /* V177: Raw Material Master fields open only after its submenu selection. */
 (function(){
@@ -5856,9 +5768,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   new MutationObserver(bind).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
-
-
-
 <script>
 /* V183: Clean single X controls on the right side of Raw Material sections. */
 (function(){
@@ -5943,7 +5852,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <script>
 /* V186: V183 base — existing single X buttons moved to far right. */
 </script>
-
 <script>
 /* V187: Raw Material Name submenu toggles its fields open/closed. */
 (function(){
@@ -5978,7 +5886,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   [300,800,1500].forEach(t=>setTimeout(setup,t));
 })();
 </script>
-
 <script>
 /* V188: Material Inward submenu toggles its fields open/closed like Raw Material Name. */
 (function(){
@@ -6021,7 +5928,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   [300,800,1500].forEach(t=>setTimeout(setup,t));
 })();
 </script>
-
 <script>
 /* V189: Item Master Add Item submenu toggles its form open/closed. */
 (function(){
@@ -6063,18 +5969,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   [300,800,1500].forEach(t=>setTimeout(setup,t));
 })();
 </script>
-
 <script>/* V204: Party ledger shows Amount/GST/Bill totals and signed Pending Due balance for every entry. */</script>
-
 <script>
 /* V205: Based on V204. Running Pending Balance uses DB for debit and CR for credit. */
 </script>
 <script>/* V206: Based on V205. Bill Summary running Pending Balance DB/CR. */</script>
-
 <script>/* V207: Explicit Debit Total and Credit Total labels. Based on V206. */</script>
-
-
-
 <script>
 /* V216 — Fix Accounting + submenu + field toggle. Based on V215. */
 (function(){
@@ -6130,9 +6030,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   [300,800,1500].forEach(t=>setTimeout(initV216,t));
 })();
 </script>
-
-
-
 <script>
 /* V219: Final Accounting submenu fix.
    Uses explicit class/attribute state and prevents older handlers from
@@ -6207,7 +6104,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   else initV219();
 })();
 </script>
-
 <script>
 /* V220: Master menu. Clicking Master toggles all Master submenus. */
 (function(){
@@ -6227,11 +6123,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV220Master);else initV220Master();
 })();
 </script>
-
 <!-- V222: Vendor Master moved from Job Work page into Master submenu as a separate page. -->
-
 <!-- V223: Fixed Vendor Master list rendering below the Vendor Master form. Based on V222. -->
-
 <script>
 /* V225: Job Work submenu. Job Work toggles two entry sections. */
 (function(){
@@ -6271,7 +6164,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV225JobWork);else initV225JobWork();
 })();
 </script>
-
 <!-- V226: Job Work submenu labels updated: removed 1./2. numbering and kept suitable icons. Based on V225. -->
 <script>
 /* V226: Raw Material Issue Date added. */
@@ -6286,7 +6178,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  else setIssueDate();
 })();
 </script>
-
 <script>
 /* V227: Job Work side last transaction history for Raw Material Issue to Vendor. */
 (function(){
@@ -6349,9 +6240,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   setInterval(renderJWLastIssueHistoryV227,1000);
 })();
 </script>
-
 <!-- V227: Job Work module now shows Raw Material Issue to Vendor last transaction history. Based on V226. -->
-
 <style id="v228VendorRawBalanceStyle">
 /* V228: Vendor Raw Material Balance red + bold + larger font. */
 #jwTable td:nth-child(3), #jwTable td:nth-child(4) {
@@ -6360,7 +6249,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   font-weight: 800 !important;
 }
 </style>
-
 <script id="v231ReportMenuScript">
 /* V231: Report is the main menu; all report modules are submenus. */
 (function(){
@@ -6466,9 +6354,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   else initV231();
 })();
 </script>
-
-
-
 <script id="v255BackupSideMenuScript">
 (function(){
   function init(){
@@ -6489,7 +6374,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
-
 <style id="v257SideMenuStyle">
 /* V257: fixed side menu order and stronger menu look */
 .tabs > button, .tabs > div > button {
@@ -6532,27 +6416,18 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 </body></html>
-
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
      Totals are calculated directly from party detail rows. Based on V207. -->
-
 <!-- V209: KSP Polytech accounting ledger fix.
      Purchase/inward ledger bill amount now includes GST: Net + GST. -->
-
 <!-- V210: KSP Polytech Job Work Receive Bill Total fix.
      GST is added to net/job amount for Bill Total, including older entries. -->
-
 <!-- V211: Accounting tab click toggles Receive Payment / Pay Supplier-Vendor submenu. Based on V210. -->
-
 <!-- V212: Accounting moved to side expandable menu with Receive Payment and Pay Supplier/Vendor underneath. Based on V211. -->
-
 <!-- V213: Removed arrow beside Accounting. Submenu remains directly below Accounting. Based on V212. -->
-
 <!-- V214: Accounting submenu visibility fixed. Receive Payment and Pay Supplier/Vendor appear directly below Accounting. Based on V213. -->
-
 <!-- V215: Accounting click toggles submenu; Receive Payment and Pay Supplier/Vendor each toggle their own fields. Based on V214. -->
-
 <!-- V249: GST close X moved higher above Purchase GST heading. -->
-  <!-- V252: Added Payable GST = Purchase GST - Sale GST with green positive / red negative styling. -->
+<!-- V252: Added Payable GST = Purchase GST - Sale GST with green positive / red negative styling. -->
 <!-- V253: Added cumulative GST Balance month-wise. Each month adds/subtracts its Payable GST from the previous balance. -->
 <!-- V254: GST Total rows made bold/big with enhanced look; Generate button upgraded. -->
