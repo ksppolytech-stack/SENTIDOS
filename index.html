@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V248 - Firebase Online Sync</title>
+<title>Sentidos ERP V253 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -34,6 +34,9 @@ main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-w
 .v252PayableGST{font-weight:700;}
 .v252PayableGST.v252Positive{color:#178a43 !important;}
 .v252PayableGST.v252Negative{color:#c62828 !important;}
+.v253GSTBalance{font-weight:700;}
+.v253GSTBalance.v253Positive{color:#178a43 !important;}
+.v253GSTBalance.v253Negative{color:#c62828 !important;}
 </style>
 <style>
 .payment-due{color:#c62828;font-weight:700}
@@ -4956,7 +4959,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         <table>
           <thead><tr>
             <th>Month</th><th>Purchase Taxable</th><th>Sale Taxable</th>
-            <th>Sale GST</th><th>Purchase GST</th><th>Payable GST</th>
+            <th>Sale GST</th><th>Purchase GST</th><th>Payable GST</th><th>GST Balance</th>
           </tr></thead>
           <tbody id="v243GSTMonthBody"></tbody>
           <tfoot id="v243GSTMonthFoot"></tfoot>
@@ -5095,25 +5098,38 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const tx=getTx().filter(t=>selected==='ALL'||String(t.date||'').slice(5,7)===selected);
       const rows=aggregate(tx,false).sort((a,b)=>a.key.localeCompare(b.key));
 
+      let runningBalance=0;
       $('v243GSTMonthBody').innerHTML=rows.map(x=>{
         const [y,m]=x.key.split('-');
         const label=(y && m && Number(y)>1900 && Number(m)>=1 && Number(m)<=12)
           ? new Date(Number(y),Number(m)-1,1).toLocaleString('en-IN',{month:'long',year:'numeric'})
           : 'Unknown Month';
+        const payable=x.purchaseGST-x.saleGST;
+        runningBalance+=payable;
+        const pCls=payable>=0?'v252Positive':'v252Negative';
+        const bCls=runningBalance>=0?'v253Positive':'v253Negative';
         return `<tr data-gst-month="${m}" style="cursor:pointer">
           <td style="text-align:left;font-weight:700">${esc(label)}</td>
           <td>${money(x.purchase)}</td><td>${money(x.sale)}</td>
-          <td>${money(x.saleGST)}</td><td>${money(x.purchaseGST)}</td><td class="v252PayableGST">${money(x.purchaseGST-x.saleGST)}</td>
+          <td>${money(x.saleGST)}</td><td>${money(x.purchaseGST)}</td>
+          <td class="v252PayableGST ${pCls}">${money(payable)}</td>
+          <td class="v253GSTBalance ${bCls}">${money(runningBalance)}</td>
         </tr>`;
-      }).join('') || '<tr><td colspan="6">No GST entries found.</td></tr>';
+      }).join('') || '<tr><td colspan="7">No GST entries found.</td></tr>';
 
       const totals=rows.reduce((a,x)=>({
         purchase:a.purchase+x.purchase,sale:a.sale+x.sale,saleGST:a.saleGST+x.saleGST,
         purchaseTotal:a.purchaseTotal+x.purchaseTotal,purchaseGST:a.purchaseGST+x.purchaseGST
       }),{purchase:0,sale:0,saleGST:0,purchaseTotal:0,purchaseGST:0});
+      const totalPayable=totals.purchaseGST-totals.saleGST;
+      const totalBalance=totalPayable;
+      const totalPayableCls=totalPayable>=0?'v252Positive':'v252Negative';
+      const totalBalanceCls=totalBalance>=0?'v253Positive':'v253Negative';
       $('v243GSTMonthFoot').innerHTML=`<tr>
         <th>Total</th><th>${money(totals.purchase)}</th><th>${money(totals.sale)}</th>
-        <th>${money(totals.saleGST)}</th><th>${money(totals.purchaseGST)}</th><th class="v252PayableGST">${money(totals.purchaseGST-totals.saleGST)}</th>
+        <th>${money(totals.saleGST)}</th><th>${money(totals.purchaseGST)}</th>
+        <th class="v252PayableGST ${totalPayableCls}">${money(totalPayable)}</th>
+        <th class="v253GSTBalance ${totalBalanceCls}">${money(totalBalance)}</th>
       </tr>`;
 
       $('v243GSTCustomerSection').style.display='none';
@@ -6394,3 +6410,4 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 <!-- V249: GST close X moved higher above Purchase GST heading. -->
   <!-- V252: Added Payable GST = Purchase GST - Sale GST with green positive / red negative styling. -->
+<!-- V253: Added cumulative GST Balance month-wise. Each month adds/subtracts its Payable GST from the previous balance. -->
