@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V238 - Firebase Online Sync</title>
+<title>Sentidos ERP V239 - Firebase Online Sync</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -212,7 +212,7 @@ tr.low-stock-row td * {
   </div>
 </div>
  
- <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V238</b> — Firebase Online Sync enabled.</div>
+ <div id="versionInfo" style="font-size:12px;padding:5px 10px;text-align:center"><b>Sentidos ERP V239</b> — Firebase Online Sync enabled.</div>
 <header><b>Sentidos — Inventory</b></header>
 <main>
 <div class="tabs">
@@ -4953,18 +4953,31 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
       <div class="grid" style="margin-top:10px">
         <div>
-          <label>From Date</label>
-          <input type="date" id="v234GSTFrom">
-        </div>
-        <div>
-          <label>To Date</label>
-          <input type="date" id="v234GSTTo">
+          <label>Month</label>
+          <select id="v239GSTMonth">
+            <option value="ALL">All Month</option>
+            <option value="01">January</option>
+            <option value="02">February</option>
+            <option value="03">March</option>
+            <option value="04">April</option>
+            <option value="05">May</option>
+            <option value="06">June</option>
+            <option value="07">July</option>
+            <option value="08">August</option>
+            <option value="09">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
         </div>
         <div style="align-self:end">
           <button type="button" id="v168GSTGenerate">Generate GST Report</button>
         </div>
       </div>
 
+      <div id="v239GSTMonthLabel" class="small" style="margin-top:8px;font-weight:700">
+        Month: All Month
+      </div>
       <div style="overflow:auto;margin-top:12px">
         <table>
           <thead><tr>
@@ -4981,16 +4994,18 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       </div>`;
 
     const today=new Date();
-    const yyyy=today.getFullYear();
-    const mm=String(today.getMonth()+1).padStart(2,'0');
-    const dd=String(today.getDate()).padStart(2,'0');
-    const todayStr=`${yyyy}-${mm}-${dd}`;
-    $('v234GSTFrom').value=`${yyyy}-${mm}-01`;
-    $('v234GSTTo').value=todayStr;
+    const currentMonth=String(today.getMonth()+1).padStart(2,'0');
+    $('v239GSTMonth').value='ALL';
 
     function fill(){
-      const from=$('v234GSTFrom').value;
-      const to=$('v234GSTTo').value;
+      const month=$('v239GSTMonth').value;
+      const monthNames={
+        ALL:'All Month',01:'January',02:'February',03:'March',04:'April',
+        05:'May',06:'June',07:'July',08:'August',09:'September',
+        10:'October',11:'November',12:'December'
+      };
+      const ml=$('v239GSTMonthLabel');
+      if(ml)ml.textContent='Month: '+(monthNames[month]||'All Month');
 
       const tx=read('adr_tx_v2');
       const filtered=tx.filter(t=>{
@@ -4998,8 +5013,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         return ['DISPATCH','RAW MATERIAL SALE','PURCHASE','RAW MATERIAL PURCHASE',
           'RAW MATERIAL COMPANY INWARD','JOB WORK RECEIVE'].includes(type);
       }).filter(t=>{
+        if(month==='ALL') return true;
         const d=String(t.date||'').slice(0,10);
-        return (!from||d>=from)&&(!to||d<=to);
+        return d.slice(5,7)===month;
       });
 
       const map=new Map();
@@ -5088,6 +5104,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
     fill();
     $('v168GSTGenerate').onclick=fill;
+    $('v239GSTMonth').onchange=fill;
     $('v168GSTClose').onclick=()=>panel.style.display='none';
   }
 
