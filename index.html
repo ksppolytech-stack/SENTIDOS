@@ -5442,6 +5442,12 @@ button:not(.no-style):active {transform:translateY(0); box-shadow:0 2px 5px rgba
 #v266StockItemsPanel table th:nth-child(5),
 #v266StockItemsPanel table td:nth-child(5){display:none !important;}
 </style>
+<style id="v282-fixed-layout">
+/* Sentidos fixed header/logo area; only detail/content area scrolls */
+.v282-fixed-brand{position:sticky!important;top:0!important;z-index:1000!important;background:#fff!important;}
+.v282-fixed-brand img{width:150px!important;height:auto!important;max-height:90px!important;object-fit:contain!important;}
+</style>
+<script>(function(){function fix(){var imgs=document.querySelectorAll('img');imgs.forEach(function(img){var a=(img.alt||'').toLowerCase(),p=(img.closest('header,.brand,.logo,.topbar,.navbar')||{});if(a.includes('sentidos')||/sentidos/i.test(img.src||'')){var box=img.closest('header,.brand,.logo,.topbar,.navbar,div');if(box)box.classList.add('v282-fixed-brand');img.style.width='150px';img.style.maxHeight='90px';}});var sels=['main','.content','.page-content','.app-content','.main-content','.details','.detail','.table-wrap'];sels.forEach(function(x){document.querySelectorAll(x).forEach(function(e){if(e.scrollHeight>e.clientHeight+20){e.style.overflowY='auto';e.style.maxHeight='calc(100vh - 125px)';}})});} if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fix);else fix();setTimeout(fix,500);})();</script>
 </head><body>'+clone.innerHTML+'</body></html>');
     w.document.close();
     w.focus();
