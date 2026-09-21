@@ -916,6 +916,7 @@ function msg(id,text){$(id).textContent=text;}
 
 document.querySelectorAll('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
  const target=$(btn.dataset.page);if(!target)return;
+ if(btn.dataset.page!=='dashboard') hideDashboardDetailsOnNavigation();
  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
  target.classList.add('active');
  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
@@ -1861,6 +1862,14 @@ function showDashboardFilter(type){
 }
 function setupDashboardCards(){
  document.querySelectorAll('.dashCard').forEach(c=>c.onclick=()=>showDashboardFilter(c.dataset.filter));
+}
+
+// V286: Always hide Dashboard detail list when navigating to another module.
+function hideDashboardDetailsOnNavigation(){
+ const box=document.getElementById('dashboardDetails');
+ if(box) box.style.display='none';
+ const body=document.getElementById('dashboardDetailsTable');
+ if(body) body.innerHTML='';
 }
 function editPurchase(id){
  const t=transactions.find(x=>String(x.id)===String(id));
@@ -6564,6 +6573,18 @@ button:not(.no-style):active {transform:translateY(0); box-shadow:0 2px 5px rgba
  });
  showItems();
 })();
+
+// V286: Hide Dashboard's opened Total Items/details list whenever any other menu/action is selected.
+document.addEventListener('click',function(e){
+ const el=e.target.closest('button, [data-page]');
+ if(!el) return;
+ const page=el.getAttribute('data-page');
+ const isDashboard=page==='dashboard';
+ const isDashboardCard=!!el.closest('#dashboard .dashCard');
+ if(isDashboardCard || isDashboard) return;
+ const isNavigation=!!page || !!el.closest('.tabs') || /^(v231ReportBtn|v255BackupBtn|v266StockBtn|v266StockTransactionBtn|v225JobWorkBtn|v220MasterBtn|v212AccountingSideBtn|openReceivePaymentBtn|openPaySupplierBtn)$/.test(el.id||'');
+ if(isNavigation) hideDashboardDetailsOnNavigation();
+},true);
 </script>
 </body></html>
 
