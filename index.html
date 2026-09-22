@@ -4021,7 +4021,7 @@ function openCustomers(k){
  (r.map(t=>'<tr><td>'+esc(t.date||'')+'</td><td>'+esc(t.customer||'')+'</td><td>'+esc(t.billNo||t.ref||'')+'</td><td>'+esc(t.itemName||t.item||'')+'</td><td>'+Math.abs(+t.qty||0)+'</td><td>'+money(t.dispatchRate)+'</td><td>'+money(t.amount)+'</td><td>'+money(t.tax)+'</td><td>'+money(grand(t))+'</td></tr>').join('')||'<tr><td colspan="9">No transactions found</td></tr>')+
  '</tbody></table>';d.scrollIntoView({behavior:'smooth',block:'start'})
 }
-function install(){let card=document.querySelector('#dashboard .dashCard[data-filter="sales"]');if(!card)return;card.onclick=openSales;card.style.cursor='pointer';card.title='Click for month-wise sales history'}
+function install(){}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(install,1000));else setTimeout(install,1000);
 })();
 </script>
@@ -4055,7 +4055,7 @@ d.innerHTML='<hr><h3>🏭 Supplier Wise Purchase - '+esc(mn(k))+'</h3><table><th
 (r.map(t=>'<tr><td>'+esc(t.date||'')+'</td><td>'+esc(t.supplier||t.vendor||'')+'</td><td>'+esc(t.invoiceRef||t.billNo||t.ref||'')+'</td><td>'+esc(t.itemName||t.item||'')+'</td><td>'+Math.abs(+t.qty||0)+'</td><td>'+money(t.rate||t.purchaseRate||t.unit)+'</td><td>'+money(pa(t))+'</td><td>'+money(t.tax)+'</td><td>'+money(pg(t))+'</td></tr>').join('')||'<tr><td colspan="9">No transactions found</td></tr>')+
 '</tbody></table>';d.scrollIntoView({behavior:'smooth',block:'start'})
 }
-function install(){const d=document.getElementById('dashboard');if(!d)return;[...d.querySelectorAll('*')].forEach(e=>{if(e.children.length<=4&&/^Total Purchase$/i.test((e.textContent||'').trim())){e.style.cursor='pointer';e.title='Click for month-wise purchase history';e.addEventListener('click',openPurchase,true)}})}
+function install(){}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(install,1000));else setTimeout(install,1000);
 })();
 </script>
@@ -6587,53 +6587,64 @@ document.addEventListener('click',function(e){
 },true);
 </script>
 
-<script>
-/* V293: Single, self-contained Dashboard card controller. */
+
+<script id="v293DashboardController">
 (function(){
-  function byId(id){return document.getElementById(id)}
-  function clearDetail(){
-    const b=byId('dashboardDetails');
-    const t=byId('dashboardDetailsTable');
-    if(b){b.style.display='none';b.removeAttribute('data-dash-open')}
-    if(t)t.innerHTML='';
+  function clear(){
+    const b=document.getElementById('dashboardDetails');
+    if(b){b.style.display='none';b.removeAttribute('data-dashboard-filter');}
+    const t=document.getElementById('dashboardDetailsTable'); if(t)t.innerHTML='';
+    ['v152SalesBox','v153PurchaseBox'].forEach(id=>{const x=document.getElementById(id);if(x)x.remove();});
   }
-  function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-  function rowsFor(type){
-    const tx=Array.isArray(window.transactions)?window.transactions:[];
-    const it=Array.isArray(window.items)?window.items:[];
-    const rm=Array.isArray(window.rawMaterials)?window.rawMaterials:[];
-    if(type==='all') return {title:'Total Items — Details', heads:['Code','Name','Category','Unit','Stock'], rows:it.map(x=>[x.code,x.name,x.cat,x.unit,x.stock])};
-    if(type==='sales') return {title:'Total Sales — Details', heads:['Date','Customer','Item','Qty','Amount','GST','Total'], rows:tx.filter(x=>String(x.type||'').toUpperCase()==='DISPATCH').slice().reverse().map(x=>{const q=Math.abs(Number(x.qty)||0),a=Number(x.amount??q*Number(x.dispatchRate??x.rate??0))||0,g=Number(x.tax??a*Number(x.taxRate||0)/100)||0;return [x.date,x.customer,x.itemName||x.item,q.toFixed(3),a.toFixed(2),g.toFixed(2),(Number(x.grandTotal??a+g)).toFixed(2)]})};
-    if(type==='purchase') return {title:'Total Purchase — Details', heads:['Date','Supplier','Item','Qty','Rate','Amount'], rows:tx.filter(x=>['PURCHASE','RAW MATERIAL PURCHASE','RAW MATERIAL COMPANY INWARD'].includes(String(x.type||'').toUpperCase())).slice().reverse().map(x=>{const q=Math.abs(Number(x.qty)||0),r=Number(x.purchaseRate??x.inwardRate??x.rate||0),a=Number(x.amount??q*r)||0;return [x.date,x.supplier||x.supplierName,x.itemName||x.materialName||x.item,q.toFixed(3),r.toFixed(2),a.toFixed(2)]})};
-    if(type==='raw') return {title:'ADR Raw Material Stock — Details',heads:['Code','Material','Unit','Stock','Minimum'],rows:rm.map(x=>[x.code,x.name,x.unit,x.stock,x.min])};
-    if(type==='vendor') return {title:'Vendor Raw Material Stock — Details',heads:['Vendor','Raw Material','Unit','Balance'],rows:(()=>{const a={};tx.filter(x=>String(x.type||'').toUpperCase()==='JOB WORK ISSUE'&&Number(x.qty)>0).forEach(x=>{const k=(x.vendor||'')+'|'+String(x.item||'').replace(/^RM:/,'');a[k]=(a[k]||0)+Number(x.qty||0)});return Object.entries(a).map(([k,q])=>{const [v,r]=k.split('|');const z=rm.find(x=>String(x.code)===r);return [v,z?.name||r,z?.unit||'',q]})})()};
-    if(type==='fg') return {title:'Finished Goods — Details',heads:['Code','Name','Unit','Stock','Minimum'],rows:it.filter(x=>String(x.cat||'').toLowerCase()==='finished goods').map(x=>[x.code,x.name,x.unit,x.stock,x.min])};
-    if(type==='low') return {title:'Low Stock — Details',heads:['Code','Name','Category','Unit','Stock','Minimum'],rows:rm.filter(x=>Number(x.stock)<=Number(x.min)).map(x=>[x.code,x.name,'Raw Material',x.unit,x.stock,x.min]).concat(it.filter(x=>Number(x.stock)<=Number(x.min)).map(x=>[x.code,x.name,x.cat,x.unit,x.stock,x.min]))};
-    return {title:'Details',heads:[],rows:[]};
+  function openType(type){
+    if(type==='sales'){ if(typeof openSales==='function') openSales(); return; }
+    if(type==='purchase'){ if(typeof openPurchase==='function') openPurchase(); return; }
+    if(typeof showDashboardFilter==='function'){
+      showDashboardFilter(type);
+      const b=document.getElementById('dashboardDetails'); if(b)b.dataset.dashboardFilter=type;
+    }
   }
-  function open(type){
-    const b=byId('dashboardDetails'), title=byId('dashboardDetailsTitle'), table=byId('dashboardDetailsTable');
-    if(!b||!title||!table)return;
-    const d=rowsFor(type); title.textContent=d.title;
-    const th=d.heads.map(x=>'<th>'+esc(x)+'</th>').join('');
-    const body=d.rows.length?d.rows.map(r=>'<tr>'+r.map(x=>'<td>'+esc(x)+'</td>').join('')+'</tr>').join(''):'<tr><td colspan="'+Math.max(1,d.heads.length)+'">No data found</td></tr>';
-    table.innerHTML='<tr>'+th+'</tr>'+body;
-    b.style.display='block'; b.dataset.dashOpen=type;
+  function isOpen(type){
+    if(type==='sales'){const x=document.getElementById('v152SalesBox');return !!x;}
+    if(type==='purchase'){const x=document.getElementById('v153PurchaseBox');return !!x;}
+    const b=document.getElementById('dashboardDetails');
+    return !!b && b.style.display!=='none' && b.dataset.dashboardFilter===type;
   }
-  function click(e){
-    const card=e.target.closest && e.target.closest('#dashboard .dashCard');
+  function handler(e){
+    const card=e.target && e.target.closest ? e.target.closest('#dashboard .dashCard') : null;
     if(!card)return;
-    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-    const type=card.getAttribute('data-filter')||'all';
-    const b=byId('dashboardDetails');
-    const same=b && b.style.display!=='none' && b.dataset.dashOpen===type;
-    clearDetail();
-    if(!same)open(type);
+    const type=card.getAttribute('data-filter')||'';
+    const same=isOpen(type);
+    clear();
+    if(!same)openType(type);
+    e.preventDefault();
+    e.stopPropagation();
   }
-  function arm(){document.querySelectorAll('#dashboard .dashCard').forEach(c=>{c.style.cursor='pointer';c.style.pointerEvents='auto';});}
-  window.addEventListener('click',click,true);
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',arm); else arm();
-  setTimeout(arm,500);setTimeout(arm,1500);setTimeout(arm,3000);
+  // One handler only. It is deliberately installed at document bubble phase.
+  document.addEventListener('click',handler,false);
+  function style(){document.querySelectorAll('#dashboard .dashCard').forEach(c=>{c.style.cursor='pointer';c.style.pointerEvents='auto';});}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',style);else style();
+  setTimeout(style,500);setTimeout(style,1500);
+})();
+</script>
+<script id="v294DashboardMenuFix">
+(function(){
+  function goDashboard(e){
+    const btn=e.target.closest && e.target.closest('button[data-page="dashboard"]');
+    if(!btn) return;
+    const page=document.getElementById('dashboard');
+    if(!page) return;
+    e.preventDefault();
+    e.stopPropagation();
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+    page.classList.add('active');
+    document.querySelectorAll('.tabs button[data-page]').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    try{sessionStorage.setItem('sentidosLastPage','dashboard');}catch(err){}
+    if(typeof hideDashboardDetailsOnNavigation==='function') hideDashboardDetailsOnNavigation();
+    if(typeof render==='function') render();
+  }
+  document.addEventListener('click',goDashboard,true);
 })();
 </script>
 </body></html>
