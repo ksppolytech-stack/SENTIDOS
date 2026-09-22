@@ -6745,6 +6745,50 @@ document.addEventListener('click',function(e){
   },true);
 })();
 </script>
+
+<script>
+/* V291: Reliable Dashboard click handler.  Use pointerdown capture + click fallback. */
+(function(){
+  function clearDetails(){
+    const b=document.getElementById('dashboardDetails');
+    if(b){b.style.display='none';b.removeAttribute('data-v290-filter');b.removeAttribute('data-v291-filter');}
+    const tb=document.getElementById('dashboardDetailsTable'); if(tb)tb.innerHTML='';
+    ['v152SalesBox','v153PurchaseBox'].forEach(id=>{const x=document.getElementById(id);if(x)x.remove();});
+  }
+  function isOpen(type){
+    if(type==='sales'){const x=document.getElementById('v152SalesBox');return !!x && x.style.display!=='none';}
+    if(type==='purchase'){const x=document.getElementById('v153PurchaseBox');return !!x && x.style.display!=='none';}
+    const b=document.getElementById('dashboardDetails');
+    return !!b && b.style.display!=='none' && (b.dataset.v291Filter===type || b.dataset.v290Filter===type || b.dataset.v288Filter===type);
+  }
+  function handle(e){
+    const card=e.target && e.target.closest ? e.target.closest('.dashCard') : null;
+    if(!card || !document.getElementById('dashboard')?.contains(card)) return;
+    if(e.type==='click' && e.defaultPrevented) e.preventDefault();
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    const type=card.getAttribute('data-filter')||'';
+    const was=isOpen(type);
+    clearDetails();
+    if(was)return;
+    if(type==='sales' && typeof openSales==='function'){openSales();return;}
+    if(type==='purchase' && typeof openPurchase==='function'){openPurchase();return;}
+    if(typeof showDashboardFilter==='function'){
+      showDashboardFilter(type);
+      const b=document.getElementById('dashboardDetails'); if(b)b.dataset.v291Filter=type;
+    }
+  }
+  window.addEventListener('pointerdown',handle,true);
+  window.addEventListener('click',handle,true);
+  function arm(){
+    document.querySelectorAll('#dashboard .dashCard').forEach(c=>{
+      c.style.cursor='pointer';
+      c.style.pointerEvents='auto';
+    });
+  }
+  arm();
+  setTimeout(arm,300);setTimeout(arm,1000);setTimeout(arm,2000);
+})();
+</script>
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
