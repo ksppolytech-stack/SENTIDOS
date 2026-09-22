@@ -6586,6 +6586,65 @@ document.addEventListener('click',function(e){
  if(isNavigation) hideDashboardDetailsOnNavigation();
 },true);
 </script>
+
+<script>
+/* V288: Dashboard cards now properly toggle their detail panels.
+   First click = show, second click on the same card = hide.
+   Switching cards removes the previous card's details. */
+(function(){
+  function removeBox(id){const x=document.getElementById(id);if(x)x.remove();}
+  function hideAllDashboardDetails(){
+    const box=document.getElementById('dashboardDetails');
+    if(box){box.style.display='none';const body=document.getElementById('dashboardDetailsTable');if(body)body.innerHTML='';}
+    removeBox('v152SalesBox');
+    removeBox('v153PurchaseBox');
+  }
+  function showTotalItems(type){
+    const box=document.getElementById('dashboardDetails');
+    if(!box)return;
+    const currentlyOpen=box.style.display!=='none' && box.dataset.v288Filter===type;
+    hideAllDashboardDetails();
+    if(currentlyOpen)return;
+    showDashboardFilter(type);
+    box.dataset.v288Filter=type;
+  }
+  function bind(){
+    const cards=document.querySelectorAll('#dashboard .dashCard');
+    if(!cards.length)return;
+    cards.forEach(card=>{
+      const type=card.dataset.filter||'';
+      card.onclick=function(e){
+        e.preventDefault();e.stopImmediatePropagation();
+        if(type==='sales'){
+          const existing=document.getElementById('v152SalesBox');
+          hideAllDashboardDetails();
+          if(existing)return;
+          openSales();
+          return;
+        }
+        if(type==='purchase'){
+          const existing=document.getElementById('v153PurchaseBox');
+          hideAllDashboardDetails();
+          if(existing)return;
+          if(typeof openPurchase==='function')openPurchase();
+          return;
+        }
+        showTotalItems(type);
+      };
+      card.style.cursor='pointer';
+    });
+  }
+  function hideOnNavigation(e){
+    const el=e.target.closest('button,[data-page]');
+    if(!el)return;
+    if(el.closest('#dashboard .dashCard'))return;
+    if(el.closest('.tabs') || el.getAttribute('data-page'))hideAllDashboardDetails();
+  }
+  document.addEventListener('click',hideOnNavigation,true);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(bind,2200));
+  else setTimeout(bind,2200);
+})();
+</script>
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
