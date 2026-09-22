@@ -1835,7 +1835,7 @@ function receiveFromVendor(){
  msg('jwReceiveMsg','Component received. Challan No: '+ref+' | Rate ₹'+rate.toFixed(2)+' | Job Work ₹'+amount.toFixed(2)+' | Material Cost ₹'+rawCost.toFixed(2)+' | ADR stock unchanged.');
  $('jwReceiveDate').value=new Date().toISOString().slice(0,10);$('jwTaxRate').value='18';$('jwReceiveVendor').value='';$('jwComponent').value='';$('jwComponentWeight').value='';$('jwReceiveQty').value='';$('jwJobRate').value='';$('jwConsumption').textContent='';$('jwJobAmount').textContent='';
 }
-function showDashboardFilter(type){
+window.showDashboardFilter=function showDashboardFilter(type){
  const box=$('dashboardDetails'),title=$('dashboardDetailsTitle'),table=$('dashboardDetailsTable');
  let list=[],label='';
  if(type==='raw'){list=rawMaterials.map(r=>({code:r.code,name:r.name,cat:'Raw Material',unit:r.unit,weight:'-',stock:r.stock,min:r.min}));label='Raw Material Stock';} else if(type==='vendor'){
@@ -4003,7 +4003,7 @@ function mk(v){let s=String(v||'').trim(),m=s.match(/^(\d{4})[-\/](\d{1,2})/);if
 function mn(k){let p=k.split('-');return new Date(+p[0],+p[1]-1,1).toLocaleString(undefined,{month:'long',year:'numeric'})}
 function sale(t){return String(t.type||'').toUpperCase()==='DISPATCH'}
 function grand(t){return t.grandTotal!=null?Number(t.grandTotal)||0:(Number(t.amount)||0)+(Number(t.tax)||0)}
-function openSales(){
+window.openSales=function openSales(){
  let b=document.getElementById('v152SalesBox');if(!b){b=document.createElement('div');b.id='v152SalesBox';(document.getElementById('dashboard')||document.body).appendChild(b)}
  let m={};getTx().filter(sale).forEach(t=>{let k=mk(t.date);if(!k)return;(m[k]??={e:0,q:0,a:0,g:0,t:0});m[k].e++;m[k].q+=Math.abs(+t.qty||0);m[k].a+=+t.amount||0;m[k].g+=+t.tax||0;m[k].t+=grand(t)});
  let ks=Object.keys(m).sort().reverse(),T=ks.reduce((z,k)=>{z.e+=m[k].e;z.q+=m[k].q;z.a+=m[k].a;z.g+=m[k].g;z.t+=m[k].t;return z},{e:0,q:0,a:0,g:0,t:0});
@@ -4038,7 +4038,7 @@ function mn(k){let p=k.split('-');return new Date(+p[0],+p[1]-1,1).toLocaleStrin
 function pur(t){return String(t.type||'').toUpperCase()==='PURCHASE'}
 function pa(t){return t.amount!=null?Number(t.amount)||0:Math.abs(Number(t.qty)||0)*Number(t.unit)||0}
 function pg(t){return t.grandTotal!=null?Number(t.grandTotal)||0:pa(t)+(Number(t.tax)||0)}
-function openPurchase(){
+window.openPurchase=function openPurchase(){
 let b=document.getElementById('v153PurchaseBox');if(!b){b=document.createElement('div');b.id='v153PurchaseBox';(document.getElementById('dashboard')||document.body).appendChild(b)}
 let m={};tx().filter(pur).forEach(t=>{let k=mk(t.date);if(!k)return;(m[k]??={e:0,q:0,a:0,g:0,t:0});m[k].e++;m[k].q+=Math.abs(+t.qty||0);m[k].a+=pa(t);m[k].g+=+t.tax||0;m[k].t+=pg(t)});
 let ks=Object.keys(m).sort().reverse(),T=ks.reduce((z,k)=>{z.e+=m[k].e;z.q+=m[k].q;z.a+=m[k].a;z.g+=m[k].g;z.t+=m[k].t;return z},{e:0,q:0,a:0,g:0,t:0});
