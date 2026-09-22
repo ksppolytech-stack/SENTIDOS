@@ -1719,6 +1719,8 @@ function issueToVendor(){
  if(old)old.qty+=qty;else jobwork.push({key,vendor,raw:raw.code,qty,unit:raw.unit});
  addTxn('JOB WORK ISSUE',ref,'RM:'+raw.code,-qty,raw.unit);
  const _issueTxn=transactions[transactions.length-1];
+ // Save the actual Job Work Issue date selected by the user.
+ if($('jwIssueDate') && $('jwIssueDate').value) _issueTxn.date=$('jwIssueDate').value;
  _issueTxn.vendor=vendor;
  _issueTxn.issueRate=Number(raw.rate||0);
  _issueTxn.issueQty=qty;
@@ -6941,6 +6943,8 @@ window.v305RenderMonths=function(){
     var s=String(v==null?'':v).trim();
     var m=s.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/);
     if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');
+    var dm=s.match(/^(?:[^0-9]*)([0-9]{1,2})[\/\-]([0-9]{1,2})[\/\-]([0-9]{4})/);
+    if(dm)return dm[3]+'-'+String(dm[2]).padStart(2,'0');
     var d=new Date(s);
     if(!isNaN(d.getTime()))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
     return '';
@@ -6949,6 +6953,8 @@ window.v305RenderMonths=function(){
     var s=String(v==null?'':v).trim();
     var m=s.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/);
     if(m)return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+    var dm=s.match(/^(?:[^0-9]*)([0-9]{1,2})[\/\-]([0-9]{1,2})[\/\-]([0-9]{4})/);
+    if(dm)return dm[3]+'-'+String(dm[2]).padStart(2,'0')+'-'+String(dm[1]).padStart(2,'0');
     var d=new Date(s);
     if(!isNaN(d.getTime()))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     return s;
@@ -7000,6 +7006,72 @@ window.v305RenderMonths=function(){
     });
   }
   window.v310RenderRawMonths=renderMonths;
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
+})();
+</script>
+<script id="v311JobworkSeptemberFinalFix">
+(function(){
+  function read(k){try{var a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+  function saveTx(a){try{localStorage.setItem('adr_tx_v2',JSON.stringify(a));}catch(e){}}
+  function parseMonth(v){
+    var s=String(v==null?'':v).trim();
+    var m=s.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/); if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');
+    var d=s.match(/^(?:[^0-9]*)([0-9]{1,2})[\/\-]([0-9]{1,2})[\/\-](\d{4})/); if(d)return d[3]+'-'+String(d[2]).padStart(2,'0');
+    var x=new Date(s); if(!isNaN(x.getTime()))return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0');
+    return '';
+  }
+  // Normalize existing Job Work Issue records that were saved with locale-formatted dates.
+  function normalize(){
+    var tx=read('adr_tx_v2'),changed=false;
+    tx.forEach(function(t){
+      if(String(t.type||'').toUpperCase()!=='JOB WORK ISSUE')return;
+      var m=String(t.date||'').match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if(m){var iso=m[3]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0'); if(t.date!==iso){t.date=iso;changed=true;}}
+    });
+    if(changed)saveTx(tx);
+  }
+  function rawRows(){
+    var tx=read('adr_tx_v2'),rms=read('adr_rawmaterials_v2');
+    return tx.map(function(t){
+      var type=String(t.type||t.transactionType||'').toUpperCase();
+      if(['RAW MATERIAL COMPANY INWARD','JOB WORK ISSUE','PRODUCTION','RAW MATERIAL SALE'].indexOf(type)<0)return null;
+      var code=String(t.item||'').replace(/^RM:/i,'');
+      var r=rms.find(function(x){return String(x.code)===code;}); if(!r)return null;
+      var month=parseMonth(t.date||t.createdAt||t.timestamp); if(!month)return null;
+      var ds=String(t.date||'');
+      var m=ds.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/);
+      var date=m?m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0'):ds;
+      var dm=ds.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if(dm)date=dm[3]+'-'+String(dm[2]).padStart(2,'0')+'-'+String(dm[1]).padStart(2,'0');
+      return {date:date,month:month,type:type,code:code,name:r.name||code,qty:Math.abs(Number(t.qty)||0),unit:t.unit||r.unit||'KG',ref:t.ref||'',party:t.vendor||t.supplier||t.customer||''};
+    }).filter(Boolean);
+  }
+  function renderMonths(){
+    normalize(); var rows=rawRows(),m={};
+    rows.forEach(function(x){if(!m[x.month])m[x.month]={inward:0,issue:0,production:0,sale:0}; if(x.type==='RAW MATERIAL COMPANY INWARD')m[x.month].inward+=x.qty; else if(x.type==='JOB WORK ISSUE')m[x.month].issue+=x.qty; else if(x.type==='PRODUCTION')m[x.month].production+=x.qty; else m[x.month].sale+=x.qty;});
+    var b=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!b||!title||!table)return;
+    var names=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var keys=Object.keys(m).sort().reverse();
+    title.textContent='RAW MATERIAL STOCK — Transaction History Month Wise';
+    table.innerHTML='<tr><th>Month</th><th>Inward</th><th>Job Work Issue</th><th>Production Used</th><th>Raw Material Sale</th><th>Total Outward</th></tr>'+(keys.map(function(k){var x=m[k],out=x.issue+x.production+x.sale;return '<tr class="v311MonthRow" data-month="'+k+'" style="cursor:pointer"><td><b>'+names[Number(k.slice(5))-1]+' '+k.slice(0,4)+'</b></td><td>'+x.inward.toFixed(3)+'</td><td>'+x.issue.toFixed(3)+'</td><td>'+x.production.toFixed(3)+'</td><td>'+x.sale.toFixed(3)+'</td><td>'+out.toFixed(3)+'</td></tr>';}).join('')||'<tr><td colspan="6">No raw material transaction history found</td></tr>');
+    b.style.display='block';b.dataset.dashboardFilter='raw';
+    table.querySelectorAll('.v311MonthRow').forEach(function(r){r.onclick=function(){openMonth(r.getAttribute('data-month'));};});
+  }
+  function openMonth(k){
+    normalize(); var rows=rawRows().filter(function(x){return x.month===k;}).sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
+    var b=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!b||!title||!table)return;
+    title.textContent='RAW MATERIAL STOCK — '+k+' Detail';
+    table.innerHTML='<tr><th>Date</th><th>Type</th><th>Code</th><th>Raw Material</th><th>Party</th><th>Qty</th><th>Unit</th><th>Reference</th></tr>'+(rows.map(function(x){return '<tr><td>'+x.date+'</td><td>'+x.type+'</td><td>'+x.code+'</td><td>'+x.name+'</td><td>'+x.party+'</td><td>'+x.qty.toFixed(3)+'</td><td>'+x.unit+'</td><td>'+x.ref+'</td></tr>';}).join('')||'<tr><td colspan="8">No transactions found for this month</td></tr>');
+    b.style.display='block';b.dataset.dashboardFilter='raw-month-detail';
+    title.insertAdjacentHTML('beforeend',' <button type="button" id="v311BackMonth" style="float:right">← Month Wise</button>');
+    document.getElementById('v311BackMonth').onclick=function(){renderMonths();};
+  }
+  function bind(){
+    normalize();
+    var c=document.querySelector('#dashboard .dashCard[data-filter="raw"]'); if(c&&!c.dataset.v311Bound){c.dataset.v311Bound='1';c.addEventListener('click',function(){setTimeout(renderMonths,60);},true);}
+  }
+  window.v311RenderRawMonths=renderMonths;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
   [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
 })();
