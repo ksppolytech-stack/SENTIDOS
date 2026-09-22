@@ -7366,4 +7366,50 @@ window.v315RefreshDashboardCharts=render;
   [100,300,700,1200,2000,3500,5000].forEach(function(t){setTimeout(hook,t)});
 })();
 </script>
+
+<script id="v320RawBalanceFinalFix">
+(function(){
+  function applyBalance(){
+    var table=document.getElementById('dashboardDetailsTable');
+    if(!table)return;
+    var rows=table.querySelectorAll('tr.v312MonthRow');
+    if(!rows.length)return;
+    var data=[];
+    rows.forEach(function(r){
+      var c=r.querySelectorAll('td');
+      if(c.length<6)return;
+      var k=r.getAttribute('data-month')||'';
+      data.push({k:k,inward:parseFloat(c[1].textContent)||0,outward:parseFloat(c[5].textContent)||0,row:r});
+    });
+    data.sort(function(a,b){return a.k.localeCompare(b.k);});
+    var bal=0;
+    data.forEach(function(x){bal+=x.inward-x.outward;x.balance=bal;});
+    var head=table.querySelector('tr');
+    if(!head)return;
+    var th=head.querySelector('[data-v320-balance]');
+    if(!th){th=document.createElement('th');th.textContent='Balance';th.setAttribute('data-v320-balance','1');head.appendChild(th);}
+    data.forEach(function(x){
+      var td=x.row.querySelector('[data-v320-balance-cell]');
+      if(!td){td=document.createElement('td');td.setAttribute('data-v320-balance-cell','1');x.row.appendChild(td);}
+      td.textContent=x.balance.toFixed(3);
+    });
+  }
+  function schedule(){[30,120,300,700].forEach(function(t){setTimeout(applyBalance,t);});}
+  function bind(){
+    document.addEventListener('click',function(e){
+      var c=e.target.closest?e.target.closest('#dashboard .dashCard[data-filter="raw"]'):null;
+      if(c)schedule();
+    },true);
+    var host=document.getElementById('dashboardDetailsTable');
+    if(host){
+      new MutationObserver(function(){
+        var rows=host.querySelectorAll('tr.v312MonthRow');
+        if(rows.length)schedule();
+      }).observe(host,{childList:true,subtree:true});
+    }
+    schedule();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+})();
+</script>
 </body></html>
