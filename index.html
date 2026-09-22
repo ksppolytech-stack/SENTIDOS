@@ -6695,6 +6695,56 @@ document.addEventListener('click',function(e){
   },true);
 })();
 </script>
+
+<script>
+/* V290: Dashboard cards - master click handler at WINDOW capture level.
+   This runs before older document/card handlers, so every dashboard card click works. */
+(function(){
+  function remove(id){const x=document.getElementById(id);if(x)x.remove();}
+  function hideAll(){
+    const box=document.getElementById('dashboardDetails');
+    if(box){box.style.display='none';box.removeAttribute('data-v290-filter');box.removeAttribute('data-v288-filter');}
+    const body=document.getElementById('dashboardDetailsTable');
+    if(body)body.innerHTML='';
+    remove('v152SalesBox');
+    remove('v153PurchaseBox');
+  }
+  function openState(type){
+    if(type==='sales'){const x=document.getElementById('v152SalesBox');return !!x && x.style.display!=='none';}
+    if(type==='purchase'){const x=document.getElementById('v153PurchaseBox');return !!x && x.style.display!=='none';}
+    const b=document.getElementById('dashboardDetails');
+    return !!b && b.style.display!=='none' && (b.dataset.v290Filter===type || b.dataset.v288Filter===type);
+  }
+  function handle(e){
+    const card=e.target && e.target.closest ? e.target.closest('#dashboard .dashCard') : null;
+    if(!card)return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    const type=card.getAttribute('data-filter')||'';
+    const wasOpen=openState(type);
+    hideAll();
+    if(wasOpen)return;
+    if(type==='sales'){
+      if(typeof openSales==='function')openSales();
+      return;
+    }
+    if(type==='purchase'){
+      if(typeof openPurchase==='function')openPurchase();
+      return;
+    }
+    if(typeof showDashboardFilter==='function'){
+      showDashboardFilter(type);
+      const box=document.getElementById('dashboardDetails');
+      if(box)box.dataset.v290Filter=type;
+    }
+  }
+  window.addEventListener('click',handle,true);
+  window.addEventListener('pointerup',function(e){
+    /* no action here; click is the single source of truth */
+  },true);
+})();
+</script>
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
