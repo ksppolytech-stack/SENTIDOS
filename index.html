@@ -234,6 +234,30 @@ tr.low-stock-row td * {
 #dashboardDetails[data-dashboard-filter="raw"] > table > thead,
 #dashboardDetails[data-dashboard-filter="raw-month-detail"] > table > thead { display:none !important; }
 </style>
+
+<style id="v315ColorfulDashboardStyle">
+#dashboard .cards{gap:16px;margin-bottom:18px}
+#dashboard .dashCard{border:0!important;border-radius:16px!important;color:#fff!important;min-height:92px;padding:18px 20px!important;box-shadow:0 8px 22px rgba(0,0,0,.12);transition:transform .18s,box-shadow .18s;cursor:pointer;font-weight:600;position:relative;overflow:hidden}
+#dashboard .dashCard:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(0,0,0,.18)}
+#dashboard .dashCard:after{content:'';position:absolute;width:90px;height:90px;border-radius:50%;right:-28px;top:-30px;background:rgba(255,255,255,.14)}
+#dashboard .dashCard b{display:block;font-size:22px;margin-top:10px;color:#fff!important}
+#dashboard .dashCard[data-filter="all"]{background:linear-gradient(135deg,#4f46e5,#7c3aed)!important}
+#dashboard .dashCard[data-filter="sales"]{background:linear-gradient(135deg,#0ea5e9,#2563eb)!important}
+#dashboard .dashCard[data-filter="purchase"]{background:linear-gradient(135deg,#f97316,#ea580c)!important}
+#dashboard .dashCard[data-filter="raw"]{background:linear-gradient(135deg,#10b981,#059669)!important}
+#dashboard .dashCard[data-filter="vendor"]{background:linear-gradient(135deg,#14b8a6,#0f766e)!important}
+#dashboard .dashCard[data-filter="fg"]{background:linear-gradient(135deg,#ec4899,#db2777)!important}
+#dashboard .dashCard[data-filter="low"]{background:linear-gradient(135deg,#ef4444,#b91c1c)!important}
+.v315Charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:16px 0}
+.v315ChartPanel{background:#fff;border-radius:16px;padding:18px;box-shadow:0 6px 20px rgba(0,0,0,.08);border:1px solid #e8edf5}
+.v315ChartPanel h3{margin:0 0 4px;font-size:18px}.v315ChartSub{font-size:12px;color:#667085;margin-bottom:14px}
+.v315Bars{height:250px;display:flex;align-items:flex-end;gap:10px;padding:18px 8px 28px;border-bottom:1px solid #d9dee8;overflow-x:auto}
+.v315BarCol{min-width:48px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative}
+.v315BarValue{font-size:10px;color:#475467;margin-bottom:4px;white-space:nowrap}.v315Bar{width:30px;border-radius:8px 8px 2px 2px;min-height:2px;background:linear-gradient(180deg,#38bdf8,#2563eb);transition:height .3s}.v315PurchaseBars .v315Bar{background:linear-gradient(180deg,#fb923c,#ea580c)}
+.v315BarLabel{position:absolute;bottom:-25px;font-size:10px;color:#475467;white-space:nowrap;transform:rotate(-30deg);transform-origin:top center}
+.v315Empty{height:210px;display:flex;align-items:center;justify-content:center;color:#98a2b3;font-size:13px}
+@media(max-width:800px){.v315Charts{grid-template-columns:1fr}.v315Bars{height:220px}}
+</style>
 </head>
 <body>
 <button id="globalRefreshBtn" type="button" title="Refresh Page" aria-label="Refresh Page" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
@@ -7195,6 +7219,22 @@ window.v305RenderMonths=function(){
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hook);else hook();
   [200,600,1200,2500,5000].forEach(function(t){setTimeout(hook,t)});
+})();
+</script>
+
+<script id="v315ColorfulDashboardCharts">
+(function(){
+function readTx(){try{var a=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function monthKey(v){var s=String(v||'').trim(),m=s.match(/^(\d{4})[-\/](\d{1,2})/);if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);if(m){var a=+m[1],b=+m[2];return m[3]+'-'+String(a>12?b:a).padStart(2,'0')}return ''}
+function monthLabel(k){var p=k.split('-'),names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return names[Number(p[1])-1]+' '+p[0]}
+function amount(t){var n=Number(t.grandTotal);if(Number.isFinite(n)&&n!==0)return Math.abs(n);return Math.abs((Number(t.amount)||0)+(Number(t.tax)||0))}
+function aggregate(type){var m={};readTx().forEach(function(t){if(String(t.type||'').toUpperCase()!==type)return;var k=monthKey(t.date);if(!k)return;m[k]=(m[k]||0)+amount(t)});return m}
+function money(n){return '₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:0})}
+function chartHtml(title,sub,map,cls){var keys=Object.keys(map).sort();if(!keys.length)return '<div class="v315ChartPanel"><h3>'+title+'</h3><div class="v315ChartSub">'+sub+'</div><div class="v315Empty">No data found</div></div>';var max=Math.max.apply(null,keys.map(function(k){return map[k]}))||1;return '<div class="v315ChartPanel '+cls+'"><h3>'+title+'</h3><div class="v315ChartSub">'+sub+'</div><div class="v315Bars">'+keys.map(function(k){var h=Math.max(3,(map[k]/max)*185);return '<div class="v315BarCol"><div class="v315BarValue">'+money(map[k])+'</div><div class="v315Bar" style="height:'+h+'px"></div><div class="v315BarLabel">'+esc(monthLabel(k))+'</div></div>'}).join('')+'</div></div>'}
+function render(){var d=document.getElementById('dashboard');if(!d)return;var old=document.getElementById('v315Charts');if(old)old.remove();var host=document.createElement('div');host.id='v315Charts';host.className='v315Charts';host.innerHTML=chartHtml('📈 Month Wise Sales','Monthly sales / dispatch grand total',aggregate('DISPATCH'),'v315SalesBars')+chartHtml('🛒 Month Wise Purchase','Monthly purchase grand total',aggregate('PURCHASE'),'v315PurchaseBars');var details=document.getElementById('dashboardDetails');if(details)d.insertBefore(host,details);else d.appendChild(host)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(render,500)});else setTimeout(render,500);[1500,3000,5000].forEach(function(t){setTimeout(render,t)});
+window.v315RefreshDashboardCharts=render;
 })();
 </script>
 </body></html>
