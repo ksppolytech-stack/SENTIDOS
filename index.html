@@ -6798,9 +6798,7 @@ document.addEventListener('click',function(e){
      else if(type==='PRODUCTION')months[k].production+=q;
      else months[k].sale+=q;
    });
-   var html='<tr><th colspan="7" style="text-align:left">Current Raw Material Stock</th></tr><tr><th>Code</th><th>Name</th><th>Unit</th><th>Stock</th><th>Minimum</th><th>Rate</th><th>Status</th></tr>';
-   if(rmList.length){rmList.forEach(function(r){var st=Number(r.stock)||0,mn=Number(r.min)||0;html+='<tr><td>'+esc(r.code)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.unit||'KG')+'</td><td><b>'+st.toFixed(3)+'</b></td><td>'+mn.toFixed(3)+'</td><td>₹'+(Number(r.rate)||0).toFixed(2)+'</td><td>'+(st<=mn?'LOW STOCK':'OK')+'</td></tr>';});}else html+='<tr><td colspan="7">No raw material stock found</td></tr>';
-   html+='<tr><th colspan="7" style="text-align:left;padding-top:16px">Month Wise Transaction History</th></tr><tr><th>Month</th><th>Inward</th><th>Job Work Issue</th><th>Production Used</th><th>Raw Material Sale</th><th>Total Outward</th><th>Net Inward</th></tr>';
+   var html='<tr><th colspan="7" style="text-align:left;padding-top:16px">Month Wise Transaction History</th></tr><tr><th>Month</th><th>Inward</th><th>Job Work Issue</th><th>Production Used</th><th>Raw Material Sale</th><th>Total Outward</th><th>Net Inward</th></tr>';
    var keys=Object.keys(months).sort().reverse();
    if(keys.length){keys.forEach(function(k){var m=months[k],out=m.issue+m.production+m.sale;html+='<tr><td><b>'+monthLabel(k)+'</b></td><td>'+m.inward.toFixed(3)+'</td><td>'+m.issue.toFixed(3)+'</td><td>'+m.production.toFixed(3)+'</td><td>'+m.sale.toFixed(3)+'</td><td>'+out.toFixed(3)+'</td><td>'+ (m.inward-out).toFixed(3)+'</td></tr>';});}else html+='<tr><td colspan="7">No raw material transaction history found</td></tr>';
    title.textContent='RAW MATERIAL STOCK';table.innerHTML=html;box.style.display='block';box.dataset.dashboardFilter='raw';box.scrollIntoView({behavior:'smooth',block:'start'});
