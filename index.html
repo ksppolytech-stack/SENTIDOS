@@ -6931,6 +6931,79 @@ window.v305RenderMonths=function(){
   [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
 })();
 </script>
+
+<!-- V310: Fix raw-material month history for JOB WORK ISSUE transactions whose saved date may be locale-formatted. -->
+<script id="v310JobworkIssueHistoryFix">
+(function(){
+  function read(k){try{var a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function dateKey(v){
+    var s=String(v==null?'':v).trim();
+    var m=s.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/);
+    if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');
+    var d=new Date(s);
+    if(!isNaN(d.getTime()))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    return '';
+  }
+  function fullDate(v){
+    var s=String(v==null?'':v).trim();
+    var m=s.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/);
+    if(m)return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+    var d=new Date(s);
+    if(!isNaN(d.getTime()))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    return s;
+  }
+  function monthLabel(k){var n=['January','February','March','April','May','June','July','August','September','October','November','December'],p=k.split('-');return n[Number(p[1])-1]+' '+p[0];}
+  function rawRows(){
+    var tx=read('adr_tx_v2'),rms=read('adr_rawmaterials_v2');
+    return tx.map(function(t){
+      var type=String(t.type||t.transactionType||'').toUpperCase();
+      if(['RAW MATERIAL COMPANY INWARD','JOB WORK ISSUE','PRODUCTION','RAW MATERIAL SALE'].indexOf(type)<0)return null;
+      var code=String(t.item||'').replace(/^RM:/i,'');
+      var r=rms.find(function(x){return String(x.code)===code});
+      if(!r)return null;
+      var dk=dateKey(t.date||t.createdAt||t.timestamp);if(!dk)return null;
+      return {date:fullDate(t.date||t.createdAt||t.timestamp),rawDate:t.date||'',month:dk,type:type,code:code,name:r.name||code,qty:Math.abs(Number(t.qty)||0),unit:t.unit||r.unit||'KG',ref:t.ref||t.inwardRef||t.billNo||t.invoiceNo||'',party:t.vendor||t.supplier||t.customer||'',remark:t.remark||''};
+    }).filter(Boolean);
+  }
+  function renderMonths(){
+    var rows=rawRows(),m={};
+    rows.forEach(function(x){if(!m[x.month])m[x.month]={inward:0,issue:0,production:0,sale:0}; if(x.type==='RAW MATERIAL COMPANY INWARD')m[x.month].inward+=x.qty;else if(x.type==='JOB WORK ISSUE')m[x.month].issue+=x.qty;else if(x.type==='PRODUCTION')m[x.month].production+=x.qty;else m[x.month].sale+=x.qty;});
+    var b=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!b||!title||!table)return;
+    title.textContent='RAW MATERIAL STOCK — Transaction History Month Wise';
+    table.innerHTML='<tr><th>Month</th><th>Inward</th><th>Job Work Issue</th><th>Production Used</th><th>Raw Material Sale</th><th>Total Outward</th></tr>'+
+      (Object.keys(m).sort().reverse().map(function(k){var x=m[k],out=x.issue+x.production+x.sale;return '<tr class="v310MonthRow" data-month="'+k+'" style="cursor:pointer"><td><b>'+monthLabel(k)+'</b></td><td>'+x.inward.toFixed(3)+'</td><td>'+x.issue.toFixed(3)+'</td><td>'+x.production.toFixed(3)+'</td><td>'+x.sale.toFixed(3)+'</td><td>'+out.toFixed(3)+'</td></tr>';}).join('')||'<tr><td colspan="6">No raw material transaction history found</td></tr>');
+    b.style.display='block';b.dataset.dashboardFilter='raw';
+  }
+  function openMonth(k){
+    var rows=rawRows().filter(function(x){return x.month===k}).sort(function(a,b){return String(b.date).localeCompare(String(a.date))});
+    var b=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!b||!title||!table)return;
+    title.innerHTML='RAW MATERIAL STOCK — '+esc(monthLabel(k))+' <button type="button" id="v310BackMonth" style="float:right">← Month Wise</button>';
+    table.innerHTML='<tr><th>Date</th><th>Type</th><th>Code</th><th>Raw Material</th><th>Party</th><th>Qty</th><th>Unit</th><th>Reference</th></tr>'+
+      (rows.map(function(x){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.code)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.party)+'</td><td>'+x.qty.toFixed(3)+'</td><td>'+esc(x.unit)+'</td><td>'+esc(x.ref)+'</td></tr>';}).join('')||'<tr><td colspan="8">No transactions found for this month</td></tr>');
+    b.style.display='block';b.dataset.dashboardFilter='raw-month-detail';
+    var back=document.getElementById('v310BackMonth');if(back)back.onclick=function(e){e.preventDefault();e.stopPropagation();renderMonths();};
+  }
+  function bind(){
+    var table=document.getElementById('dashboardDetailsTable');if(table&&table.dataset.v310Bound!=='1'){
+      table.addEventListener('click',function(e){
+        var tr=e.target.closest?e.target.closest('tr'):null;if(!tr)return;
+        var cell=tr.querySelector('td');if(!cell)return;
+        var txt=String(cell.textContent||'').trim(),m=txt.match(/^(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})$/i);if(!m)return;
+        var names=['january','february','march','april','may','june','july','august','september','october','november','december'],k=m[2]+'-'+String(names.indexOf(m[1].toLowerCase())+1).padStart(2,'0');
+        e.preventDefault();e.stopImmediatePropagation();openMonth(k);
+      },true);table.dataset.v310Bound='1';
+    }
+    document.querySelectorAll('#dashboard .dashCard[data-filter="raw"]').forEach(function(c){
+      if(c.dataset.v310Card==='1')return;c.dataset.v310Card='1';
+      c.addEventListener('click',function(e){setTimeout(function(){var b=document.getElementById('dashboardDetails');if(b&&b.style.display!=='none'&&b.dataset.dashboardFilter==='raw'){renderMonths();}},30);},true);
+    });
+  }
+  window.v310RenderRawMonths=renderMonths;
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
+})();
+</script>
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
