@@ -7393,4 +7393,65 @@ window.v315RefreshDashboardCharts=render;
   [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t)});
 })();
 </script>
+
+<script id="v321FinalDashboardCardStateFix">
+(function(){
+  var activeType=null;
+  var observerStarted=false;
+  function chart(){return document.getElementById('v315Charts');}
+  function details(){return document.getElementById('dashboardDetails');}
+  function hideOldDetails(){
+    ['v152SalesBox','v153PurchaseBox'].forEach(function(id){var x=document.getElementById(id);if(x)x.remove();});
+    var d=details();
+    if(d){d.style.display='none';d.removeAttribute('data-dashboard-filter');}
+  }
+  function setChart(show){
+    var c=chart();
+    if(c){c.style.display=show?'':'none';c.setAttribute('data-v321-hidden',show?'0':'1');}
+  }
+  function forceState(){
+    var c=chart();
+    if(c){
+      if(activeType===null || activeType==='__chart__'){c.style.display='';c.removeAttribute('data-v321-hidden');}
+      else {c.style.display='none';c.setAttribute('data-v321-hidden','1');}
+    }
+  }
+  function openCard(type){
+    var same=(activeType===type);
+    hideOldDetails();
+    if(same){
+      activeType='__chart__';
+      setChart(true);
+      return;
+    }
+    activeType=type;
+    setChart(false);
+    if(type==='sales' && typeof window.openSales==='function') window.openSales();
+    else if(type==='purchase' && typeof window.openPurchase==='function') window.openPurchase();
+    else if(typeof window.showDashboardFilter==='function') window.showDashboardFilter(type);
+    var d=details();
+    if(d){d.style.display='block';d.dataset.dashboardFilter=type;}
+    setTimeout(function(){forceState();},20);
+    setTimeout(function(){forceState();},150);
+    setTimeout(function(){forceState();},500);
+  }
+  function bind(){
+    if(document.documentElement.dataset.v321Bound==='1')return;
+    document.documentElement.dataset.v321Bound='1';
+    document.addEventListener('click',function(e){
+      var card=e.target&&e.target.closest?e.target.closest('#dashboard .dashCard'):null;
+      if(!card)return;
+      e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
+      openCard(card.getAttribute('data-filter')||'all');
+    },true);
+    if(!observerStarted && window.MutationObserver){
+      observerStarted=true;
+      var d=document.getElementById('dashboard');
+      if(d){new MutationObserver(function(){forceState();}).observe(d,{childList:true,subtree:true});}
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  [100,300,700,1200,2000,3500,5000].forEach(function(t){setTimeout(bind,t);});
+})();
+</script>
 </body></html>
