@@ -4021,7 +4021,7 @@ function openCustomers(k){
  (r.map(t=>'<tr><td>'+esc(t.date||'')+'</td><td>'+esc(t.customer||'')+'</td><td>'+esc(t.billNo||t.ref||'')+'</td><td>'+esc(t.itemName||t.item||'')+'</td><td>'+Math.abs(+t.qty||0)+'</td><td>'+money(t.dispatchRate)+'</td><td>'+money(t.amount)+'</td><td>'+money(t.tax)+'</td><td>'+money(grand(t))+'</td></tr>').join('')||'<tr><td colspan="9">No transactions found</td></tr>')+
  '</tbody></table>';d.scrollIntoView({behavior:'smooth',block:'start'})
 }
-function install(){let card=document.querySelector('#dashboard .dashCard[data-filter="sales"]');if(!card)return;card.onclick=openSales;card.style.cursor='pointer';card.title='Click for month-wise sales history'}
+function install(){}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(install,1000));else setTimeout(install,1000);
 })();
 </script>
@@ -4055,7 +4055,7 @@ d.innerHTML='<hr><h3>🏭 Supplier Wise Purchase - '+esc(mn(k))+'</h3><table><th
 (r.map(t=>'<tr><td>'+esc(t.date||'')+'</td><td>'+esc(t.supplier||t.vendor||'')+'</td><td>'+esc(t.invoiceRef||t.billNo||t.ref||'')+'</td><td>'+esc(t.itemName||t.item||'')+'</td><td>'+Math.abs(+t.qty||0)+'</td><td>'+money(t.rate||t.purchaseRate||t.unit)+'</td><td>'+money(pa(t))+'</td><td>'+money(t.tax)+'</td><td>'+money(pg(t))+'</td></tr>').join('')||'<tr><td colspan="9">No transactions found</td></tr>')+
 '</tbody></table>';d.scrollIntoView({behavior:'smooth',block:'start'})
 }
-function install(){const d=document.getElementById('dashboard');if(!d)return;[...d.querySelectorAll('*')].forEach(e=>{if(e.children.length<=4&&/^Total Purchase$/i.test((e.textContent||'').trim())){e.style.cursor='pointer';e.title='Click for month-wise purchase history';e.addEventListener('click',openPurchase,true)}})}
+function install(){}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(install,1000));else setTimeout(install,1000);
 })();
 </script>
@@ -6587,201 +6587,44 @@ document.addEventListener('click',function(e){
 },true);
 </script>
 
-<script>
-/* V288: Dashboard cards now properly toggle their detail panels.
-   First click = show, second click on the same card = hide.
-   Switching cards removes the previous card's details. */
+
+<script id="v293DashboardController">
 (function(){
-  function removeBox(id){const x=document.getElementById(id);if(x)x.remove();}
-  function hideAllDashboardDetails(){
-    const box=document.getElementById('dashboardDetails');
-    if(box){box.style.display='none';const body=document.getElementById('dashboardDetailsTable');if(body)body.innerHTML='';}
-    removeBox('v152SalesBox');
-    removeBox('v153PurchaseBox');
-  }
-  function showTotalItems(type){
-    const box=document.getElementById('dashboardDetails');
-    if(!box)return;
-    const currentlyOpen=box.style.display!=='none' && box.dataset.v288Filter===type;
-    hideAllDashboardDetails();
-    if(currentlyOpen)return;
-    showDashboardFilter(type);
-    box.dataset.v288Filter=type;
-  }
-  function bind(){
-    const cards=document.querySelectorAll('#dashboard .dashCard');
-    if(!cards.length)return;
-    cards.forEach(card=>{
-      const type=card.dataset.filter||'';
-      card.onclick=function(e){
-        e.preventDefault();e.stopImmediatePropagation();
-        if(type==='sales'){
-          const existing=document.getElementById('v152SalesBox');
-          hideAllDashboardDetails();
-          if(existing)return;
-          openSales();
-          return;
-        }
-        if(type==='purchase'){
-          const existing=document.getElementById('v153PurchaseBox');
-          hideAllDashboardDetails();
-          if(existing)return;
-          if(typeof openPurchase==='function')openPurchase();
-          return;
-        }
-        showTotalItems(type);
-      };
-      card.style.cursor='pointer';
-    });
-  }
-  function hideOnNavigation(e){
-    const el=e.target.closest('button,[data-page]');
-    if(!el)return;
-    if(el.closest('#dashboard .dashCard'))return;
-    if(el.closest('.tabs') || el.getAttribute('data-page'))hideAllDashboardDetails();
-  }
-  document.addEventListener('click',hideOnNavigation,true);
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(bind,2200));
-  else setTimeout(bind,2200);
-})();
-</script>
-
-<script>
-/* V289: Final Dashboard card click controller.
-   Uses one capture handler so older dashboard handlers cannot block later clicks. */
-(function(){
-  function remove(id){const x=document.getElementById(id);if(x)x.remove();}
-  function hideAll(){
-    const box=document.getElementById('dashboardDetails');
-    if(box){box.style.display='none';box.removeAttribute('data-v288-filter');}
-    const body=document.getElementById('dashboardDetailsTable');
-    if(body)body.innerHTML='';
-    remove('v152SalesBox');
-    remove('v153PurchaseBox');
-  }
-  function isOpen(id){
-    const x=document.getElementById(id);
-    return !!x && x.style.display!=='none';
-  }
-  document.addEventListener('click',function(e){
-    const card=e.target.closest('#dashboard .dashCard');
-    if(!card)return;
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-
-    const type=card.dataset.filter||'';
-    const wasOpen = type==='sales' ? isOpen('v152SalesBox')
-      : type==='purchase' ? isOpen('v153PurchaseBox')
-      : (function(){const b=document.getElementById('dashboardDetails');return !!b && b.style.display!=='none' && b.dataset.v288Filter===type;})();
-
-    // Every click first clears the previous card's detail.
-    hideAll();
-    if(wasOpen)return; // second click on same card = hide only
-
-    if(type==='sales'){
-      if(typeof openSales==='function')openSales();
-      return;
-    }
-    if(type==='purchase'){
-      if(typeof openPurchase==='function')openPurchase();
-      return;
-    }
-    if(typeof showDashboardFilter==='function'){
-      showDashboardFilter(type);
-      const box=document.getElementById('dashboardDetails');
-      if(box)box.dataset.v288Filter=type;
-    }
-  },true);
-})();
-</script>
-
-<script>
-/* V290: Dashboard cards - master click handler at WINDOW capture level.
-   This runs before older document/card handlers, so every dashboard card click works. */
-(function(){
-  function remove(id){const x=document.getElementById(id);if(x)x.remove();}
-  function hideAll(){
-    const box=document.getElementById('dashboardDetails');
-    if(box){box.style.display='none';box.removeAttribute('data-v290-filter');box.removeAttribute('data-v288-filter');}
-    const body=document.getElementById('dashboardDetailsTable');
-    if(body)body.innerHTML='';
-    remove('v152SalesBox');
-    remove('v153PurchaseBox');
-  }
-  function openState(type){
-    if(type==='sales'){const x=document.getElementById('v152SalesBox');return !!x && x.style.display!=='none';}
-    if(type==='purchase'){const x=document.getElementById('v153PurchaseBox');return !!x && x.style.display!=='none';}
+  function clear(){
     const b=document.getElementById('dashboardDetails');
-    return !!b && b.style.display!=='none' && (b.dataset.v290Filter===type || b.dataset.v288Filter===type);
-  }
-  function handle(e){
-    const card=e.target && e.target.closest ? e.target.closest('#dashboard .dashCard') : null;
-    if(!card)return;
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    const type=card.getAttribute('data-filter')||'';
-    const wasOpen=openState(type);
-    hideAll();
-    if(wasOpen)return;
-    if(type==='sales'){
-      if(typeof openSales==='function')openSales();
-      return;
-    }
-    if(type==='purchase'){
-      if(typeof openPurchase==='function')openPurchase();
-      return;
-    }
-    if(typeof showDashboardFilter==='function'){
-      showDashboardFilter(type);
-      const box=document.getElementById('dashboardDetails');
-      if(box)box.dataset.v290Filter=type;
-    }
-  }
-  window.addEventListener('click',handle,true);
-  window.addEventListener('pointerup',function(e){
-    /* no action here; click is the single source of truth */
-  },true);
-})();
-</script>
-
-<script>
-/* V292: Dashboard click fix. One click event only; pointerdown removed because it toggled twice. */
-(function(){
-  function clearDetails(){
-    const b=document.getElementById('dashboardDetails');
-    if(b){b.style.display='none';b.removeAttribute('data-v290-filter');b.removeAttribute('data-v291-filter');b.removeAttribute('data-v292-filter');}
-    const tb=document.getElementById('dashboardDetailsTable'); if(tb)tb.innerHTML='';
+    if(b){b.style.display='none';b.removeAttribute('data-dashboard-filter');}
+    const t=document.getElementById('dashboardDetailsTable'); if(t)t.innerHTML='';
     ['v152SalesBox','v153PurchaseBox'].forEach(id=>{const x=document.getElementById(id);if(x)x.remove();});
   }
-  function isOpen(type){
-    if(type==='sales'){const x=document.getElementById('v152SalesBox');return !!x && x.style.display!=='none';}
-    if(type==='purchase'){const x=document.getElementById('v153PurchaseBox');return !!x && x.style.display!=='none';}
-    const b=document.getElementById('dashboardDetails');
-    return !!b && b.style.display!=='none' && (b.dataset.v292Filter===type || b.dataset.v291Filter===type || b.dataset.v290Filter===type || b.dataset.v288Filter===type);
-  }
-  function handle(e){
-    const card=e.target && e.target.closest ? e.target.closest('#dashboard .dashCard') : null;
-    if(!card)return;
-    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-    const type=card.getAttribute('data-filter')||'';
-    const was=isOpen(type);
-    clearDetails();
-    if(was)return;
-    if(type==='sales' && typeof openSales==='function'){openSales();return;}
-    if(type==='purchase' && typeof openPurchase==='function'){openPurchase();return;}
+  function openType(type){
+    if(type==='sales'){ if(typeof openSales==='function') openSales(); return; }
+    if(type==='purchase'){ if(typeof openPurchase==='function') openPurchase(); return; }
     if(typeof showDashboardFilter==='function'){
       showDashboardFilter(type);
-      const b=document.getElementById('dashboardDetails'); if(b)b.dataset.v292Filter=type;
+      const b=document.getElementById('dashboardDetails'); if(b)b.dataset.dashboardFilter=type;
     }
   }
-  window.addEventListener('click',handle,true);
-  function arm(){
-    document.querySelectorAll('#dashboard .dashCard').forEach(c=>{c.style.cursor='pointer';c.style.pointerEvents='auto';});
+  function isOpen(type){
+    if(type==='sales'){const x=document.getElementById('v152SalesBox');return !!x;}
+    if(type==='purchase'){const x=document.getElementById('v153PurchaseBox');return !!x;}
+    const b=document.getElementById('dashboardDetails');
+    return !!b && b.style.display!=='none' && b.dataset.dashboardFilter===type;
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',arm); else arm();
-  setTimeout(arm,300);setTimeout(arm,1000);setTimeout(arm,2000);
+  function handler(e){
+    const card=e.target && e.target.closest ? e.target.closest('#dashboard .dashCard') : null;
+    if(!card)return;
+    const type=card.getAttribute('data-filter')||'';
+    const same=isOpen(type);
+    clear();
+    if(!same)openType(type);
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  // One handler only. It is deliberately installed at document bubble phase.
+  document.addEventListener('click',handler,false);
+  function style(){document.querySelectorAll('#dashboard .dashCard').forEach(c=>{c.style.cursor='pointer';c.style.pointerEvents='auto';});}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',style);else style();
+  setTimeout(style,500);setTimeout(style,1500);
 })();
 </script>
 </body></html>
