@@ -7074,4 +7074,42 @@ window.v305RenderMonths=function(){
   [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
 })();
 </script>
+<script id="v313MonthBalanceFix">
+(function(){
+  function renderBalance(){
+    var table=document.getElementById('dashboardDetailsTable');
+    if(!table)return;
+    var rows=table.querySelectorAll('tr.v312MonthRow');
+    if(!rows.length)return;
+    var data=[], names=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    rows.forEach(function(r){
+      var c=r.querySelectorAll('td'); if(c.length<6)return;
+      var k=r.getAttribute('data-month')||'';
+      data.push({k:k,inward:parseFloat(c[1].textContent)||0,outward:parseFloat(c[5].textContent)||0,row:r});
+    });
+    data.sort(function(a,b){return a.k.localeCompare(b.k);});
+    var bal=0;
+    data.forEach(function(x){bal += x.inward-x.outward; x.balance=bal;});
+    var head=table.querySelector('tr');
+    if(head && !head.querySelector('[data-v313-balance]')){
+      var th=document.createElement('th'); th.textContent='Balance'; th.setAttribute('data-v313-balance','1'); head.appendChild(th);
+    }
+    data.forEach(function(x){
+      var td=x.row.querySelector('[data-v313-balance-cell]');
+      if(!td){td=document.createElement('td');td.setAttribute('data-v313-balance-cell','1');x.row.appendChild(td);}
+      td.textContent=x.balance.toFixed(3);
+    });
+  }
+  function hook(){
+    if(window.v312RenderRawMonths && !window.__v313Wrapped){
+      var old=window.v312RenderRawMonths;
+      window.v312RenderRawMonths=function(){old();setTimeout(renderBalance,10);};
+      window.__v313Wrapped=true;
+    }
+    setTimeout(renderBalance,20);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hook);else hook();
+  [300,800,1500,3000,5000].forEach(function(t){setTimeout(hook,t);});
+})();
+</script>
 </body></html>
