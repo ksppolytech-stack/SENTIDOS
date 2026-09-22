@@ -7232,7 +7232,7 @@ function amount(t){var n=Number(t.grandTotal);if(Number.isFinite(n)&&n!==0)retur
 function aggregate(type){var m={};readTx().forEach(function(t){if(String(t.type||'').toUpperCase()!==type)return;var k=monthKey(t.date);if(!k)return;m[k]=(m[k]||0)+amount(t)});return m}
 function money(n){return '₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:0})}
 function chartHtml(title,sub,map,cls){var keys=Object.keys(map).sort();if(!keys.length)return '<div class="v315ChartPanel"><h3>'+title+'</h3><div class="v315ChartSub">'+sub+'</div><div class="v315Empty">No data found</div></div>';var max=Math.max.apply(null,keys.map(function(k){return map[k]}))||1;return '<div class="v315ChartPanel '+cls+'"><h3>'+title+'</h3><div class="v315ChartSub">'+sub+'</div><div class="v315Bars">'+keys.map(function(k){var h=Math.max(3,(map[k]/max)*185);return '<div class="v315BarCol"><div class="v315BarValue">'+money(map[k])+'</div><div class="v315Bar" style="height:'+h+'px"></div><div class="v315BarLabel">'+esc(monthLabel(k))+'</div></div>'}).join('')+'</div></div>'}
-function render(){var d=document.getElementById('dashboard');if(!d)return;var old=document.getElementById('v315Charts');if(old)old.remove();var host=document.createElement('div');host.id='v315Charts';host.className='v315Charts';host.innerHTML=chartHtml('📈 Month Wise Sales','Monthly sales / dispatch grand total',aggregate('DISPATCH'),'v315SalesBars')+chartHtml('🛒 Month Wise Purchase','Monthly purchase grand total',aggregate('PURCHASE'),'v315PurchaseBars');var details=document.getElementById('dashboardDetails');if(details)d.insertBefore(host,details);else d.appendChild(host)}
+function render(){var d=document.getElementById('dashboard');if(!d)return;var old=document.getElementById('v315Charts');var wasHidden=old&&old.style.display==='none';if(old)old.remove();var host=document.createElement('div');host.id='v315Charts';host.className='v315Charts';host.innerHTML=chartHtml('📈 Month Wise Sales','Monthly sales / dispatch grand total',aggregate('DISPATCH'),'v315SalesBars')+chartHtml('🛒 Month Wise Purchase','Monthly purchase grand total',aggregate('PURCHASE'),'v315PurchaseBars');var details=document.getElementById('dashboardDetails');if(details)d.insertBefore(host,details);else d.appendChild(host);if(wasHidden){host.style.display='none';host.dataset.v316Hidden='1';}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(render,500)});else setTimeout(render,500);[1500,3000,5000].forEach(function(t){setTimeout(render,t)});
 window.v315RefreshDashboardCharts=render;
 })();
@@ -7251,9 +7251,10 @@ window.v315RefreshDashboardCharts=render;
       var hidden=box.style.display==='none';
       if(hidden){
         box.style.display='';
-        if(typeof window.v315RefreshDashboardCharts==='function') setTimeout(window.v315RefreshDashboardCharts,0);
+        box.removeAttribute('data-v316-hidden');
       }else{
         box.style.display='none';
+        box.setAttribute('data-v316-hidden','1');
       }
     },true);
   }
