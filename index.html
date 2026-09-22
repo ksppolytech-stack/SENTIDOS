@@ -6645,6 +6645,56 @@ document.addEventListener('click',function(e){
   else setTimeout(bind,2200);
 })();
 </script>
+
+<script>
+/* V289: Final Dashboard card click controller.
+   Uses one capture handler so older dashboard handlers cannot block later clicks. */
+(function(){
+  function remove(id){const x=document.getElementById(id);if(x)x.remove();}
+  function hideAll(){
+    const box=document.getElementById('dashboardDetails');
+    if(box){box.style.display='none';box.removeAttribute('data-v288-filter');}
+    const body=document.getElementById('dashboardDetailsTable');
+    if(body)body.innerHTML='';
+    remove('v152SalesBox');
+    remove('v153PurchaseBox');
+  }
+  function isOpen(id){
+    const x=document.getElementById(id);
+    return !!x && x.style.display!=='none';
+  }
+  document.addEventListener('click',function(e){
+    const card=e.target.closest('#dashboard .dashCard');
+    if(!card)return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    const type=card.dataset.filter||'';
+    const wasOpen = type==='sales' ? isOpen('v152SalesBox')
+      : type==='purchase' ? isOpen('v153PurchaseBox')
+      : (function(){const b=document.getElementById('dashboardDetails');return !!b && b.style.display!=='none' && b.dataset.v288Filter===type;})();
+
+    // Every click first clears the previous card's detail.
+    hideAll();
+    if(wasOpen)return; // second click on same card = hide only
+
+    if(type==='sales'){
+      if(typeof openSales==='function')openSales();
+      return;
+    }
+    if(type==='purchase'){
+      if(typeof openPurchase==='function')openPurchase();
+      return;
+    }
+    if(typeof showDashboardFilter==='function'){
+      showDashboardFilter(type);
+      const box=document.getElementById('dashboardDetails');
+      if(box)box.dataset.v288Filter=type;
+    }
+  },true);
+})();
+</script>
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
