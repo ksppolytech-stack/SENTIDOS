@@ -1231,43 +1231,6 @@ function printRawSaleInvoice(rows,invoiceNo,customer,date){
  w.document.write(`<!doctype html><html><head><title>Raw Material Invoice ${invoiceNo}</title><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #333;padding:8px;text-align:left}td.num,th.num{text-align:right}.tot{margin-top:20px;text-align:right;font-size:18px}</style></head><body><h1>RAW MATERIAL SALES INVOICE</h1><p><b>Invoice No:</b> ${invoiceNo}<br><b>Date:</b> ${date}<br><b>Customer:</b> ${customer}</p><table><thead><tr><th>Raw Material</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate</th><th class="num">Taxable</th><th class="num">GST</th><th class="num">Total</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.name}</td><td class="num">${x.qty.toFixed(3)}</td><td>${x.unit}</td><td class="num">₹${x.rate.toFixed(2)}</td><td class="num">₹${x.amount.toFixed(2)}</td><td class="num">₹${x.tax.toFixed(2)}</td><td class="num">₹${x.grandTotal.toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="tot">Taxable: ₹${totals.taxable.toFixed(2)}<br>GST: ₹${totals.tax.toFixed(2)}<br><b>Grand Total: ₹${totals.grand.toFixed(2)}</b></div><script>window.onload=()=>window.print()<\/script><!-- V232: Report main menu with GST, Dispatch, Purchase, Production and Job Work submenus. Based on V231. -->
 
 
-
-<script id="v295DashboardFinalFix">
-(function(){
-  function dashboard(){
-    const page=document.getElementById('dashboard');
-    if(!page) return;
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    page.classList.add('active');
-    document.querySelectorAll('.tabs button[data-page]').forEach(b=>b.classList.remove('active'));
-    const btn=document.querySelector('.tabs button[data-page="dashboard"]');
-    if(btn) btn.classList.add('active');
-    if(typeof hideDashboardDetailsOnNavigation==='function') hideDashboardDetailsOnNavigation();
-    window.scrollTo({top:0,behavior:'smooth'});
-  }
-  function bind(){
-    const btn=document.querySelector('.tabs button[data-page="dashboard"]');
-    if(btn){ btn.type='button'; btn.onclick=function(e){e.preventDefault(); dashboard();}; }
-    // V152/V153 functions are inside IIFEs, so expose them when available.
-    if(typeof openSales==='function') window.openSales=openSales;
-    if(typeof openPurchase==='function') window.openPurchase=openPurchase;
-    document.querySelectorAll('#dashboard .dashCard').forEach(card=>{
-      card.style.pointerEvents='auto';
-      card.style.cursor='pointer';
-      card.onclick=function(e){
-        e.preventDefault(); e.stopPropagation();
-        const type=card.getAttribute('data-filter');
-        if(type==='sales' && typeof window.openSales==='function'){ window.openSales(); return; }
-        if(type==='purchase' && typeof window.openPurchase==='function'){ window.openPurchase(); return; }
-        if(typeof showDashboardFilter==='function') showDashboardFilter(type);
-      };
-    });
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind);
-  else bind();
-  setTimeout(bind,300); setTimeout(bind,1000);
-})();
-</script>
 </body></html>`);w.document.close();
 }
 function saveRawSaleInvoice(){
@@ -2718,43 +2681,6 @@ function downloadCustomerLedgerPDF(){
  <h2>Customer Ledger</h2><p><b>Customer:</b> ${selected}</p>
  <table><thead>${table.querySelector('thead')?.innerHTML||''}</thead><tbody>${rows}</tbody><tfoot>${foot}</tfoot></table>
  <script>window.onload=function(){window.print();};<\/script>
-
-<script id="v295DashboardFinalFix">
-(function(){
-  function dashboard(){
-    const page=document.getElementById('dashboard');
-    if(!page) return;
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    page.classList.add('active');
-    document.querySelectorAll('.tabs button[data-page]').forEach(b=>b.classList.remove('active'));
-    const btn=document.querySelector('.tabs button[data-page="dashboard"]');
-    if(btn) btn.classList.add('active');
-    if(typeof hideDashboardDetailsOnNavigation==='function') hideDashboardDetailsOnNavigation();
-    window.scrollTo({top:0,behavior:'smooth'});
-  }
-  function bind(){
-    const btn=document.querySelector('.tabs button[data-page="dashboard"]');
-    if(btn){ btn.type='button'; btn.onclick=function(e){e.preventDefault(); dashboard();}; }
-    // V152/V153 functions are inside IIFEs, so expose them when available.
-    if(typeof openSales==='function') window.openSales=openSales;
-    if(typeof openPurchase==='function') window.openPurchase=openPurchase;
-    document.querySelectorAll('#dashboard .dashCard').forEach(card=>{
-      card.style.pointerEvents='auto';
-      card.style.cursor='pointer';
-      card.onclick=function(e){
-        e.preventDefault(); e.stopPropagation();
-        const type=card.getAttribute('data-filter');
-        if(type==='sales' && typeof window.openSales==='function'){ window.openSales(); return; }
-        if(type==='purchase' && typeof window.openPurchase==='function'){ window.openPurchase(); return; }
-        if(typeof showDashboardFilter==='function') showDashboardFilter(type);
-      };
-    });
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind);
-  else bind();
-  setTimeout(bind,300); setTimeout(bind,1000);
-})();
-</script>
 </body></html>`);
  win.document.close();
 }
@@ -5525,44 +5451,7 @@ button:not(.no-style):active {transform:translateY(0); box-shadow:0 2px 5px rgba
 #v266StockItemsPanel table th:nth-child(5),
 #v266StockItemsPanel table td:nth-child(5){display:none !important;}
 </style>
-</head><body>'+clone.innerHTML+'
-<script id="v295DashboardFinalFix">
-(function(){
-  function dashboard(){
-    const page=document.getElementById('dashboard');
-    if(!page) return;
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    page.classList.add('active');
-    document.querySelectorAll('.tabs button[data-page]').forEach(b=>b.classList.remove('active'));
-    const btn=document.querySelector('.tabs button[data-page="dashboard"]');
-    if(btn) btn.classList.add('active');
-    if(typeof hideDashboardDetailsOnNavigation==='function') hideDashboardDetailsOnNavigation();
-    window.scrollTo({top:0,behavior:'smooth'});
-  }
-  function bind(){
-    const btn=document.querySelector('.tabs button[data-page="dashboard"]');
-    if(btn){ btn.type='button'; btn.onclick=function(e){e.preventDefault(); dashboard();}; }
-    // V152/V153 functions are inside IIFEs, so expose them when available.
-    if(typeof openSales==='function') window.openSales=openSales;
-    if(typeof openPurchase==='function') window.openPurchase=openPurchase;
-    document.querySelectorAll('#dashboard .dashCard').forEach(card=>{
-      card.style.pointerEvents='auto';
-      card.style.cursor='pointer';
-      card.onclick=function(e){
-        e.preventDefault(); e.stopPropagation();
-        const type=card.getAttribute('data-filter');
-        if(type==='sales' && typeof window.openSales==='function'){ window.openSales(); return; }
-        if(type==='purchase' && typeof window.openPurchase==='function'){ window.openPurchase(); return; }
-        if(typeof showDashboardFilter==='function') showDashboardFilter(type);
-      };
-    });
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind);
-  else bind();
-  setTimeout(bind,300); setTimeout(bind,1000);
-})();
-</script>
-</body></html>');
+</head><body>'+clone.innerHTML+'</body></html>');
     w.document.close();
     w.focus();
     setTimeout(()=>{w.print();w.close()},400);
