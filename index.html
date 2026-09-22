@@ -7112,4 +7112,62 @@ window.v305RenderMonths=function(){
   [300,800,1500,3000,5000].forEach(function(t){setTimeout(hook,t);});
 })();
 </script>
+<script id="v313InlineMonthDetails">
+(function(){
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]});}
+  function pad(n){return String(n).padStart(2,'0');}
+  function dateKey(v){
+    var s=String(v==null?'':v).trim(); if(!s)return '';
+    var m=s.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/); if(m)return m[1]+'-'+pad(m[2])+'-'+pad(m[3]);
+    var d=s.match(/^([0-9]{1,2})[\/]([0-9]{1,2})[\/]([0-9]{4})/);
+    if(d){var a=+d[1],b=+d[2]; if(a>12)return d[3]+'-'+pad(b)+'-'+pad(a); if(b>12)return d[3]+'-'+pad(a)+'-'+pad(b); return d[3]+'-'+pad(a)+'-'+pad(b);}
+    var x=new Date(s); if(!isNaN(x.getTime()))return x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate());
+    return '';
+  }
+  function rowsForMonth(k){
+    var tx=[];try{tx=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]');}catch(e){tx=[];}
+    var rms=[];try{rms=JSON.parse(localStorage.getItem('adr_rawmaterials_v2')||'[]');}catch(e){rms=[];}
+    return tx.map(function(t){
+      var type=String(t.type||t.transactionType||'').toUpperCase();
+      if(['RAW MATERIAL COMPANY INWARD','JOB WORK ISSUE','PRODUCTION','RAW MATERIAL SALE'].indexOf(type)<0)return null;
+      var code=String(t.item||'').replace(/^RM:/i,'');
+      var rm=rms.find(function(r){return String(r.code)===code;}); if(!rm)return null;
+      var d=dateKey(t.issueDate||t.jwIssueDate||t.date||t.createdAt||t.timestamp); if(!d||d.slice(0,7)!==k)return null;
+      return {date:d,type:type,code:code,name:rm.name||code,party:t.vendor||t.supplier||t.customer||'',qty:Math.abs(Number(t.qty)||0),unit:t.unit||rm.unit||'KG',ref:t.ref||t.inwardRef||t.billNo||t.invoiceNo||''};
+    }).filter(Boolean).sort(function(a,b){return b.date.localeCompare(a.date);});
+  }
+  function monthDetail(k,colspan){
+    var rows=rowsForMonth(k),html='<div style="padding:8px 10px;overflow:auto"><table style="width:100%;border-collapse:collapse"><tr><th>Date</th><th>Type</th><th>Code</th><th>Raw Material</th><th>Party</th><th>Qty</th><th>Unit</th><th>Reference</th></tr>';
+    html+=rows.map(function(x){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.code)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.party)+'</td><td>'+x.qty.toFixed(3)+'</td><td>'+esc(x.unit)+'</td><td>'+esc(x.ref)+'</td></tr>';}).join('');
+    if(!rows.length)html+='<tr><td colspan="8">No transactions found for this month</td></tr>';
+    return '<tr class="v313MonthDetail"><td colspan="'+colspan+'">'+html+'</table></div></td></tr>';
+  }
+  function bind(){
+    var table=document.getElementById('dashboardDetailsTable'); if(!table)return;
+    table.querySelectorAll('tr.v312MonthRow').forEach(function(row){
+      row.style.cursor='pointer';
+      if(row.dataset.v313Inline==='1')return;
+      row.dataset.v313Inline='1';
+      row.addEventListener('click',function(e){
+        e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
+        var old=table.querySelector('tr.v313MonthDetail');
+        if(old && old.previousElementSibling===row){old.remove();return;}
+        if(old)old.remove();
+        var k=row.getAttribute('data-month')||'';
+        row.insertAdjacentHTML('afterend',monthDetail(k,row.children.length));
+      },true);
+    });
+  }
+  function hook(){
+    if(window.v312RenderRawMonths && !window.__v313InlineWrap){
+      var old=window.v312RenderRawMonths;
+      window.v312RenderRawMonths=function(){old();setTimeout(bind,20);};
+      window.__v313InlineWrap=true;
+    }
+    bind();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hook);else hook();
+  [100,400,800,1500,3000,5000].forEach(function(t){setTimeout(hook,t);});
+})();
+</script>
 </body></html>
