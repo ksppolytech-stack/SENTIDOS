@@ -7261,4 +7261,52 @@ window.v315RefreshDashboardCharts=render;
   [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t)});
 })();
 </script>
+
+<style id="v317DashboardSideMenu">
+/* V317: colourful dashboard-style module sidebar */
+@media (min-width:900px){
+  .tabs{
+    background:linear-gradient(180deg,#f8fbff 0%,#eef4fb 48%,#e8f0f8 100%)!important;
+    border-right:1px solid #c7d4e2!important;
+    box-shadow:6px 0 22px rgba(30,70,110,.10)!important;
+    padding:12px 9px!important;
+  }
+  .tabs button{
+    position:relative!important;
+    border:1px solid #d5dfeb!important;
+    background:linear-gradient(135deg,#ffffff 0%,#edf4fb 100%)!important;
+    color:#18324b!important;
+    font-weight:800!important;
+    font-size:14px!important;
+    letter-spacing:.1px!important;
+    border-radius:11px!important;
+    padding:10px 12px!important;
+    box-shadow:0 3px 9px rgba(30,70,110,.08)!important;
+    transition:transform .18s ease,box-shadow .18s ease,background .18s ease!important;
+  }
+  .tabs button:before{
+    content:'';
+    position:absolute;left:0;top:7px;bottom:7px;width:4px;
+    border-radius:0 5px 5px 0;
+    background:#4f8cff;
+  }
+  .tabs button:nth-child(4n+1):before{background:#4f8cff}
+  .tabs button:nth-child(4n+2):before{background:#16b89a}
+  .tabs button:nth-child(4n+3):before{background:#ff9f43}
+  .tabs button:nth-child(4n+4):before{background:#9b59ff}
+  .tabs button:hover{
+    transform:translateX(4px)!important;
+    box-shadow:0 7px 16px rgba(30,70,110,.16)!important;
+    background:linear-gradient(135deg,#ffffff 0%,#e3efff 100%)!important;
+  }
+  .tabs button.active{
+    color:#fff!important;
+    border-color:#315d9b!important;
+    background:linear-gradient(135deg,#173b6b 0%,#2d70b8 100%)!important;
+    box-shadow:0 7px 18px rgba(35,91,150,.28)!important;
+    transform:translateX(3px)!important;
+  }
+  .tabs button.active:before{background:#ffd166!important;width:5px}
+}
+</style>
 </body></html>
