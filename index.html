@@ -7237,4 +7237,28 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 window.v315RefreshDashboardCharts=render;
 })();
 </script>
+
+<script id="v316DashboardChartToggle">
+(function(){
+  function charts(){return document.getElementById('v315Charts');}
+  function bind(){
+    var dash=document.getElementById('dashboard'); if(!dash||dash.dataset.v316Bound==='1')return;
+    dash.dataset.v316Bound='1';
+    dash.addEventListener('click',function(e){
+      var card=e.target.closest ? e.target.closest('.dashCard') : null;
+      if(!card)return;
+      var box=charts(); if(!box)return;
+      var hidden=box.style.display==='none';
+      if(hidden){
+        box.style.display='';
+        if(typeof window.v315RefreshDashboardCharts==='function') setTimeout(window.v315RefreshDashboardCharts,0);
+      }else{
+        box.style.display='none';
+      }
+    },true);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t)});
+})();
+</script>
 </body></html>
