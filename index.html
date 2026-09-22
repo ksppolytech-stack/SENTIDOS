@@ -6747,11 +6747,11 @@ document.addEventListener('click',function(e){
 </script>
 
 <script>
-/* V291: Reliable Dashboard click handler.  Use pointerdown capture + click fallback. */
+/* V292: Dashboard click fix. One click event only; pointerdown removed because it toggled twice. */
 (function(){
   function clearDetails(){
     const b=document.getElementById('dashboardDetails');
-    if(b){b.style.display='none';b.removeAttribute('data-v290-filter');b.removeAttribute('data-v291-filter');}
+    if(b){b.style.display='none';b.removeAttribute('data-v290-filter');b.removeAttribute('data-v291-filter');b.removeAttribute('data-v292-filter');}
     const tb=document.getElementById('dashboardDetailsTable'); if(tb)tb.innerHTML='';
     ['v152SalesBox','v153PurchaseBox'].forEach(id=>{const x=document.getElementById(id);if(x)x.remove();});
   }
@@ -6759,12 +6759,11 @@ document.addEventListener('click',function(e){
     if(type==='sales'){const x=document.getElementById('v152SalesBox');return !!x && x.style.display!=='none';}
     if(type==='purchase'){const x=document.getElementById('v153PurchaseBox');return !!x && x.style.display!=='none';}
     const b=document.getElementById('dashboardDetails');
-    return !!b && b.style.display!=='none' && (b.dataset.v291Filter===type || b.dataset.v290Filter===type || b.dataset.v288Filter===type);
+    return !!b && b.style.display!=='none' && (b.dataset.v292Filter===type || b.dataset.v291Filter===type || b.dataset.v290Filter===type || b.dataset.v288Filter===type);
   }
   function handle(e){
-    const card=e.target && e.target.closest ? e.target.closest('.dashCard') : null;
-    if(!card || !document.getElementById('dashboard')?.contains(card)) return;
-    if(e.type==='click' && e.defaultPrevented) e.preventDefault();
+    const card=e.target && e.target.closest ? e.target.closest('#dashboard .dashCard') : null;
+    if(!card)return;
     e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
     const type=card.getAttribute('data-filter')||'';
     const was=isOpen(type);
@@ -6774,18 +6773,14 @@ document.addEventListener('click',function(e){
     if(type==='purchase' && typeof openPurchase==='function'){openPurchase();return;}
     if(typeof showDashboardFilter==='function'){
       showDashboardFilter(type);
-      const b=document.getElementById('dashboardDetails'); if(b)b.dataset.v291Filter=type;
+      const b=document.getElementById('dashboardDetails'); if(b)b.dataset.v292Filter=type;
     }
   }
-  window.addEventListener('pointerdown',handle,true);
   window.addEventListener('click',handle,true);
   function arm(){
-    document.querySelectorAll('#dashboard .dashCard').forEach(c=>{
-      c.style.cursor='pointer';
-      c.style.pointerEvents='auto';
-    });
+    document.querySelectorAll('#dashboard .dashCard').forEach(c=>{c.style.cursor='pointer';c.style.pointerEvents='auto';});
   }
-  arm();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',arm); else arm();
   setTimeout(arm,300);setTimeout(arm,1000);setTimeout(arm,2000);
 })();
 </script>
