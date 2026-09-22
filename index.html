@@ -1231,6 +1231,61 @@ function printRawSaleInvoice(rows,invoiceNo,customer,date){
  w.document.write(`<!doctype html><html><head><title>Raw Material Invoice ${invoiceNo}</title><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #333;padding:8px;text-align:left}td.num,th.num{text-align:right}.tot{margin-top:20px;text-align:right;font-size:18px}</style></head><body><h1>RAW MATERIAL SALES INVOICE</h1><p><b>Invoice No:</b> ${invoiceNo}<br><b>Date:</b> ${date}<br><b>Customer:</b> ${customer}</p><table><thead><tr><th>Raw Material</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate</th><th class="num">Taxable</th><th class="num">GST</th><th class="num">Total</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.name}</td><td class="num">${x.qty.toFixed(3)}</td><td>${x.unit}</td><td class="num">₹${x.rate.toFixed(2)}</td><td class="num">₹${x.amount.toFixed(2)}</td><td class="num">₹${x.tax.toFixed(2)}</td><td class="num">₹${x.grandTotal.toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="tot">Taxable: ₹${totals.taxable.toFixed(2)}<br>GST: ₹${totals.tax.toFixed(2)}<br><b>Grand Total: ₹${totals.grand.toFixed(2)}</b></div><script>window.onload=()=>window.print()<\/script><!-- V232: Report main menu with GST, Dispatch, Purchase, Production and Job Work submenus. Based on V231. -->
 
 
+<script id="v297DashboardCardFinalFix">
+(function(){
+  // V297: expose the existing month-wise handlers, then use one capture-phase
+  // handler for every Dashboard card so older handlers cannot cancel the click.
+  function expose(){
+    try{
+      if(typeof openSales==='function') window.sentidosOpenSales=openSales;
+      if(typeof openPurchase==='function') window.sentidosOpenPurchase=openPurchase;
+    }catch(e){}
+  }
+  function go(type){
+    if(type==='sales' && typeof window.sentidosOpenSales==='function'){
+      window.sentidosOpenSales(); return;
+    }
+    if(type==='purchase' && typeof window.sentidosOpenPurchase==='function'){
+      window.sentidosOpenPurchase(); return;
+    }
+    if(typeof window.showDashboardFilter==='function'){
+      window.showDashboardFilter(type); return;
+    }
+    // showDashboardFilter is a top-level function in the ERP, but keep a
+    // direct fallback for the common stock cards.
+    var box=document.getElementById('dashboardDetails');
+    if(!box)return;
+    box.style.display='block';
+  }
+  function bind(){
+    expose();
+    document.querySelectorAll('#dashboard .dashCard').forEach(function(card){
+      card.style.pointerEvents='auto';
+      card.style.cursor='pointer';
+      card.setAttribute('role','button');
+      card.setAttribute('tabindex','0');
+    });
+  }
+  document.addEventListener('click',function(e){
+    var card=e.target && e.target.closest ? e.target.closest('#dashboard .dashCard') : null;
+    if(!card)return;
+    var type=card.getAttribute('data-filter')||'';
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    go(type);
+  },true);
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Enter' && e.key!==' ')return;
+    var card=e.target && e.target.closest ? e.target.closest('#dashboard .dashCard') : null;
+    if(!card)return;
+    e.preventDefault();
+    go(card.getAttribute('data-filter')||'');
+  },true);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);
+  else bind();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
+})();
+</script>
 </body></html>`);w.document.close();
 }
 function saveRawSaleInvoice(){
