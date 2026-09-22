@@ -7366,4 +7366,31 @@ window.v315RefreshDashboardCharts=render;
   [100,300,700,1200,2000,3500,5000].forEach(function(t){setTimeout(hook,t)});
 })();
 </script>
+<script id="v320DashboardCardDetailChartFix">
+(function(){
+  function charts(){return document.getElementById('v315Charts');}
+  function details(){return document.getElementById('dashboardDetails');}
+  function showCharts(){var c=charts(); if(c){c.style.display='';c.removeAttribute('data-v316-hidden');c.removeAttribute('data-v319-hidden');}}
+  function placeDetailsBelowCharts(){var d=document.getElementById('dashboard'),c=charts(),x=details();if(d&&c&&x&&c.nextElementSibling!==x)d.insertBefore(x,c.nextSibling);}
+  function run(type){
+    showCharts();
+    var x=details(); if(x){x.style.display='none';}
+    if(type==='sales' && typeof window.openSales==='function') window.openSales();
+    else if(type==='purchase' && typeof window.openPurchase==='function') window.openPurchase();
+    else if(typeof window.showDashboardFilter==='function') window.showDashboardFilter(type);
+    setTimeout(function(){showCharts();placeDetailsBelowCharts();var z=details();if(z)z.style.display='block';},30);
+    setTimeout(function(){showCharts();placeDetailsBelowCharts();},250);
+  }
+  function bind(){
+    var d=document.getElementById('dashboard');if(!d||d.dataset.v320Bound==='1')return;d.dataset.v320Bound='1';
+    d.addEventListener('click',function(e){
+      var card=e.target&&e.target.closest?e.target.closest('.dashCard'):null;if(!card||!d.contains(card))return;
+      e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
+      run(card.getAttribute('data-filter')||'all');
+    },true);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t)});
+})();
+</script>
 </body></html>
