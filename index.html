@@ -7394,9 +7394,14 @@ window.v315RefreshDashboardCharts=render;
       else {c.style.setProperty('display','none','important');c.setAttribute('data-v321-hidden','1');}
     }
   }
+  function removeAllCardDetails(){
+    ['v152SalesBox','v153PurchaseBox'].forEach(function(id){var x=document.getElementById(id);if(x)x.remove();});
+    var d=details();
+    if(d){d.style.display='none';d.removeAttribute('data-dashboard-filter');}
+  }
   function openCard(type){
     var same=(activeType===type);
-    hideOldDetails();
+    removeAllCardDetails();
     if(same){
       activeType='__chart__';
       setChart(true);
@@ -7404,11 +7409,20 @@ window.v315RefreshDashboardCharts=render;
     }
     activeType=type;
     setChart(false);
-    if(type==='sales' && typeof window.openSales==='function') window.openSales();
-    else if(type==='purchase' && typeof window.openPurchase==='function') window.openPurchase();
-    else if(typeof window.showDashboardFilter==='function') window.showDashboardFilter(type);
+    if(type==='sales' && typeof window.openSales==='function'){
+      window.openSales();
+    } else if(type==='purchase' && typeof window.openPurchase==='function'){
+      window.openPurchase();
+    } else if(type==='raw' && typeof window.v305RenderMonths==='function'){
+      window.v305RenderMonths();
+    } else if(typeof window.showDashboardFilter==='function'){
+      window.showDashboardFilter(type);
+    }
     var d=details();
-    if(d){d.style.display='block';d.dataset.dashboardFilter=type;}
+    if(d && type!=='sales' && type!=='purchase'){
+      d.style.display='block';
+      d.dataset.dashboardFilter=type;
+    }
     setTimeout(function(){forceState();},20);
     setTimeout(function(){forceState();},150);
     setTimeout(function(){forceState();},500);
