@@ -4022,6 +4022,7 @@ function openCustomers(k){
  (r.map(t=>'<tr><td>'+esc(t.date||'')+'</td><td>'+esc(t.customer||'')+'</td><td>'+esc(t.billNo||t.ref||'')+'</td><td>'+esc(t.itemName||t.item||'')+'</td><td>'+Math.abs(+t.qty||0)+'</td><td>'+money(t.dispatchRate)+'</td><td>'+money(t.amount)+'</td><td>'+money(t.tax)+'</td><td>'+money(grand(t))+'</td></tr>').join('')||'<tr><td colspan="9">No transactions found</td></tr>')+
  '</tbody></table>';d.scrollIntoView({behavior:'smooth',block:'start'})
 }
+window.openSales=openSales; window.openPurchase=openPurchase;
 function install(){}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(install,1000));else setTimeout(install,1000);
 })();
@@ -6705,6 +6706,29 @@ document.addEventListener('click',function(e){
         e.preventDefault();
         e.stopPropagation();
         showCard(card.getAttribute('data-filter')||'');
+      };
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind);
+  else bind();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
+})();
+</script>
+
+<!-- V299: Final direct Dashboard card click binding. -->
+<script id="v299DashboardDirectClickFix">
+(function(){
+  function bind(){
+    document.querySelectorAll('#dashboard .dashCard').forEach(function(card){
+      var type=card.getAttribute('data-filter')||'';
+      card.style.pointerEvents='auto';
+      card.style.cursor='pointer';
+      card.onclick=function(e){
+        if(e){e.preventDefault(); e.stopPropagation();}
+        if(type==='sales' && typeof window.openSales==='function'){ window.openSales(); return false; }
+        if(type==='purchase' && typeof window.openPurchase==='function'){ window.openPurchase(); return false; }
+        if(typeof window.showDashboardFilter==='function'){ window.showDashboardFilter(type); return false; }
+        return false;
       };
     });
   }
