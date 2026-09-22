@@ -7010,26 +7010,33 @@ window.v305RenderMonths=function(){
   [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
 })();
 </script>
-<script id="v311JobworkSeptemberFinalFix">
+<script id="v312JobworkSeptemberRobustFix">
 (function(){
   function read(k){try{var a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
   function saveTx(a){try{localStorage.setItem('adr_tx_v2',JSON.stringify(a));}catch(e){}}
-  function parseMonth(v){
-    var s=String(v==null?'':v).trim();
-    var m=s.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/); if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');
-    var d=s.match(/^(?:[^0-9]*)([0-9]{1,2})[\/\-]([0-9]{1,2})[\/\-](\d{4})/); if(d)return d[3]+'-'+String(d[2]).padStart(2,'0');
-    var x=new Date(s); if(!isNaN(x.getTime()))return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0');
+  function pad(n){return String(n).padStart(2,'0');}
+  function isoFromParts(y,m,d){m=Number(m);d=Number(d);y=Number(y);if(!y||m<1||m>12||d<1||d>31)return '';return y+'-'+pad(m)+'-'+pad(d);}
+  function parseDateValue(v, preferLocale){
+    var s=String(v==null?'':v).trim(); if(!s)return '';
+    var m=s.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/); if(m)return isoFromParts(m[1],m[2],m[3]);
+    var d=s.match(/^([0-9]{1,2})[\/]([0-9]{1,2})[\/]([0-9]{4})/);
+    if(d){
+      var a=Number(d[1]),b=Number(d[2]);
+      // Strings containing time/comma are normally browser en-US locale strings: M/D/YYYY.
+      if(a>12 && b<=12)return isoFromParts(d[3],b,a);
+      if(b>12 && a<=12)return isoFromParts(d[3],a,b);
+      return preferLocale ? isoFromParts(d[3],a,b) : isoFromParts(d[3],b,a);
+    }
+    var x=new Date(s); if(!isNaN(x.getTime()))return x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate());
     return '';
   }
-  // Normalize existing Job Work Issue records that were saved with locale-formatted dates.
-  function normalize(){
-    var tx=read('adr_tx_v2'),changed=false;
-    tx.forEach(function(t){
-      if(String(t.type||'').toUpperCase()!=='JOB WORK ISSUE')return;
-      var m=String(t.date||'').match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-      if(m){var iso=m[3]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0'); if(t.date!==iso){t.date=iso;changed=true;}}
-    });
-    if(changed)saveTx(tx);
+  function getDate(t){
+    var preferLocale=String(t.date||'').indexOf(',')>=0 || String(t.date||'').indexOf(' ')>=0;
+    var fields=[t.issueDate,t.jwIssueDate,t.date,t.createdAt,t.timestamp];
+    for(var i=0;i<fields.length;i++){var d=parseDateValue(fields[i],preferLocale);if(d)return d;}
+    // addTxn() uses Date.now()+random for id; use it as a safe fallback for old records.
+    var id=Number(t.id); if(isFinite(id)&&id>1000000000000){var z=new Date(Math.floor(id));if(!isNaN(z.getTime()))return z.getFullYear()+'-'+pad(z.getMonth()+1)+'-'+pad(z.getDate());}
+    return '';
   }
   function rawRows(){
     var tx=read('adr_tx_v2'),rms=read('adr_rawmaterials_v2');
@@ -7038,66 +7045,33 @@ window.v305RenderMonths=function(){
       if(['RAW MATERIAL COMPANY INWARD','JOB WORK ISSUE','PRODUCTION','RAW MATERIAL SALE'].indexOf(type)<0)return null;
       var code=String(t.item||'').replace(/^RM:/i,'');
       var r=rms.find(function(x){return String(x.code)===code;}); if(!r)return null;
-      var month=parseMonth(t.date||t.createdAt||t.timestamp); if(!month)return null;
-      var ds=String(t.date||'');
-      var m=ds.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/);
-      var date=m?m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0'):ds;
-      var dm=ds.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-      if(dm)date=dm[3]+'-'+String(dm[2]).padStart(2,'0')+'-'+String(dm[1]).padStart(2,'0');
-      return {date:date,month:month,type:type,code:code,name:r.name||code,qty:Math.abs(Number(t.qty)||0),unit:t.unit||r.unit||'KG',ref:t.ref||'',party:t.vendor||t.supplier||t.customer||''};
+      var date=getDate(t); if(!date)return null;
+      return {date:date,month:date.slice(0,7),type:type,code:code,name:r.name||code,qty:Math.abs(Number(t.qty)||0),unit:t.unit||r.unit||'KG',ref:t.ref||'',party:t.vendor||t.supplier||t.customer||''};
     }).filter(Boolean);
   }
   function renderMonths(){
-    normalize(); var rows=rawRows(),m={};
-    rows.forEach(function(x){if(!m[x.month])m[x.month]={inward:0,issue:0,production:0,sale:0}; if(x.type==='RAW MATERIAL COMPANY INWARD')m[x.month].inward+=x.qty; else if(x.type==='JOB WORK ISSUE')m[x.month].issue+=x.qty; else if(x.type==='PRODUCTION')m[x.month].production+=x.qty; else m[x.month].sale+=x.qty;});
+    var rows=rawRows(),m={};
+    rows.forEach(function(x){if(!m[x.month])m[x.month]={inward:0,issue:0,production:0,sale:0};if(x.type==='RAW MATERIAL COMPANY INWARD')m[x.month].inward+=x.qty;else if(x.type==='JOB WORK ISSUE')m[x.month].issue+=x.qty;else if(x.type==='PRODUCTION')m[x.month].production+=x.qty;else m[x.month].sale+=x.qty;});
     var b=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!b||!title||!table)return;
-    var names=['January','February','March','April','May','June','July','August','September','October','November','December'];
-    var keys=Object.keys(m).sort().reverse();
+    var names=['January','February','March','April','May','June','July','August','September','October','November','December'],keys=Object.keys(m).sort().reverse();
     title.textContent='RAW MATERIAL STOCK — Transaction History Month Wise';
-    table.innerHTML='<tr><th>Month</th><th>Inward</th><th>Job Work Issue</th><th>Production Used</th><th>Raw Material Sale</th><th>Total Outward</th></tr>'+(keys.map(function(k){var x=m[k],out=x.issue+x.production+x.sale;return '<tr class="v311MonthRow" data-month="'+k+'" style="cursor:pointer"><td><b>'+names[Number(k.slice(5))-1]+' '+k.slice(0,4)+'</b></td><td>'+x.inward.toFixed(3)+'</td><td>'+x.issue.toFixed(3)+'</td><td>'+x.production.toFixed(3)+'</td><td>'+x.sale.toFixed(3)+'</td><td>'+out.toFixed(3)+'</td></tr>';}).join('')||'<tr><td colspan="6">No raw material transaction history found</td></tr>');
+    table.innerHTML='<tr><th>Month</th><th>Inward</th><th>Job Work Issue</th><th>Production Used</th><th>Raw Material Sale</th><th>Total Outward</th></tr>'+(keys.map(function(k){var x=m[k],out=x.issue+x.production+x.sale;return '<tr class="v312MonthRow" data-month="'+k+'" style="cursor:pointer"><td><b>'+names[Number(k.slice(5))-1]+' '+k.slice(0,4)+'</b></td><td>'+x.inward.toFixed(3)+'</td><td>'+x.issue.toFixed(3)+'</td><td>'+x.production.toFixed(3)+'</td><td>'+x.sale.toFixed(3)+'</td><td>'+out.toFixed(3)+'</td></tr>';}).join('')||'<tr><td colspan="6">No raw material transaction history found</td></tr>');
     b.style.display='block';b.dataset.dashboardFilter='raw';
-    table.querySelectorAll('.v311MonthRow').forEach(function(r){r.onclick=function(){openMonth(r.getAttribute('data-month'));};});
+    table.querySelectorAll('.v312MonthRow').forEach(function(r){r.onclick=function(e){e.preventDefault();e.stopPropagation();openMonth(r.getAttribute('data-month'));};});
   }
   function openMonth(k){
-    normalize(); var rows=rawRows().filter(function(x){return x.month===k;}).sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
+    var rows=rawRows().filter(function(x){return x.month===k;}).sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
     var b=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!b||!title||!table)return;
     title.textContent='RAW MATERIAL STOCK — '+k+' Detail';
     table.innerHTML='<tr><th>Date</th><th>Type</th><th>Code</th><th>Raw Material</th><th>Party</th><th>Qty</th><th>Unit</th><th>Reference</th></tr>'+(rows.map(function(x){return '<tr><td>'+x.date+'</td><td>'+x.type+'</td><td>'+x.code+'</td><td>'+x.name+'</td><td>'+x.party+'</td><td>'+x.qty.toFixed(3)+'</td><td>'+x.unit+'</td><td>'+x.ref+'</td></tr>';}).join('')||'<tr><td colspan="8">No transactions found for this month</td></tr>');
     b.style.display='block';b.dataset.dashboardFilter='raw-month-detail';
-    title.insertAdjacentHTML('beforeend',' <button type="button" id="v311BackMonth" style="float:right">← Month Wise</button>');
-    document.getElementById('v311BackMonth').onclick=function(){renderMonths();};
+    title.insertAdjacentHTML('beforeend',' <button type="button" id="v312BackMonth" style="float:right">← Month Wise</button>');
+    document.getElementById('v312BackMonth').onclick=function(e){e.preventDefault();e.stopPropagation();renderMonths();};
   }
-  function bind(){
-    normalize();
-    var c=document.querySelector('#dashboard .dashCard[data-filter="raw"]'); if(c&&!c.dataset.v311Bound){c.dataset.v311Bound='1';c.addEventListener('click',function(){setTimeout(renderMonths,60);},true);}
-  }
-  window.v311RenderRawMonths=renderMonths;
+  function bind(){var c=document.querySelector('#dashboard .dashCard[data-filter="raw"]');if(c&&!c.dataset.v312Bound){c.dataset.v312Bound='1';c.addEventListener('click',function(){setTimeout(renderMonths,80);},true);}}
+  window.v312RenderRawMonths=renderMonths;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
   [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
 })();
 </script>
 </body></html>
-
-<!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
-     Totals are calculated directly from party detail rows. Based on V207. -->
-
-<!-- V209: KSP Polytech accounting ledger fix.
-     Purchase/inward ledger bill amount now includes GST: Net + GST. -->
-
-<!-- V210: KSP Polytech Job Work Receive Bill Total fix.
-     GST is added to net/job amount for Bill Total, including older entries. -->
-
-<!-- V211: Accounting tab click toggles Receive Payment / Pay Supplier-Vendor submenu. Based on V210. -->
-
-<!-- V212: Accounting moved to side expandable menu with Receive Payment and Pay Supplier/Vendor underneath. Based on V211. -->
-
-<!-- V213: Removed arrow beside Accounting. Submenu remains directly below Accounting. Based on V212. -->
-
-<!-- V214: Accounting submenu visibility fixed. Receive Payment and Pay Supplier/Vendor appear directly below Accounting. Based on V213. -->
-
-<!-- V215: Accounting click toggles submenu; Receive Payment and Pay Supplier/Vendor each toggle their own fields. Based on V214. -->
-
-<!-- V249: GST close X moved higher above Purchase GST heading. -->
-  <!-- V252: Added Payable GST = Purchase GST - Sale GST with green positive / red negative styling. -->
-<!-- V253: Added cumulative GST Balance month-wise. Each month adds/subtracts its Payable GST from the previous balance. -->
-<!-- V254: GST Total rows made bold/big with enhanced look; Generate button upgraded. -->
