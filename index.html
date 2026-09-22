@@ -6737,6 +6737,44 @@ document.addEventListener('click',function(e){
   [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
 })();
 </script>
+<!-- V301: Dashboard card toggle - second click hides opened details. -->
+<script id="v301DashboardCardToggleFix">
+(function(){
+  function hideDetails(){
+    var b=document.getElementById('dashboardDetails');
+    if(b){b.style.display='none';b.removeAttribute('data-dashboard-filter');}
+    var t=document.getElementById('dashboardDetailsTable'); if(t)t.innerHTML='';
+    ['v152SalesBox','v153PurchaseBox'].forEach(function(id){var x=document.getElementById(id);if(x)x.remove();});
+  }
+  function isOpen(type){
+    if(type==='sales') return !!document.getElementById('v152SalesBox');
+    if(type==='purchase') return !!document.getElementById('v153PurchaseBox');
+    var b=document.getElementById('dashboardDetails');
+    return !!b && b.style.display!=='none' && b.dataset.dashboardFilter===type;
+  }
+  function bind(){
+    document.querySelectorAll('#dashboard .dashCard').forEach(function(card){
+      var type=card.getAttribute('data-filter')||'';
+      card.onclick=function(e){
+        if(e){e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();}
+        if(isOpen(type)){ hideDetails(); return false; }
+        hideDetails();
+        if(type==='sales' && typeof window.openSales==='function'){window.openSales();return false;}
+        if(type==='purchase' && typeof window.openPurchase==='function'){window.openPurchase();return false;}
+        if(typeof window.showDashboardFilter==='function'){
+          window.showDashboardFilter(type);
+          var b=document.getElementById('dashboardDetails');
+          if(b)b.dataset.dashboardFilter=type;
+        }
+        return false;
+      };
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
+})();
+</script>
+
 </body></html>
 
 <!-- V208: Debit/Credit totals made explicitly visible below Bill/Reference Summary.
