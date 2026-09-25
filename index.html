@@ -388,7 +388,7 @@ tr.low-stock-row td * {
 </div><br><button class="primary" id="addRM">➕ Save Raw Material</button>
 </div>
 <button type="button" id="showRawMaterialMasterBtn" class="primary" style="display:none;margin-bottom:12px">➕ Add Raw Material</button>
-<table><thead><tr><th>Material Name</th><th>Total Stock</th><th>Action</th></tr></thead><tbody id="rmTable"></tbody></table><div id="rawLotDetails" class="small"></div>
+<table><thead><tr><th>Material Name</th><th>Opening Stock</th><th>Total Stock</th><th>Action</th></tr></thead><tbody id="rmTable"></tbody></table><div id="rawLotDetails" class="small"></div>
 <hr>
 <h3>Company Raw Material Inward / Stock Add</h3><p class="small">ઉપરની listમાં માત્ર Material Name અને Total Stock દેખાશે. નીચેની Inward listમાં દરેક batchનો Rate અલગ દેખાશે.</p>
 <div class="grid">
@@ -1713,7 +1713,7 @@ function addRawMaterial(){
  const rate=Number($('rmRate').value)||0,opening=Number($('rmOpening').value)||0;
  if(!code||!name)return alert('Material Code અને Material Name નાખો.');
  if(rawMaterials.some(x=>x.code===code))return alert('Material Code already exists.');
- rawMaterials.push({code,name,unit:$('rmUnit').value,rate,stock:opening,min:Number($('rmMin').value)||0});
+ rawMaterials.push({code,name,unit:$('rmUnit').value,rate,opening,stock:opening,min:Number($('rmMin').value)||0});
  if(opening>0)addRawMaterialLot(code,opening,rate);
  save();['rmCode','rmName','rmRate','rmOpening','rmMin'].forEach(id=>$(id).value='');
  render();refreshDropdowns();
@@ -1724,8 +1724,21 @@ function editRawMaterial(code){
  const r=rawMaterials.find(x=>x.code===code);if(!r)return;
  const n=prompt('Material Name',r.name);if(n===null)return;
  const rate=prompt('Rate / KG',r.rate);if(rate===null)return;
+ const opening=prompt('Opening Stock ('+r.unit+')',Number(r.opening||0));if(opening===null)return;
+ const newOpening=Number(opening)||0;
+ const oldOpening=Number(r.opening||0);
+ r.stock=Number(r.stock||0)+(newOpening-oldOpening);
+ r.opening=newOpening;
  const min=prompt('Minimum Stock',r.min);if(min===null)return;
- r.name=n;r.rate=Number(rate)||0;r.min=Number(min)||0;save();
+ r.name=n;r.rate=Number(rate)||0;r.min=Number(min)||0;
+ if(newOpening>0){
+   const lot=rawMaterialLots[r.code];
+   if(Array.isArray(lot) && oldOpening!==newOpening){
+     const idx=lot.findIndex(x=>String(x.type||'').toUpperCase()==='OPENING');
+     if(idx>=0)lot[idx].qty=newOpening; else lot.unshift({qty:newOpening,rate:r.rate,date:'',type:'OPENING'});
+   }
+ }
+ save();render();
 }
 function deleteRawMaterial(code){
  if(jobwork.some(x=>x.raw===code)||transactions.some(t=>t.item===code))return alert('આ Raw Material transaction/job workમાં વપરાયેલ છે.');
@@ -3628,7 +3641,7 @@ document.querySelectorAll('[data-bom-del]').forEach(b=>b.onclick=()=>deleteBomPr
  $('rmPurchaseTable').innerHTML=purchases.length?purchases.slice().reverse().map(t=>{const a=Number(t.amount??(Number(t.qty||0)*Number(t.purchaseRate??t.inwardRate??t.rate??0)))||0,gstRate=Number(t.taxRate??18),gst=Number(t.tax??a*gstRate/100),total=Number(t.grandTotal??a+gst);return `<tr><td>${t.date}</td><td>${t.ref}</td><td>${t.supplier||''}</td><td>${(rawMaterials.find(r=>('RM:'+r.code)===t.item)||{name:t.item}).name}</td><td>${Number(t.qty||0).toFixed(3)}</td><td>₹${fmtRate2(t.purchaseRate??t.inwardRate??t.rate??0)}</td><td>₹${a.toFixed(2)}</td><td>${gstRate.toFixed(2)}%</td><td>₹${gst.toFixed(2)}</td><td>₹${total.toFixed(2)}</td><td>${t.unit||''}</td><td><button data-rmp-edit="${t.id}">✏️ Edit</button> <button data-rmp="${t.id}">🗑 Delete</button></td></tr>`}).join(''):'<tr><td colspan="12">No inward entries</td></tr>';
  document.querySelectorAll('[data-rmp-edit]').forEach(b=>b.onclick=()=>editPurchase(b.dataset.rmpEdit));
  document.querySelectorAll('[data-rmp]').forEach(b=>b.onclick=()=>deletePurchase(b.dataset.rmp));
-$('rmTable').innerHTML=rawMaterials.map(r=>`<tr><td>${r.name}</td><td>${Number(r.stock||0).toFixed(3)} ${r.unit}</td><td><button type="button" data-rm-edit="${r.code}">✏️ Edit</button> <button type="button" data-rm-del="${r.code}">🗑 Delete</button></td></tr>`).join('');
+$('rmTable').innerHTML=rawMaterials.map(r=>`<tr><td>${r.name}</td><td>${Number(r.opening||0).toFixed(3)} ${r.unit}</td><td>${Number(r.stock||0).toFixed(3)} ${r.unit}</td><td><button type="button" data-rm-edit="${r.code}">✏️ Edit</button> <button type="button" data-rm-del="${r.code}">🗑 Delete</button></td></tr>`).join('');
  document.querySelectorAll('[data-rm-edit]').forEach(b=>b.onclick=()=>editRawMaterial(b.dataset.rmEdit));
  document.querySelectorAll('[data-rm-del]').forEach(b=>b.onclick=()=>deleteRawMaterial(b.dataset.rmDel));
 
@@ -7364,52 +7377,6 @@ window.v315RefreshDashboardCharts=render;
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hook);else hook();
   [100,300,700,1200,2000,3500,5000].forEach(function(t){setTimeout(hook,t)});
-})();
-</script>
-
-<script id="v320RawBalanceFinalFix">
-(function(){
-  function applyBalance(){
-    var table=document.getElementById('dashboardDetailsTable');
-    if(!table)return;
-    var rows=table.querySelectorAll('tr.v312MonthRow');
-    if(!rows.length)return;
-    var data=[];
-    rows.forEach(function(r){
-      var c=r.querySelectorAll('td');
-      if(c.length<6)return;
-      var k=r.getAttribute('data-month')||'';
-      data.push({k:k,inward:parseFloat(c[1].textContent)||0,outward:parseFloat(c[5].textContent)||0,row:r});
-    });
-    data.sort(function(a,b){return a.k.localeCompare(b.k);});
-    var bal=0;
-    data.forEach(function(x){bal+=x.inward-x.outward;x.balance=bal;});
-    var head=table.querySelector('tr');
-    if(!head)return;
-    var th=head.querySelector('[data-v320-balance]');
-    if(!th){th=document.createElement('th');th.textContent='Balance';th.setAttribute('data-v320-balance','1');head.appendChild(th);}
-    data.forEach(function(x){
-      var td=x.row.querySelector('[data-v320-balance-cell]');
-      if(!td){td=document.createElement('td');td.setAttribute('data-v320-balance-cell','1');x.row.appendChild(td);}
-      td.textContent=x.balance.toFixed(3);
-    });
-  }
-  function schedule(){[30,120,300,700].forEach(function(t){setTimeout(applyBalance,t);});}
-  function bind(){
-    document.addEventListener('click',function(e){
-      var c=e.target.closest?e.target.closest('#dashboard .dashCard[data-filter="raw"]'):null;
-      if(c)schedule();
-    },true);
-    var host=document.getElementById('dashboardDetailsTable');
-    if(host){
-      new MutationObserver(function(){
-        var rows=host.querySelectorAll('tr.v312MonthRow');
-        if(rows.length)schedule();
-      }).observe(host,{childList:true,subtree:true});
-    }
-    schedule();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
 })();
 </script>
 </body></html>
