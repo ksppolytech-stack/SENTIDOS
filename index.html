@@ -7515,4 +7515,69 @@ window.v315RefreshDashboardCharts=render;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
+
+<!-- V322: Authoritative Dashboard card controller. Keeps charts hidden when switching cards and restores RAW MATERIAL month-wise history. -->
+<style id="v322DashboardCardFix">
+#v315Charts.v322ChartsHidden{display:none !important;}
+</style>
+<script id="v322DashboardCardFixScript">
+(function(){
+  var selectedType=null, detailOpen=false;
+  function charts(){return document.getElementById('v315Charts');}
+  function setChartsHidden(hidden){
+    var c=charts();
+    if(c){c.classList.toggle('v322ChartsHidden',!!hidden);c.style.setProperty('display',hidden?'none':'','important');}
+  }
+  function clearDetails(){
+    var b=document.getElementById('dashboardDetails');
+    if(b){b.style.display='none';b.removeAttribute('data-dashboard-filter');}
+    var t=document.getElementById('dashboardDetailsTable');if(t)t.innerHTML='';
+    ['v152SalesBox','v153PurchaseBox'].forEach(function(id){var x=document.getElementById(id);if(x)x.remove();});
+  }
+  function isOpen(type){
+    if(type==='sales')return !!document.getElementById('v152SalesBox');
+    if(type==='purchase')return !!document.getElementById('v153PurchaseBox');
+    var b=document.getElementById('dashboardDetails');
+    return !!b&&b.style.display!=='none'&&b.dataset.dashboardFilter===type;
+  }
+  function openType(type){
+    if(type==='raw'){
+      var f=window.v312RenderRawMonths||window.v310RenderRawMonths||window.v305RenderMonths;
+      if(typeof f==='function'){try{f();}catch(e){console.error(e);}}
+      else if(typeof window.showDashboardFilter==='function')window.showDashboardFilter(type);
+      return;
+    }
+    if(type==='sales'&&typeof window.openSales==='function'){window.openSales();return;}
+    if(type==='purchase'&&typeof window.openPurchase==='function'){window.openPurchase();return;}
+    if(typeof window.showDashboardFilter==='function'){
+      window.showDashboardFilter(type);
+      var b=document.getElementById('dashboardDetails');if(b)b.dataset.dashboardFilter=type;
+    }
+  }
+  function handle(card,e){
+    var type=card.getAttribute('data-filter')||'';
+    var same=(selectedType===type&&detailOpen&&isOpen(type));
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+    if(same){
+      clearDetails();selectedType=null;detailOpen=false;setChartsHidden(false);return false;
+    }
+    clearDetails();selectedType=type;detailOpen=true;setChartsHidden(true);
+    openType(type);
+    [0,60,180,400,800].forEach(function(ms){setTimeout(function(){if(detailOpen&&selectedType===type)setChartsHidden(true);},ms);});
+    return false;
+  }
+  function bind(){
+    var doc=document;
+    if(doc.__v322DashboardHandler)doc.removeEventListener('click',doc.__v322DashboardHandler,true);
+    doc.__v322DashboardHandler=function(e){
+      var card=e.target&&e.target.closest?e.target.closest('#dashboard .dashCard'):null;
+      if(!card)return;
+      handle(card,e);
+    };
+    doc.addEventListener('click',doc.__v322DashboardHandler,true);
+  }
+  function init(){bind();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
 </body></html>
