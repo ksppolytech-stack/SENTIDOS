@@ -7379,4 +7379,107 @@ window.v315RefreshDashboardCharts=render;
   [100,300,700,1200,2000,3500,5000].forEach(function(t){setTimeout(hook,t)});
 })();
 </script>
-</body></html>
+
+<style id="v320DashboardCardStateFixStyle">
+/* V320: keep dashboard charts hidden while switching between different cards */
+#v315Charts.v320-dashboard-charts-hidden{display:none!important;}
+</style>
+\n<script id="v320DashboardCardStateFix">
+(function(){
+  var selectedType=null;
+  var detailOpen=false;
+  var chartHidden=false;
+  var observer=null;
+
+  function charts(){return document.getElementById('v315Charts');}
+  function setChartsHidden(hidden){
+    chartHidden=!!hidden;
+    var c=charts();
+    if(c){
+      c.classList.toggle('v320-dashboard-charts-hidden',chartHidden);
+      c.setAttribute('data-v320-hidden',chartHidden?'1':'0');
+      if(!chartHidden)c.style.removeProperty('display');
+    }
+  }
+  function clearDetails(){
+    var b=document.getElementById('dashboardDetails');
+    if(b){b.style.display='none';b.removeAttribute('data-dashboard-filter');}
+    var t=document.getElementById('dashboardDetailsTable');
+    if(t)t.innerHTML='';
+    ['v152SalesBox','v153PurchaseBox'].forEach(function(id){
+      var x=document.getElementById(id);
+      if(x)x.remove();
+    });
+  }
+  function isOpen(type){
+    if(type==='sales')return !!document.getElementById('v152SalesBox');
+    if(type==='purchase')return !!document.getElementById('v153PurchaseBox');
+    var b=document.getElementById('dashboardDetails');
+    return !!b && b.style.display!=='none' && b.dataset.dashboardFilter===type;
+  }
+  function openType(type){
+    if(type==='sales' && typeof window.openSales==='function'){window.openSales();return;}
+    if(type==='purchase' && typeof window.openPurchase==='function'){window.openPurchase();return;}
+    if(typeof window.showDashboardFilter==='function'){
+      window.showDashboardFilter(type);
+      var b=document.getElementById('dashboardDetails');
+      if(b)b.dataset.dashboardFilter=type;
+    }
+  }
+  function handleCard(card,e){
+    var type=card.getAttribute('data-filter')||'';
+    var same=(selectedType===type && isOpen(type));
+    if(e){e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();}
+
+    if(same){
+      clearDetails();
+      selectedType=null;
+      detailOpen=false;
+      setChartsHidden(false);
+      return false;
+    }
+
+    // Different card (or first click): close old detail and KEEP charts hidden.
+    clearDetails();
+    selectedType=type;
+    detailOpen=true;
+    setChartsHidden(true);
+    openType(type);
+    // Some card renderers recreate/replace their detail area asynchronously.
+    setTimeout(function(){setChartsHidden(true);},0);
+    setTimeout(function(){setChartsHidden(true);},80);
+    setTimeout(function(){setChartsHidden(true);},250);
+    return false;
+  }
+  function bind(){
+    var dash=document.getElementById('dashboard');
+    if(!dash)return;
+    if(dash.__v320CardStateHandler)dash.removeEventListener('click',dash.__v320CardStateHandler,true);
+    dash.__v320CardStateHandler=function(e){
+      var card=e.target&&e.target.closest?e.target.closest('#dashboard .dashCard'):null;
+      if(!card)return;
+      handleCard(card,e);
+    };
+    dash.addEventListener('click',dash.__v320CardStateHandler,true);
+    document.querySelectorAll('#dashboard .dashCard').forEach(function(card){
+      card.style.pointerEvents='auto';
+      card.style.cursor='pointer';
+    });
+  }
+  function watchCharts(){
+    var dash=document.getElementById('dashboard');
+    if(!dash || typeof MutationObserver==='undefined')return;
+    if(observer)observer.disconnect();
+    observer=new MutationObserver(function(){
+      if(chartHidden){
+        var c=charts();
+        if(c)c.classList.add('v320-dashboard-charts-hidden');
+      }
+    });
+    observer.observe(dash,{childList:true,subtree:true});
+    if(chartHidden)setChartsHidden(true);
+  }
+  function init(){bind();watchCharts();setTimeout(bind,300);setTimeout(bind,1000);setTimeout(bind,2000);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>\n</body></html>
