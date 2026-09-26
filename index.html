@@ -7580,4 +7580,46 @@ window.v315RefreshDashboardCharts=render;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
+
+<style id="v323TotalItemStockColorStyle">
+#dashboardDetailsTable td.v323-stock-green{color:#168a16!important;font-weight:800!important;background:#effcf0!important;}
+#dashboardDetailsTable td.v323-stock-red{color:#e00000!important;font-weight:800!important;background:#fff0f0!important;}
+</style>
+<script id="v323TotalItemStockColorFix">
+(function(){
+  function apply(type){
+    if(type!=='all')return;
+    var table=document.getElementById('dashboardDetailsTable');
+    if(!table)return;
+    Array.prototype.forEach.call(table.querySelectorAll('tr'),function(tr){
+      var cells=tr.children;
+      if(!cells || cells.length<7)return;
+      var stockCell=cells[5], minCell=cells[6];
+      var stock=parseFloat(String(stockCell.textContent||'').replace(/,/g,''));
+      var min=parseFloat(String(minCell.textContent||'').replace(/,/g,''));
+      stockCell.classList.remove('v323-stock-green','v323-stock-red');
+      if(!isFinite(stock))return;
+      if(isFinite(min) && stock<=min) stockCell.classList.add('v323-stock-red');
+      else stockCell.classList.add('v323-stock-green');
+    });
+  }
+  function install(){
+    if(typeof window.showDashboardFilter!=='function')return;
+    if(window.__v323Wrapped)return;
+    var old=window.showDashboardFilter;
+    window.showDashboardFilter=function(type){
+      var r=old.apply(this,arguments);
+      if(type==='all'){
+        apply(type);
+        setTimeout(function(){apply(type);},30);
+        setTimeout(function(){apply(type);},150);
+      }
+      return r;
+    };
+    window.__v323Wrapped=true;
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
+  [100,400,1000,2000].forEach(function(t){setTimeout(install,t);});
+})();
+</script>
 </body></html>
