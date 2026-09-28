@@ -7622,4 +7622,75 @@ window.v315RefreshDashboardCharts=render;
   [100,400,1000,2000].forEach(function(t){setTimeout(install,t);});
 })();
 </script>
+
+<script id="v324AllReportsExcel">
+/* V324: Add Save to Excel to every Reports module report. Exports the currently displayed report table. */
+(function(){
+  function $(id){return document.getElementById(id)}
+  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+  function cleanText(v){return String(v==null?'':v).replace(/\s+/g,' ').trim()}
+
+  function tableToExcel(panel, table, filename){
+    if(!table){alert('પહેલા Report Generate કરો.');return;}
+    const clone=table.cloneNode(true);
+    clone.querySelectorAll('button,input,select,textarea,[data-no-export]').forEach(el=>el.remove());
+    const rows=[...clone.querySelectorAll('tr')];
+    if(!rows.length){alert('Export કરવા માટે data નથી.');return;}
+    const html='<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>'+
+      '<h3>'+esc(panel?.querySelector('h2,h3')?.innerText||'Report')+'</h3>'+clone.outerHTML+'</body></html>';
+    const blob=new Blob(['\ufeff',html],{type:'application/vnd.ms-excel;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=filename.replace(/\.(xlsx|csv)$/i,'')+'.xls';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+  }
+
+  function addExcelButton(panel, tableId, filename, beforeId){
+    if(!panel || panel.querySelector('[data-v324-excel]'))return;
+    const table=tableId?$(tableId):panel.querySelector('table');
+    if(!table)return;
+    const b=document.createElement('button');
+    b.type='button';b.setAttribute('data-v324-excel','1');
+    b.textContent='📊 Save to Excel';
+    b.style.cssText='margin-left:6px;';
+    b.onclick=function(){tableToExcel(panel,table,filename)};
+    const before=beforeId?$(beforeId):null;
+    if(before && before.parentNode) before.parentNode.insertBefore(b,before.nextSibling);
+    else {
+      const grid=panel.querySelector('.grid');
+      if(grid) grid.appendChild(b); else panel.insertBefore(b,panel.firstChild.nextSibling);
+    }
+  }
+
+  function addAll(){
+    // GST already has V169 Excel/CSV export; do not duplicate it.
+    addExcelButton($('dispatchReportPanel'),'dispatchReportMainTable','Dispatch_Report.xls','printDispatchReportMain');
+    addExcelButton($('purchaseReportPanel'),'purchaseReportTable','Purchase_Report.xls','printPurchaseReport');
+    addExcelButton($('productionReportPanel'),'productionReportTable','Production_Report.xls','printProductionReport');
+    addExcelButton($('jobWorkMonthlyReportPanel'),null,'Job_Work_Report.xls','printJWReport');
+    // Inline reports used elsewhere in the ERP are also included when present.
+    addExcelButton(document.getElementById('purchaseReportSection'),'purchaseInlineReportTable','Purchase_Report_Inline.xls','purchaseInlineReportBtn');
+    addExcelButton(document.getElementById('dispatchReportSection'),'dispatchReportTable','Dispatch_Report_Inline.xls','dispatchReportBtn');
+    // GST report: replace/augment the existing CSV-labelled button with an Excel-compatible .xls button.
+    const gst=$('v168GSTReport');
+    if(gst && !gst.querySelector('[data-v324-gst-excel]')){
+      const bar=$('v169GSTActions');
+      if(bar){
+        const old=$('v169GSTExcel');
+        if(old)old.style.display='none';
+        const b=document.createElement('button');b.type='button';b.textContent='📊 Save to Excel';b.setAttribute('data-v324-gst-excel','1');
+        b.onclick=function(){tableToExcel(gst,gst.querySelector('table'),'GST_Report_Month_Wise.xls')};
+        bar.appendChild(b);
+      }
+    }
+  }
+
+  function init(){addAll();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){[500,1200,2500,5000].forEach(t=>setTimeout(addAll,t))});
+  else [500,1200,2500,5000].forEach(t=>setTimeout(addAll,t));
+  new MutationObserver(function(){addAll()}).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body></html>
