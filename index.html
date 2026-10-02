@@ -311,7 +311,6 @@ tr.low-stock-row td * {
 <div id="v220MasterSubMenu" class="v220MasterSubMenu" hidden>
 <button type="button" data-page="items">📦 Item Master</button>
 <button type="button" data-page="bom">🔧 BOM Master</button>
-<button type="button" data-page="packingBOM">📦 Packing BOM / Component Deduction</button>
 <button type="button" data-page="purchaseMaster">🏢 Supplier Master</button>
 <button type="button" data-page="customerMaster">👤 Customer Master</button>
 <button type="button" data-page="fgRateMaster">💰 Finished Goods Rate Master</button>
@@ -331,7 +330,6 @@ tr.low-stock-row td * {
 <div id="jobWorkSubMenuV225" class="v225JobWorkSubMenu" hidden>
 <button type="button" id="openJWIssueBtnV225">🧱 Raw Material Issue to Vendor</button>
 <button type="button" id="openJWReceiveBtnV225">🔩 Component Receive from Vendor</button>
-<button type="button" id="openLaserMarkingBtnV325">🔖 Round Arm Laser Marking</button>
 </div>
 </div><div class="v255BackupSideGroup">
 <button type="button" id="v255BackupBtn" class="v255BackupSideBtn" aria-expanded="false">💾 Backup / Restore</button>
@@ -435,15 +433,6 @@ tr.low-stock-row td * {
 <div class="msg" id="bomMsg"></div><hr>
 <table><thead><tr><th>Product</th><th>Component</th><th>Qty</th><th>Unit</th><th>Action</th></tr></thead><tbody id="bomTable"></tbody></table>
 <br><input id="deleteBomProduct" placeholder="Product Code"><button id="deleteBom">🗑 Delete BOM</button>
-<hr>
-<div class="panel" style="margin-top:14px;background:#f8fafc">
-<h3>📦 Product Packing / Component Deduction Setting</h3>
-<p class="small">અહીં નક્કી કરો કે Production વખતે કયા components stockમાંથી deduct થવાના છે. Unchecked component productionમાં deduct નહીં થાય.</p>
-<div class="grid"><div class="autowrap" style="position:relative"><input id="packSettingProduct" placeholder="Type Product Name / Code"><div id="packSettingProductSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none;max-height:220px;overflow:auto"></div></div></div>
-<div id="packSettingList" style="margin-top:10px"></div>
-<button type="button" class="primary" id="savePackSettingBtn">💾 Save Packing Setting</button>
-<div class="msg" id="packSettingMsg"></div>
-</div>
 </div></section>
 
 <section id="purchase" class="page"><div class="panel"><h2>🛒 Purchase</h2>
@@ -659,21 +648,6 @@ tr.low-stock-row td * {
 
 <hr><div id="vendorRawMaterialBalanceV230"><h3 style="font-size:22px;font-weight:800">Vendor Raw Material Balance</h3>
 <table><thead><tr><th>Vendor</th><th>Raw Material</th><th>Qty at Vendor</th><th>Unit</th></tr></thead><tbody id="jwTable"></tbody></table></div>
-
-<div id="laserMarkingSectionV325" class="panel" style="margin-top:18px;background:#fff7ed">
-<h3>🔖 Customer Specific Laser Marking — Round Arm</h3>
-<p class="small">Round Arm પહેલા Laser Marking માટે issue થશે. Marking થયા પછી તે જ Customer માટે Final Stockમાં જશે. Customer-wise stock અલગ રહેશે.</p>
-<div class="grid">
-<input id="laserDate" type="date" title="Date">
-<div class="autowrap" style="position:relative"><input id="laserCustomer" placeholder="Type Customer Name"><div id="laserCustomerSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #aaa;display:none;max-height:220px;overflow:auto"></div></div>
-<div class="autowrap" style="position:relative"><input id="laserItem" placeholder="Type Round Arm / Item"><div id="laserItemSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #aaa;display:none;max-height:220px;overflow:auto"></div></div>
-<input id="laserQty" type="number" step="1" placeholder="Quantity">
-</div>
-<br><button type="button" class="primary" id="laserIssueBtn">🔖 Issue for Laser Marking</button>
-<button type="button" id="laserFinalBtn">✅ Marking Complete → Customer Final</button>
-<div class="msg" id="laserMsg"></div>
-<div style="overflow:auto;margin-top:12px"><table><thead><tr><th>Customer</th><th>Item</th><th>Laser Pending</th><th>Final Customer Stock</th></tr></thead><tbody id="laserStockTable"></tbody></table></div>
-</div>
 </div></section>
 
 
@@ -906,21 +880,6 @@ tr.low-stock-row td * {
 <table><thead><tr><th>Date</th><th>Type</th><th>Ref</th><th>Item</th><th>Qty</th><th>Action</th></tr></thead><tbody id="transactionTable"></tbody></table>
 </div>
 </div></section>
-
-<section id="packingBOM" class="page"><div class="panel">
-<h2>📦 Packing BOM / Component Deduction</h2>
-<p class="small"><b>અહીં નક્કી કરો કે Production વખતે કયા components stockમાંથી deduct થવાના છે.</b></p>
-<div class="panel" style="background:#f8fafc;margin-top:12px">
-<h3>6×6 Shower માટે ખાસ setting</h3>
-<p class="small">જો 6×6 Shower ના boxમાં Arm અને Dish pack થતા નથી, તો Arm અને Dish માટે <b>Deduct in Production = No</b> રાખો.</p>
-<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
-<button type="button" class="primary" id="openPackingSettingV326">⚙️ Open Packing Setting</button>
-<button type="button" id="openBomMasterV326">🔧 Open BOM Master</button>
-</div></div>
-<div class="panel" style="background:#fff;margin-top:12px">
-<h3>Setting કેવી રીતે કરવી?</h3>
-<ol class="small"><li>Product select કરો — ઉદાહરણ: <b>6×6 Shower</b></li><li>Arm અને Dish સામે checkbox <b>untick</b> કરો.</li><li><b>Save Packing Setting</b> કરો.</li><li>ત્યારબાદ 6×6 Shower productionમાં Arm/Dish stockમાંથી deduct નહીં થાય.</li></ol>
-</div></div></section>
 </main>
 <script>function fmtRate2(v){const n=Number(v);return Number.isFinite(n)?n.toFixed(2):'0.00';}
 
@@ -936,8 +895,6 @@ let jwIssueNo=Number(localStorage.getItem('adr_jw_issue_no')||0);
 let jwReceiveNo=Number(localStorage.getItem('adr_jw_receive_no')||0);
 let jobworkRates=JSON.parse(localStorage.getItem('adr_jobwork_rates_v2')||'[]');
 let rmPurchaseNo=Number(localStorage.getItem('adr_rm_purchase_no')||0);
-let productSettings=JSON.parse(localStorage.getItem('adr_product_settings_v1')||'{}');
-let laserRecords=JSON.parse(localStorage.getItem('adr_laser_marking_v1')||'[]');
 
 const $=id=>document.getElementById(id);
 
@@ -977,7 +934,7 @@ function rebuildRawLotsFromTransactions(){
    addRawMaterialLot(code,Number(t.qty)||0,Number(t.purchaseRate??t.inwardRate??t.rate??0));
  });
 }
-function save(){localStorage.setItem('adr_items_v2',JSON.stringify(items));localStorage.setItem('adr_boms_v2',JSON.stringify(boms));localStorage.setItem('adr_tx_v2',JSON.stringify(transactions));localStorage.setItem('adr_jobwork_v2',JSON.stringify(jobwork));localStorage.setItem('adr_vendors_v2',JSON.stringify(vendors));localStorage.setItem('adr_rawmaterials_v2',JSON.stringify(rawMaterials));localStorage.setItem('adr_rawmaterial_lots_v1',JSON.stringify(rawMaterialLots));localStorage.setItem('adr_jw_issue_no',String(jwIssueNo));localStorage.setItem('adr_jw_receive_no',String(jwReceiveNo));localStorage.setItem('adr_jobwork_rates_v2',JSON.stringify(jobworkRates));localStorage.setItem('adr_rm_purchase_no',String(rmPurchaseNo));localStorage.setItem('adr_product_settings_v1',JSON.stringify(productSettings));localStorage.setItem('adr_laser_marking_v1',JSON.stringify(laserRecords));refreshDropdowns();if($('openPurchaseMaster'))$('openPurchaseMaster').onclick=()=>document.querySelector('[data-page="purchaseMaster"]').click();pmInit();
+function save(){localStorage.setItem('adr_items_v2',JSON.stringify(items));localStorage.setItem('adr_boms_v2',JSON.stringify(boms));localStorage.setItem('adr_tx_v2',JSON.stringify(transactions));localStorage.setItem('adr_jobwork_v2',JSON.stringify(jobwork));localStorage.setItem('adr_vendors_v2',JSON.stringify(vendors));localStorage.setItem('adr_rawmaterials_v2',JSON.stringify(rawMaterials));localStorage.setItem('adr_rawmaterial_lots_v1',JSON.stringify(rawMaterialLots));localStorage.setItem('adr_jw_issue_no',String(jwIssueNo));localStorage.setItem('adr_jw_receive_no',String(jwReceiveNo));localStorage.setItem('adr_jobwork_rates_v2',JSON.stringify(jobworkRates));localStorage.setItem('adr_rm_purchase_no',String(rmPurchaseNo));refreshDropdowns();if($('openPurchaseMaster'))$('openPurchaseMaster').onclick=()=>document.querySelector('[data-page="purchaseMaster"]').click();pmInit();
 (function(){
  const s=$('purchaseSupplier'),i=$('purchaseCode');
  if(s){s.addEventListener('input',pmAutoRate);s.addEventListener('change',pmAutoRate);}
@@ -1224,11 +1181,8 @@ function production(){
  const productionDate=$('productionDate')?.value||new Date().toISOString().slice(0,10);
  if(!p||q<=0)return alert('Finish Product અને Quantity નાખો.');
 
- const allBomRows=boms.filter(b=>b.product===p.code);
- const packCfg=productSettings[p.code]||{};
- const excluded=Array.isArray(packCfg.excludeComponents)?packCfg.excludeComponents:[];
- const rows=allBomRows.filter(b=>!excluded.includes(b.component));
- if(!allBomRows.length)return alert('આ Finish Product માટે BOM બનાવેલ નથી.');
+ const rows=boms.filter(b=>b.product===p.code);
+ if(!rows.length)return alert('આ Finish Product માટે BOM બનાવેલ નથી.');
 
  function requiredStock(b,item){
    let n=Number(b.qty)*q;
@@ -1307,10 +1261,6 @@ function printRawSaleInvoice(rows,invoiceNo,customer,date){
 
 
 
-
-<script>
-(function(){function init(){const b=document.getElementById('openLaserMarkingBtnV325');if(!b||b.dataset.ready==='1')return;b.dataset.ready='1';b.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const p=document.getElementById('jobwork');if(p)p.classList.add('active');const sec=document.getElementById('laserMarkingSectionV325');if(sec)sec.scrollIntoView({behavior:'smooth',block:'start'});},true);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();
-</script>
 </body></html>`);w.document.close();
 }
 function saveRawSaleInvoice(){
@@ -1929,16 +1879,6 @@ function receiveFromVendor(){
  msg('jwReceiveMsg','Component received. Challan No: '+ref+' | Rate ₹'+rate.toFixed(2)+' | Job Work ₹'+amount.toFixed(2)+' | Material Cost ₹'+rawCost.toFixed(2)+' | ADR stock unchanged.');
  $('jwReceiveDate').value=new Date().toISOString().slice(0,10);$('jwTaxRate').value='18';$('jwReceiveVendor').value='';$('jwComponent').value='';$('jwComponentWeight').value='';$('jwReceiveQty').value='';$('jwJobRate').value='';$('jwConsumption').textContent='';$('jwJobAmount').textContent='';
 }
-function escV325(v){return String(v??'').replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);});}
-function initProductPackingSettings(){
- const inp=$('packSettingProduct'), box=$('packSettingProductSuggest'), list=$('packSettingList'); if(!inp||!box||!list)return;
- function render(){const p=items.find(i=>i.code===inp.dataset.selectedCode)||items.find(i=>i.code===inp.value.trim())||items.find(i=>i.name.toLowerCase()===inp.value.trim().toLowerCase());if(!p){list.innerHTML='';return;}const rows=boms.filter(b=>b.product===p.code);if(!rows.length){list.innerHTML='<div class="small">આ product માટે BOM નથી.</div>';return;}let cfg=productSettings[p.code];if(!cfg){const autoExclude=String(p.name).toLowerCase().includes('6x6')&&String(p.name).toLowerCase().includes('shower');const ex=autoExclude?rows.filter(r=>/arm|dish/i.test(String(items.find(i=>i.code===r.component)?.name||r.component))).map(r=>r.component):[];cfg={excludeComponents:ex};productSettings[p.code]=cfg;save();}const ex=Array.isArray(cfg.excludeComponents)?cfg.excludeComponents:[];list.innerHTML='<div style="overflow:auto"><table><thead><tr><th>Component</th><th>Qty</th><th>Unit</th><th>Deduct in Production</th></tr></thead><tbody>'+rows.map(r=>{const it=items.find(i=>i.code===r.component);const checked=!ex.includes(r.component);return '<tr><td>'+escV325(it?it.name:r.component)+'</td><td>'+escV325(r.qty)+'</td><td>'+escV325(r.unit)+'</td><td><label><input type="checkbox" class="packDeductV325" data-code="'+escV325(r.component)+'" '+(checked?'checked':'')+'> Yes</label></td></tr>';}).join('')+'</tbody></table></div><div class="small" style="margin-top:8px">6×6 Shower માટે Arm/Dish default રીતે exclude રાખવામાં આવે છે; જરૂર હોય તો checkbox બદલી શકો છો.</div>';}
- inp.addEventListener('input',function(){const q=inp.value.trim().toLowerCase();box.innerHTML='';if(!q){box.style.display='none';return;}items.filter(i=>i.cat==='Finished Goods'&&(i.name.toLowerCase().includes(q)||i.code.toLowerCase().includes(q))).slice(0,12).forEach(i=>{const d=document.createElement('div');d.textContent=i.name+' ['+i.code+']';d.style.cssText='padding:9px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=function(e){e.preventDefault();inp.value=i.name;inp.dataset.selectedCode=i.code;box.style.display='none';render();};box.appendChild(d);});box.style.display=box.children.length?'block':'none';});
- $('savePackSettingBtn')?.addEventListener('click',function(){const p=items.find(i=>i.code===inp.dataset.selectedCode)||items.find(i=>i.code===inp.value.trim())||items.find(i=>i.name.toLowerCase()===inp.value.trim().toLowerCase());if(!p)return alert('Product select કરો.');const ex=[...document.querySelectorAll('.packDeductV325')].filter(x=>!x.checked).map(x=>x.dataset.code);productSettings[p.code]={excludeComponents:ex};save();msg('packSettingMsg','Packing setting saved: '+p.name+' | Excluded: '+(ex.length?ex.join(', '):'None'));render();});
-}
-function getLaserCustomersV325(){try{const a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]');return [...new Set(a.map(x=>String(x.name||'').trim()).filter(Boolean))];}catch(e){return[]}}
-function renderLaserV325(){const tb=$('laserStockTable');if(!tb)return;const map={};laserRecords.forEach(r=>{const k=r.customer+'|'+r.item;if(!map[k])map[k]={customer:r.customer,item:r.item,pending:0,final:0};if(r.stage==='LASER_PENDING')map[k].pending+=Number(r.qty)||0;if(r.stage==='FINAL')map[k].final+=Number(r.qty)||0;});tb.innerHTML=Object.values(map).filter(x=>x.pending>0||x.final>0).map(x=>'<tr><td>'+escV325(x.customer)+'</td><td>'+escV325(x.item)+'</td><td style="font-weight:700;color:#d97706">'+x.pending.toFixed(0)+'</td><td style="font-weight:700;color:#15803d">'+x.final.toFixed(0)+'</td></tr>').join('')||'<tr><td colspan="4">No Laser Marking stock</td></tr>';}
-function initLaserV325(){const date=$('laserDate');if(date&&!date.value)date.value=new Date().toISOString().slice(0,10);const c=$('laserCustomer'),cs=$('laserCustomerSuggest'),i=$('laserItem'),is=$('laserItemSuggest');function sc(){const q=c.value.trim().toLowerCase();cs.innerHTML='';if(!q){cs.style.display='none';return;}getLaserCustomersV325().filter(x=>x.toLowerCase().includes(q)).slice(0,12).forEach(n=>{const d=document.createElement('div');d.textContent=n;d.style.cssText='padding:9px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();c.value=n;cs.style.display='none';};cs.appendChild(d)});cs.style.display=cs.children.length?'block':'none';}function si(){const q=i.value.trim().toLowerCase();is.innerHTML='';if(!q){is.style.display='none';return;}items.filter(x=>x.cat!=='Raw Material'&&(x.name.toLowerCase().includes(q)||x.code.toLowerCase().includes(q))).slice(0,12).forEach(x=>{const d=document.createElement('div');d.textContent=x.name+' ['+x.code+']';d.style.cssText='padding:9px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();i.value=x.name;i.dataset.selectedCode=x.code;is.style.display='none';};is.appendChild(d)});is.style.display=is.children.length?'block':'none';}c?.addEventListener('input',sc);i?.addEventListener('input',si);$('laserIssueBtn')?.addEventListener('click',function(){const customer=c.value.trim(),item=items.find(x=>x.code===i.dataset.selectedCode)||items.find(x=>x.code===i.value.trim())||items.find(x=>x.name.toLowerCase()===i.value.trim().toLowerCase()),qty=Number($('laserQty').value)||0;if(!customer||!item||qty<=0)return alert('Customer, Item અને Qty નાખો.');if(Number(item.stock)<qty)return alert('Item stock ઓછો છે.');item.stock-=qty;laserRecords.push({id:'L'+Date.now(),date:date.value||new Date().toISOString().slice(0,10),customer,item:item.code,itemName:item.name,qty,stage:'LASER_PENDING'});addTxn('LASER MARKING ISSUE','LM-'+Date.now(),item.code,-qty,item.unit);transactions[transactions.length-1].date=date.value||transactions[transactions.length-1].date;save();msg('laserMsg','Laser marking માટે '+qty+' PCS '+item.name+' → '+customer+' issue થયું.');$('laserQty').value='';renderLaserV325();});$('laserFinalBtn')?.addEventListener('click',function(){const customer=c.value.trim(),item=items.find(x=>x.code===i.dataset.selectedCode)||items.find(x=>x.code===i.value.trim())||items.find(x=>x.name.toLowerCase()===i.value.trim().toLowerCase()),qty=Number($('laserQty').value)||0;if(!customer||!item||qty<=0)return alert('Customer, Item અને Final Qty નાખો.');let pending=laserRecords.filter(r=>r.stage==='LASER_PENDING'&&r.customer.toLowerCase()===customer.toLowerCase()&&r.item===item.code).reduce((a,r)=>a+(Number(r.qty)||0),0);if(pending<qty)return alert('આ customer માટે Laser Pending stock માત્ર '+pending+' PCS છે.');let left=qty;for(const r of laserRecords){if(left<=0)break;if(r.stage==='LASER_PENDING'&&r.customer.toLowerCase()===customer.toLowerCase()&&r.item===item.code){const take=Math.min(left,Number(r.qty)||0);r.qty-=take;left-=take;laserRecords.push({id:'L'+Date.now()+Math.random(),date:date.value||new Date().toISOString().slice(0,10),customer,item:item.code,itemName:item.name,qty:take,stage:'FINAL'});}}save();msg('laserMsg',qty+' PCS '+item.name+' marking complete → '+customer+' Final Stock.');$('laserQty').value='';renderLaserV325();});renderLaserV325();}
 window.showDashboardFilter=function showDashboardFilter(type){
  const box=$('dashboardDetails'),title=$('dashboardDetailsTitle'),table=$('dashboardDetailsTable');
  let list=[],label='';
@@ -3744,10 +3684,7 @@ window._generatePurchaseReport=generatePurchaseReport;window._generateProduction
 pmInit();
 pmRender();
 render();setupRawSale();setupAllAutocomplete();setupAllMasterSuggestionsV92();setupProductionSuggestions();setupJobWorkSuggestions();
-  if($('jwReceiveDate')) $('jwReceiveDate').value=new Date().toISOString().slice(0,10);setupRateSuggestions();setupRawPurchaseSuggest();setupRawMaterialSupplierSuggestV84();setupDashboardCards();
-try{initProductPackingSettings();}catch(e){}
-try{initLaserV325();}catch(e){}
-setupReportSelectors();
+  if($('jwReceiveDate')) $('jwReceiveDate').value=new Date().toISOString().slice(0,10);setupRateSuggestions();setupRawPurchaseSuggest();setupRawMaterialSupplierSuggestV84();setupDashboardCards();setupReportSelectors();
 })();
 
 document.addEventListener('DOMContentLoaded',function(){
@@ -7754,25 +7691,6 @@ window.v315RefreshDashboardCharts=render;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){[500,1200,2500,5000].forEach(t=>setTimeout(addAll,t))});
   else [500,1200,2500,5000].forEach(t=>setTimeout(addAll,t));
   new MutationObserver(function(){addAll()}).observe(document.body,{childList:true,subtree:true});
-})();
-</script>
-
-<script id="v326PackingLaserController">
-(function(){
- function go(page){
-   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
-   var p=document.getElementById(page); if(p)p.classList.add('active');
-   document.querySelectorAll('.tabs button[data-page]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-page')===page)});
- }
- function init(){
-   var pb=document.getElementById('openPackingSettingV326');
-   if(pb) pb.onclick=function(){go('bom'); var x=document.getElementById('packSettingProduct'); if(x){x.scrollIntoView({behavior:'smooth',block:'center'});x.focus();}};
-   var bb=document.getElementById('openBomMasterV326');
-   if(bb) bb.onclick=function(){go('bom');};
-   var lm=document.getElementById('openLaserMarkingBtnV325');
-   if(lm){lm.textContent='🔖 Round Arm Laser Marking'; lm.onclick=function(e){e.preventDefault();e.stopImmediatePropagation();go('jobwork');var sec=document.getElementById('laserMarkingSectionV325');if(sec)sec.scrollIntoView({behavior:'smooth',block:'start'});};}
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
 </body></html>
