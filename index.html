@@ -320,7 +320,7 @@ tr.low-stock-row td * {
 </div>
 </div>
 <button data-page="rawmaterials">🧱 Raw Material Master</button><button data-page="purchase">🛒 Purchase</button><button data-page="production">🏭 Production</button>
-<button data-page="dispatch">🚚 Dispatch</button><button data-page="rawSale">🧾 Raw Material Sale</button><div class="v212SideMenuGroup">
+<button data-page="dispatch">🚚 Dispatch</button><button data-page="rawSale">🧾 Raw Material Sale</button><button type="button" data-page="laserMarking" id="v325LaserTopBtn">🔖 Laser Marking</button><div class="v212SideMenuGroup">
 <button type="button" class="v212AccountingSideBtn" data-page="accounting" aria-expanded="false">💰 Accounting</button>
 <div id="accountingSubMenuV211" class="v212AccountingSubMenu">
 <button type="button" id="openReceivePaymentBtn" data-subpage="receive">🧾 Receive Payment</button>
@@ -921,6 +921,40 @@ tr.low-stock-row td * {
 <h3>Setting કેવી રીતે કરવી?</h3>
 <ol class="small"><li>Product select કરો — ઉદાહરણ: <b>6×6 Shower</b></li><li>Arm અને Dish સામે checkbox <b>untick</b> કરો.</li><li><b>Save Packing Setting</b> કરો.</li><li>ત્યારબાદ 6×6 Shower productionમાં Arm/Dish stockમાંથી deduct નહીં થાય.</li></ol>
 </div></div></section>
+
+<section id="laserMarking" class="page">
+  <div class="panel v325-laser-panel">
+    <div class="v325-laser-title"><div><h2>🔖 Laser Marking</h2><p class="small">Laser marking વખતે source item stockમાંથી deduct થશે અને customer પ્રમાણે marked item stockમાં automatically add થશે.</p></div></div>
+    <div class="grid">
+      <input id="v325LaserDate" type="date" title="Date">
+      <div class="autowrap" style="position:relative">
+        <input id="v325LaserPart" placeholder="Part Name / Code" autocomplete="off">
+        <div id="v325LaserPartSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #aaa;display:none;max-height:240px;overflow:auto"></div>
+      </div>
+      <input id="v325LaserQty" type="number" min="0" step="1" placeholder="Quantity (PCS)">
+      <div class="autowrap" style="position:relative">
+        <input id="v325LaserCustomer" placeholder="Customer Name" autocomplete="off">
+        <div id="v325LaserCustomerSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #aaa;display:none;max-height:240px;overflow:auto"></div>
+      </div>
+    </div>
+    <br>
+    <button type="button" class="primary" id="v325LaserSaveBtn">💾 Save Laser Marking</button>
+    <button type="button" id="v325LaserClearBtn">✖ Clear</button>
+    <div class="msg" id="v325LaserMsg"></div>
+    <div class="panel" style="margin-top:14px;background:#f8fafc">
+      <h3>Stock Transfer</h3>
+      <p class="small"><b>Example:</b> Round Arm 100 PCS + Customer A → Round Arm stock −100 PCS → <b>Round Arm - Customer A (Laser Marked)</b> stock +100 PCS.</p>
+    </div>
+    <div style="overflow:auto;margin-top:14px">
+      <h3>Laser Marked Customer Stock</h3>
+      <table><thead><tr><th>Item Code</th><th>Marked Item</th><th>Customer</th><th>Stock</th><th>Unit</th></tr></thead><tbody id="v325LaserStockBody"></tbody></table>
+    </div>
+    <div style="overflow:auto;margin-top:14px">
+      <h3>Laser Marking History</h3>
+      <table><thead><tr><th>Date</th><th>Part</th><th>Customer</th><th>Qty</th><th>Marked Item</th></tr></thead><tbody id="v325LaserHistoryBody"></tbody></table>
+    </div>
+  </div>
+</section>
 </main>
 <script>function fmtRate2(v){const n=Number(v);return Number.isFinite(n)?n.toFixed(2):'0.00';}
 
@@ -1303,10 +1337,16 @@ function addRawSaleItem(){
 function printRawSaleInvoice(rows,invoiceNo,customer,date){
  const totals=rows.reduce((a,x)=>{a.taxable+=x.amount;a.tax+=x.tax;a.grand+=x.grandTotal;return a},{taxable:0,tax:0,grand:0});
  const w=window.open('','_blank','width=900,height=700');if(!w)return alert('Popup blocked. Browserમાં popup allow કરો.');
- w.document.write(`<!doctype html><html><head><title>Raw Material Invoice ${invoiceNo}</title><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #333;padding:8px;text-align:left}td.num,th.num{text-align:right}.tot{margin-top:20px;text-align:right;font-size:18px}</style></head><body><h1>RAW MATERIAL SALES INVOICE</h1><p><b>Invoice No:</b> ${invoiceNo}<br><b>Date:</b> ${date}<br><b>Customer:</b> ${customer}</p><table><thead><tr><th>Raw Material</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate</th><th class="num">Taxable</th><th class="num">GST</th><th class="num">Total</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.name}</td><td class="num">${x.qty.toFixed(3)}</td><td>${x.unit}</td><td class="num">₹${x.rate.toFixed(2)}</td><td class="num">₹${x.amount.toFixed(2)}</td><td class="num">₹${x.tax.toFixed(2)}</td><td class="num">₹${x.grandTotal.toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="tot">Taxable: ₹${totals.taxable.toFixed(2)}<br>GST: ₹${totals.tax.toFixed(2)}<br><b>Grand Total: ₹${totals.grand.toFixed(2)}</b></div>${'<scr'+'ipt>'}window.onload=()=>window.print()${'</scr'+'ipt>'}<!-- V232: Report main menu with GST, Dispatch, Purchase, Production and Job Work submenus. Based on V231. -->
+ w.document.write(`<!doctype html><html><head><title>Raw Material Invoice ${invoiceNo}</title><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #333;padding:8px;text-align:left}td.num,th.num{text-align:right}.tot{margin-top:20px;text-align:right;font-size:18px}</style></head><body><h1>RAW MATERIAL SALES INVOICE</h1><p><b>Invoice No:</b> ${invoiceNo}<br><b>Date:</b> ${date}<br><b>Customer:</b> ${customer}</p><table><thead><tr><th>Raw Material</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate</th><th class="num">Taxable</th><th class="num">GST</th><th class="num">Total</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.name}</td><td class="num">${x.qty.toFixed(3)}</td><td>${x.unit}</td><td class="num">₹${x.rate.toFixed(2)}</td><td class="num">₹${x.amount.toFixed(2)}</td><td class="num">₹${x.tax.toFixed(2)}</td><td class="num">₹${x.grandTotal.toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="tot">Taxable: ₹${totals.taxable.toFixed(2)}<br>GST: ₹${totals.tax.toFixed(2)}<br><b>Grand Total: ₹${totals.grand.toFixed(2)}</b></div><script>window.onload=()=>window.print()<\/script><!-- V232: Report main menu with GST, Dispatch, Purchase, Production and Job Work submenus. Based on V231. -->
 
 
 
+
+<script>
+(function(){function init(){const b=document.getElementById('openLaserMarkingBtnV325');if(!b||b.dataset.ready==='1')return;b.dataset.ready='1';b.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const p=document.getElementById('jobwork');if(p)p.classList.add('active');const sec=document.getElementById('laserMarkingSectionV325');if(sec)sec.scrollIntoView({behavior:'smooth',block:'start'});},true);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();
+</script>
+</body></html>`);w.document.close();
+}
 function saveRawSaleInvoice(){
  const date=$('rawSaleDate').value||new Date().toISOString().slice(0,10),customer=$('rawSaleCustomer').value.trim(),remark=$('rawSaleRemark').value.trim();
  if(!customer)return alert('Customer Name નાખો.');
@@ -2779,9 +2819,7 @@ function downloadCustomerLedgerPDF(){
 </style></head><body>
  <h2>Customer Ledger</h2><p><b>Customer:</b> ${selected}</p>
  <table><thead>${table.querySelector('thead')?.innerHTML||''}</thead><tbody>${rows}</tbody><tfoot>${foot}</tfoot></table>
- ${'<scr'+'ipt>'}window.onload=function(){window.print();};${'</scr'+'ipt>'}
-
-<script id="v325DataSafetyFix">(function(){window.SENTIDOS_V325_DATA_SAFE=true;})();</script>
+ <script>window.onload=function(){window.print();};<\/script>
 </body></html>`);
  win.document.close();
 }
@@ -5556,9 +5594,7 @@ button:not(.no-style):active {transform:translateY(0); box-shadow:0 2px 5px rgba
 #v266StockItemsPanel table th:nth-child(5),
 #v266StockItemsPanel table td:nth-child(5){display:none !important;}
 </style>
-</head><body>'+clone.innerHTML+'
-<script id="v325DataSafetyFix">(function(){window.SENTIDOS_V325_DATA_SAFE=true;})();</script>
-</body></html>');
+</head><body>'+clone.innerHTML+'</body></html>');
     w.document.close();
     w.focus();
     setTimeout(()=>{w.print();w.close()},400);
@@ -7698,9 +7734,7 @@ window.v315RefreshDashboardCharts=render;
     const rows=[...clone.querySelectorAll('tr')];
     if(!rows.length){alert('Export કરવા માટે data નથી.');return;}
     const html='<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>'+
-      '<h3>'+esc(panel?.querySelector('h2,h3')?.innerText||'Report')+'</h3>'+clone.outerHTML+'
-<script id="v325DataSafetyFix">(function(){window.SENTIDOS_V325_DATA_SAFE=true;})();</script>
-</body></html>';
+      '<h3>'+esc(panel?.querySelector('h2,h3')?.innerText||'Report')+'</h3>'+clone.outerHTML+'</body></html>';
     const blob=new Blob(['\ufeff',html],{type:'application/vnd.ms-excel;charset=utf-8;'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
@@ -7776,5 +7810,114 @@ window.v315RefreshDashboardCharts=render;
 })();
 </script>
 
-<script id="v325DataSafetyFix">(function(){window.SENTIDOS_V325_DATA_SAFE=true;})();</script>
+<style id="v325-laser-module-style">
+.v325-laser-panel{background:linear-gradient(135deg,#fff,#f0f9ff);border:1px solid #cbd5e1}
+.v325-laser-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.v325-laser-title h2{margin:0 0 4px}
+#v325LaserStockBody td:nth-child(4){font-weight:800;color:#15803d}
+#v325LaserHistoryBody td:nth-child(4){font-weight:700}
+/* V325: use the new dedicated top-level module instead of the older Job Work embedded panel */
+#laserMarkingSectionV325{display:none!important}
+#openLaserMarkingBtnV325{display:none!important}
+</style>
+<script id="v325-laser-module-script">
+(function(){
+  'use strict';
+  const $325=id=>document.getElementById(id);
+  const esc325=v=>String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  function date325(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function customers325(){
+    try{
+      const a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]');
+      return [...new Set(a.map(x=>String(x.name||'').trim()).filter(Boolean))];
+    }catch(e){return []}
+  }
+  function markedCode325(sourceCode,customer){
+    const a=String(customer).trim().toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,35);
+    return 'LM-'+String(sourceCode).trim()+'-'+a;
+  }
+  function findItem325(value){
+    const v=String(value||'').trim().toLowerCase();
+    return items.find(x=>String(x.code||'').toLowerCase()===v)||items.find(x=>String(x.name||'').toLowerCase()===v);
+  }
+  function show325(id,text){const e=$325(id);if(e)e.textContent=text||'';}
+  function renderStock325(){
+    const body=$325('v325LaserStockBody'); if(!body)return;
+    const rows=items.filter(x=>String(x.code||'').startsWith('LM-') && Number(x.stock||0)>0.000001);
+    body.innerHTML=rows.map(x=>{
+      const parts=String(x.name||'').split(' - ');
+      const customer=parts.length>1?parts[parts.length-1]:'';
+      return '<tr><td>'+esc325(x.code)+'</td><td>'+esc325(x.name)+'</td><td>'+esc325(customer)+'</td><td>'+Number(x.stock||0).toFixed(x.unit==='PCS'?0:3)+'</td><td>'+esc325(x.unit||'PCS')+'</td></tr>';
+    }).join('')||'<tr><td colspan="5">No Laser Marked Stock</td></tr>';
+  }
+  function renderHistory325(){
+    const body=$325('v325LaserHistoryBody'); if(!body)return;
+    let rows=[];
+    try{rows=JSON.parse(localStorage.getItem('adr_laser_marking_v2')||'[]');}catch(e){rows=[]}
+    body.innerHTML=rows.slice().reverse().map(r=>'<tr><td>'+esc325(r.date)+'</td><td>'+esc325(r.sourceName||r.sourceCode)+'</td><td>'+esc325(r.customer)+'</td><td>'+Number(r.qty||0).toFixed(r.unit==='PCS'?0:3)+'</td><td>'+esc325(r.markedName||r.markedCode)+'</td></tr>').join('')||'<tr><td colspan="5">No Laser Marking Entry</td></tr>';
+  }
+  function render325(){renderStock325();renderHistory325();}
+  function suggestPart325(){
+    const inp=$325('v325LaserPart'),box=$325('v325LaserPartSuggest');if(!inp||!box)return;
+    const q=inp.value.trim().toLowerCase();box.innerHTML='';inp.dataset.selectedCode='';
+    if(!q){box.style.display='none';return;}
+    const matches=items.filter(x=>x.cat!=='Raw Material' && !String(x.code||'').startsWith('LM-') && (String(x.name||'')+' '+String(x.code||'')).toLowerCase().includes(q)).slice(0,15);
+    matches.forEach(x=>{const d=document.createElement('div');d.textContent=x.name+' — '+x.code+' | Stock: '+Number(x.stock||0);d.style.cssText='padding:9px;cursor:pointer;border-bottom:1px solid #ddd;background:#fff';d.onmousedown=e=>{e.preventDefault();inp.value=x.name;inp.dataset.selectedCode=x.code;box.style.display='none';};box.appendChild(d)});
+    box.style.display=box.children.length?'block':'none';
+  }
+  function suggestCustomer325(){
+    const inp=$325('v325LaserCustomer'),box=$325('v325LaserCustomerSuggest');if(!inp||!box)return;
+    const q=inp.value.trim().toLowerCase();box.innerHTML='';
+    const matches=customers325().filter(x=>x.toLowerCase().includes(q)).slice(0,15);
+    if(!matches.length){box.style.display='none';return;}
+    matches.forEach(x=>{const d=document.createElement('div');d.textContent=x;d.style.cssText='padding:9px;cursor:pointer;border-bottom:1px solid #ddd;background:#fff';d.onmousedown=e=>{e.preventDefault();inp.value=x;box.style.display='none';};box.appendChild(d)});
+    box.style.display='block';
+  }
+  function saveLaser325(){
+    const date=$325('v325LaserDate'),part=$325('v325LaserPart'),qtyEl=$325('v325LaserQty'),customer=$325('v325LaserCustomer');
+    const source=findItem325(part?.dataset.selectedCode||part?.value),qty=Number(qtyEl?.value||0),cust=customer?.value.trim();
+    if(!source)return alert('Part Name select કરો.');
+    if(!cust)return alert('Customer select / enter કરો.');
+    if(qty<=0)return alert('Quantity નાખો.');
+    if(Number(source.stock||0)+0.000001<qty)return alert('Source item stock ઓછો છે. Available: '+Number(source.stock||0));
+    if(String(source.code||'').startsWith('LM-'))return alert('Laser Marked item ફરી Laser Markingમાં ન લઈ શકાય.');
+    const code=markedCode325(source.code,cust);
+    let marked=items.find(x=>x.code===code);
+    if(!marked){
+      marked={code:code,name:source.name+' - '+cust+' (Laser Marked)',cat:source.cat==='Finished Goods'?'Finished Goods':'Component',unit:source.unit||'PCS',weight:Number(source.weight||0),stock:0,min:0};
+      items.push(marked);
+    }
+    source.stock=Number(source.stock||0)-qty;
+    marked.stock=Number(marked.stock||0)+qty;
+    const dt=date?.value||date325();
+    const ref='LM-'+Date.now();
+    transactions.push({id:Date.now()+Math.random(),date:dt,type:'LASER MARKING ISSUE',ref:ref,item:source.code,qty:-qty,unit:source.unit||'PCS',customer:cust,markedItem:marked.code});
+    transactions.push({id:Date.now()+Math.random()+1,date:dt,type:'LASER MARKING COMPLETE',ref:ref,item:marked.code,qty:qty,unit:marked.unit||'PCS',customer:cust,sourceItem:source.code});
+    let hist=[];try{hist=JSON.parse(localStorage.getItem('adr_laser_marking_v2')||'[]')}catch(e){hist=[]}
+    hist.push({id:ref,date:dt,sourceCode:source.code,sourceName:source.name,customer:cust,qty:qty,unit:source.unit||'PCS',markedCode:marked.code,markedName:marked.name});
+    localStorage.setItem('adr_laser_marking_v2',JSON.stringify(hist));
+    save();
+    part.value='';part.dataset.selectedCode='';qtyEl.value='';customer.value='';
+    show325('v325LaserMsg','✅ '+qty+' '+(source.unit||'PCS')+' '+source.name+' → '+cust+' | Source Stock −'+qty+' | '+marked.name+' Stock +'+qty);
+    render325();
+  }
+  function clear325(){['v325LaserPart','v325LaserQty','v325LaserCustomer'].forEach(id=>{const e=$325(id);if(e)e.value='';});const p=$325('v325LaserPart');if(p)p.dataset.selectedCode='';show325('v325LaserMsg','');}
+  function openPage325(){
+    const p=$325('laserMarking');if(!p)return;
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));p.classList.add('active');
+    document.querySelectorAll('.tabs button[data-page]').forEach(b=>b.classList.toggle('active',b.getAttribute('data-page')==='laserMarking'));
+    const d=$325('v325LaserDate');if(d&&!d.value)d.value=date325();render325();
+  }
+  function init325(){
+    const b=$325('v325LaserTopBtn'); if(b && b.dataset.laserReady!=='1'){b.dataset.laserReady='1';b.addEventListener('click',openPage325,true);}
+    const p=$325('v325LaserPart'),c=$325('v325LaserCustomer');
+    p?.addEventListener('input',suggestPart325);p?.addEventListener('focus',suggestPart325);
+    c?.addEventListener('input',suggestCustomer325);c?.addEventListener('focus',suggestCustomer325);
+    $325('v325LaserSaveBtn')?.addEventListener('click',saveLaser325);
+    $325('v325LaserClearBtn')?.addEventListener('click',clear325);
+    const d=$325('v325LaserDate');if(d&&!d.value)d.value=date325();render325();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init325);else init325();
+})();
+</script>
 </body></html>
