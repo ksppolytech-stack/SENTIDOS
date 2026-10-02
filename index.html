@@ -320,7 +320,7 @@ tr.low-stock-row td * {
 </div>
 </div>
 <button data-page="rawmaterials">🧱 Raw Material Master</button><button data-page="purchase">🛒 Purchase</button><button data-page="production">🏭 Production</button>
-<button data-page="dispatch">🚚 Dispatch</button><button data-page="rawSale">🧾 Raw Material Sale</button><button data-page="laserMarkingV326">🔖 Laser Marking</button><div class="v212SideMenuGroup">
+<button data-page="dispatch">🚚 Dispatch</button><button data-page="rawSale">🧾 Raw Material Sale</button><div class="v212SideMenuGroup">
 <button type="button" class="v212AccountingSideBtn" data-page="accounting" aria-expanded="false">💰 Accounting</button>
 <div id="accountingSubMenuV211" class="v212AccountingSubMenu">
 <button type="button" id="openReceivePaymentBtn" data-subpage="receive">🧾 Receive Payment</button>
@@ -676,22 +676,6 @@ tr.low-stock-row td * {
 </div>
 </div></section>
 
-
-<section id="laserMarkingV326" class="page">
-<div class="panel">
-<h2>🔖 Laser Marking</h2>
-<p class="small">Laser Marking entryમાં source Partમાંથી stock deduct થશે અને marking થયા પછી Customer-wise marked item stockમાં add થશે.</p>
-<div class="grid">
-<input id="lm326Date" type="date" title="Date">
-<div class="autowrap" style="position:relative"><input id="lm326Part" placeholder="Part Name — e.g. Round Arm" autocomplete="off"><div id="lm326PartSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #aaa;display:none;max-height:220px;overflow:auto"></div></div>
-<input id="lm326Qty" type="number" min="0.001" step="1" placeholder="Quantity">
-<div class="autowrap" style="position:relative"><input id="lm326Customer" placeholder="Customer Name" autocomplete="off"><div id="lm326CustomerSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #aaa;display:none;max-height:220px;overflow:auto"></div></div>
-</div>
-<br><button type="button" class="primary" id="lm326Save">💾 Save Laser Marking</button>
-<div class="msg" id="lm326Msg"></div>
-<div style="overflow:auto;margin-top:15px"><table><thead><tr><th>Date</th><th>Source Part</th><th>Customer</th><th>Qty</th><th>Marked Item Added</th></tr></thead><tbody id="lm326Table"></tbody></table></div>
-</div>
-</section>
 
 <section id="jwrates" class="page"><div class="panel"><h2>Job Work Rate Master</h2>
 <p>Vendor + Component પ્રમાણે rate એકવાર save કરો. પછી Job Work Receive વખતે rate automatic આવશે.</p>
@@ -1319,16 +1303,10 @@ function addRawSaleItem(){
 function printRawSaleInvoice(rows,invoiceNo,customer,date){
  const totals=rows.reduce((a,x)=>{a.taxable+=x.amount;a.tax+=x.tax;a.grand+=x.grandTotal;return a},{taxable:0,tax:0,grand:0});
  const w=window.open('','_blank','width=900,height=700');if(!w)return alert('Popup blocked. Browserમાં popup allow કરો.');
- w.document.write(`<!doctype html><html><head><title>Raw Material Invoice ${invoiceNo}</title><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #333;padding:8px;text-align:left}td.num,th.num{text-align:right}.tot{margin-top:20px;text-align:right;font-size:18px}</style></head><body><h1>RAW MATERIAL SALES INVOICE</h1><p><b>Invoice No:</b> ${invoiceNo}<br><b>Date:</b> ${date}<br><b>Customer:</b> ${customer}</p><table><thead><tr><th>Raw Material</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate</th><th class="num">Taxable</th><th class="num">GST</th><th class="num">Total</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.name}</td><td class="num">${x.qty.toFixed(3)}</td><td>${x.unit}</td><td class="num">₹${x.rate.toFixed(2)}</td><td class="num">₹${x.amount.toFixed(2)}</td><td class="num">₹${x.tax.toFixed(2)}</td><td class="num">₹${x.grandTotal.toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="tot">Taxable: ₹${totals.taxable.toFixed(2)}<br>GST: ₹${totals.tax.toFixed(2)}<br><b>Grand Total: ₹${totals.grand.toFixed(2)}</b></div><script>window.onload=()=>window.print()<\/script><!-- V232: Report main menu with GST, Dispatch, Purchase, Production and Job Work submenus. Based on V231. -->
+ w.document.write(`<!doctype html><html><head><title>Raw Material Invoice ${invoiceNo}</title><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #333;padding:8px;text-align:left}td.num,th.num{text-align:right}.tot{margin-top:20px;text-align:right;font-size:18px}</style></head><body><h1>RAW MATERIAL SALES INVOICE</h1><p><b>Invoice No:</b> ${invoiceNo}<br><b>Date:</b> ${date}<br><b>Customer:</b> ${customer}</p><table><thead><tr><th>Raw Material</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate</th><th class="num">Taxable</th><th class="num">GST</th><th class="num">Total</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.name}</td><td class="num">${x.qty.toFixed(3)}</td><td>${x.unit}</td><td class="num">₹${x.rate.toFixed(2)}</td><td class="num">₹${x.amount.toFixed(2)}</td><td class="num">₹${x.tax.toFixed(2)}</td><td class="num">₹${x.grandTotal.toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="tot">Taxable: ₹${totals.taxable.toFixed(2)}<br>GST: ₹${totals.tax.toFixed(2)}<br><b>Grand Total: ₹${totals.grand.toFixed(2)}</b></div>${'<scr'+'ipt>'}window.onload=()=>window.print()${'</scr'+'ipt>'}<!-- V232: Report main menu with GST, Dispatch, Purchase, Production and Job Work submenus. Based on V231. -->
 
 
 
-
-<script>
-(function(){function init(){const b=document.getElementById('openLaserMarkingBtnV325');if(!b||b.dataset.ready==='1')return;b.dataset.ready='1';b.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const p=document.getElementById('jobwork');if(p)p.classList.add('active');const sec=document.getElementById('laserMarkingSectionV325');if(sec)sec.scrollIntoView({behavior:'smooth',block:'start'});},true);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();
-</script>
-</body></html>`);w.document.close();
-}
 function saveRawSaleInvoice(){
  const date=$('rawSaleDate').value||new Date().toISOString().slice(0,10),customer=$('rawSaleCustomer').value.trim(),remark=$('rawSaleRemark').value.trim();
  if(!customer)return alert('Customer Name નાખો.');
@@ -2801,7 +2779,9 @@ function downloadCustomerLedgerPDF(){
 </style></head><body>
  <h2>Customer Ledger</h2><p><b>Customer:</b> ${selected}</p>
  <table><thead>${table.querySelector('thead')?.innerHTML||''}</thead><tbody>${rows}</tbody><tfoot>${foot}</tfoot></table>
- <script>window.onload=function(){window.print();};<\/script>
+ ${'<scr'+'ipt>'}window.onload=function(){window.print();};${'</scr'+'ipt>'}
+
+<script id="v325DataSafetyFix">(function(){window.SENTIDOS_V325_DATA_SAFE=true;})();</script>
 </body></html>`);
  win.document.close();
 }
@@ -5576,7 +5556,9 @@ button:not(.no-style):active {transform:translateY(0); box-shadow:0 2px 5px rgba
 #v266StockItemsPanel table th:nth-child(5),
 #v266StockItemsPanel table td:nth-child(5){display:none !important;}
 </style>
-</head><body>'+clone.innerHTML+'</body></html>');
+</head><body>'+clone.innerHTML+'
+<script id="v325DataSafetyFix">(function(){window.SENTIDOS_V325_DATA_SAFE=true;})();</script>
+</body></html>');
     w.document.close();
     w.focus();
     setTimeout(()=>{w.print();w.close()},400);
@@ -7716,7 +7698,9 @@ window.v315RefreshDashboardCharts=render;
     const rows=[...clone.querySelectorAll('tr')];
     if(!rows.length){alert('Export કરવા માટે data નથી.');return;}
     const html='<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>'+
-      '<h3>'+esc(panel?.querySelector('h2,h3')?.innerText||'Report')+'</h3>'+clone.outerHTML+'</body></html>';
+      '<h3>'+esc(panel?.querySelector('h2,h3')?.innerText||'Report')+'</h3>'+clone.outerHTML+'
+<script id="v325DataSafetyFix">(function(){window.SENTIDOS_V325_DATA_SAFE=true;})();</script>
+</body></html>';
     const blob=new Blob(['\ufeff',html],{type:'application/vnd.ms-excel;charset=utf-8;'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
@@ -7791,47 +7775,6 @@ window.v315RefreshDashboardCharts=render;
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
-<script>
-/* V325 correction: standalone Laser Marking module. One entry deducts source stock and adds customer-specific marked item stock. */
-(function(){
-  function el(id){return document.getElementById(id)}
-  function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-  function customers(){try{const a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]');return [...new Set(a.map(x=>String(x.name||'').trim()).filter(Boolean))]}catch(e){return[]}}
-  function markedCode(part,customer){return 'LM-'+String(part.code||part.name).replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').toUpperCase()+'-'+String(customer).replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').toUpperCase()}
-  function markedName(part,customer){return String(part.name||part.code)+' - '+String(customer)+' - Laser Marked'}
-  function render(){
-    const tb=el('lm326Table'); if(!tb)return;
-    let a=[]; try{a=JSON.parse(localStorage.getItem('adr_laser_marking_v326')||'[]')}catch(e){}
-    tb.innerHTML=a.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.sourceName)}</td><td>${esc(x.customer)}</td><td>${Number(x.qty||0)}</td><td>${esc(x.markedName)}</td></tr>`).join('')||'<tr><td colspan="5">No Laser Marking entry</td></tr>';
-  }
-  function init(){
-    const date=el('lm326Date'), part=el('lm326Part'), ps=el('lm326PartSuggest'), cust=el('lm326Customer'), cs=el('lm326CustomerSuggest'); if(!date||!part||!cust)return;
-    if(!date.value)date.value=new Date().toISOString().slice(0,10);
-    function showParts(){const q=part.value.trim().toLowerCase();ps.innerHTML=''; if(!q){ps.style.display='none';return;} (items||[]).filter(x=>String(x.name||'').toLowerCase().includes(q)||String(x.code||'').toLowerCase().includes(q)).slice(0,15).forEach(x=>{const d=document.createElement('div');d.textContent=x.name+' ['+x.code+'] — Stock: '+Number(x.stock||0);d.style.cssText='padding:9px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();part.value=x.name;part.dataset.code=x.code;ps.style.display='none'};ps.appendChild(d)});ps.style.display=ps.children.length?'block':'none'}
-    function showCustomers(){const q=cust.value.trim().toLowerCase();cs.innerHTML=''; if(!q){cs.style.display='none';return;} customers().filter(x=>x.toLowerCase().includes(q)).slice(0,15).forEach(n=>{const d=document.createElement('div');d.textContent=n;d.style.cssText='padding:9px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();cust.value=n;cs.style.display='none'};cs.appendChild(d)});cs.style.display=cs.children.length?'block':'none'}
-    part.addEventListener('input',()=>{delete part.dataset.code;showParts()}); cust.addEventListener('input',showCustomers);
-    el('lm326Save').onclick=function(){
-      const code=part.dataset.code||part.value.trim(); const src=(items||[]).find(x=>x.code===code)|| (items||[]).find(x=>String(x.name||'').toLowerCase()===code.toLowerCase());
-      const customer=cust.value.trim(); const qty=Number(el('lm326Qty').value)||0;
-      if(!src)return alert('Part Name select કરો.'); if(!customer)return alert('Customer select/enter કરો.'); if(qty<=0)return alert('Quantity નાખો.');
-      if(Number(src.stock||0)<qty)return alert('આ Partનો stock ઓછો છે. Available: '+Number(src.stock||0));
-      src.stock=Number(src.stock||0)-qty;
-      const mcode=markedCode(src,customer), mname=markedName(src,customer);
-      let marked=(items||[]).find(x=>x.code===mcode);
-      if(!marked){marked={code:mcode,name:mname,cat:'Finished Goods',unit:src.unit||'PCS',weight:src.weight||0,stock:0,min:0};items.push(marked)}
-      marked.stock=Number(marked.stock||0)+qty;
-      const ref='LM-'+Date.now();
-      if(typeof addTxn==='function'){addTxn('LASER MARKING',ref,src.code,-qty,src.unit||'PCS');transactions[transactions.length-1].date=date.value||new Date().toISOString().slice(0,10);transactions[transactions.length-1].customer=customer;transactions[transactions.length-1].outputItem=mcode;transactions[transactions.length-1].outputQty=qty;}
-      if(typeof addTxn==='function'){addTxn('LASER MARKING OUTPUT',ref,mcode,qty,marked.unit||'PCS');transactions[transactions.length-1].date=date.value||new Date().toISOString().slice(0,10);transactions[transactions.length-1].customer=customer;transactions[transactions.length-1].sourceItem=src.code;transactions[transactions.length-1].sourceQty=qty;}
-      let log=[];try{log=JSON.parse(localStorage.getItem('adr_laser_marking_v326')||'[]')}catch(e){} log.push({date:date.value||new Date().toISOString().slice(0,10),sourceCode:src.code,sourceName:src.name,customer,qty,markedCode:mcode,markedName:mname});localStorage.setItem('adr_laser_marking_v326',JSON.stringify(log));
-      if(typeof save==='function')save(); if(typeof render==='function')render();
-      el('lm326Msg').textContent=qty+' PCS '+src.name+' માંથી deduct કરીને '+mname+' માં add થયા.';
-      el('lm326Qty').value=''; part.value=''; delete part.dataset.code; cust.value=''; render();
-    };
-    render();
-  }
-  function bindMenu(){const b=document.querySelector('[data-page="laserMarkingV326"]');if(b)b.addEventListener('click',()=>{const p=el('laserMarkingV326');if(p){p.querySelector('input')?.focus()}})}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{init();bindMenu()});else{init();bindMenu()}
-})();
-</script>
+
+<script id="v325DataSafetyFix">(function(){window.SENTIDOS_V325_DATA_SAFE=true;})();</script>
 </body></html>
