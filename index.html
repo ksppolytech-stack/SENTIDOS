@@ -319,8 +319,8 @@ tr.low-stock-row td * {
 <button type="button" data-page="jwrates">💰 Job Work Rate Master</button>
 </div>
 </div>
-<button data-page="rawmaterials">🧱 Raw Material Master</button><button data-page="purchase">🛒 Purchase</button><button data-page="production">🏭 Production</button>
-<button data-page="dispatch">🚚 Dispatch</button><button data-page="rawSale">🧾 Raw Material Sale</button><button type="button" data-page="laserMarking" id="v325LaserTopBtn">🔖 Laser Marking</button><div class="v212SideMenuGroup">
+<button data-page="rawmaterials">🧱 Raw Material Master</button><button type="button" id="v325LaserTopBtn" data-page="laserMarking">🔖 Laser Marking</button><button data-page="purchase">🛒 Purchase</button><button data-page="production">🏭 Production</button>
+<button data-page="dispatch">🚚 Dispatch</button><button data-page="rawSale">🧾 Raw Material Sale</button><div class="v212SideMenuGroup">
 <button type="button" class="v212AccountingSideBtn" data-page="accounting" aria-expanded="false">💰 Accounting</button>
 <div id="accountingSubMenuV211" class="v212AccountingSubMenu">
 <button type="button" id="openReceivePaymentBtn" data-subpage="receive">🧾 Receive Payment</button>
@@ -921,40 +921,6 @@ tr.low-stock-row td * {
 <h3>Setting કેવી રીતે કરવી?</h3>
 <ol class="small"><li>Product select કરો — ઉદાહરણ: <b>6×6 Shower</b></li><li>Arm અને Dish સામે checkbox <b>untick</b> કરો.</li><li><b>Save Packing Setting</b> કરો.</li><li>ત્યારબાદ 6×6 Shower productionમાં Arm/Dish stockમાંથી deduct નહીં થાય.</li></ol>
 </div></div></section>
-
-<section id="laserMarking" class="page">
-  <div class="panel v325-laser-panel">
-    <div class="v325-laser-title"><div><h2>🔖 Laser Marking</h2><p class="small">Laser marking વખતે source item stockમાંથી deduct થશે અને customer પ્રમાણે marked item stockમાં automatically add થશે.</p></div></div>
-    <div class="grid">
-      <input id="v325LaserDate" type="date" title="Date">
-      <div class="autowrap" style="position:relative">
-        <input id="v325LaserPart" placeholder="Part Name / Code" autocomplete="off">
-        <div id="v325LaserPartSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #aaa;display:none;max-height:240px;overflow:auto"></div>
-      </div>
-      <input id="v325LaserQty" type="number" min="0" step="1" placeholder="Quantity (PCS)">
-      <div class="autowrap" style="position:relative">
-        <input id="v325LaserCustomer" placeholder="Customer Name" autocomplete="off">
-        <div id="v325LaserCustomerSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #aaa;display:none;max-height:240px;overflow:auto"></div>
-      </div>
-    </div>
-    <br>
-    <button type="button" class="primary" id="v325LaserSaveBtn">💾 Save Laser Marking</button>
-    <button type="button" id="v325LaserClearBtn">✖ Clear</button>
-    <div class="msg" id="v325LaserMsg"></div>
-    <div class="panel" style="margin-top:14px;background:#f8fafc">
-      <h3>Stock Transfer</h3>
-      <p class="small"><b>Example:</b> Round Arm 100 PCS + Customer A → Round Arm stock −100 PCS → <b>Round Arm - Customer A (Laser Marked)</b> stock +100 PCS.</p>
-    </div>
-    <div style="overflow:auto;margin-top:14px">
-      <h3>Laser Marked Customer Stock</h3>
-      <table><thead><tr><th>Item Code</th><th>Marked Item</th><th>Customer</th><th>Stock</th><th>Unit</th></tr></thead><tbody id="v325LaserStockBody"></tbody></table>
-    </div>
-    <div style="overflow:auto;margin-top:14px">
-      <h3>Laser Marking History</h3>
-      <table><thead><tr><th>Date</th><th>Part</th><th>Customer</th><th>Qty</th><th>Marked Item</th></tr></thead><tbody id="v325LaserHistoryBody"></tbody></table>
-    </div>
-  </div>
-</section>
 </main>
 <script>function fmtRate2(v){const n=Number(v);return Number.isFinite(n)?n.toFixed(2):'0.00';}
 
@@ -1344,6 +1310,66 @@ function printRawSaleInvoice(rows,invoiceNo,customer,date){
 
 <script>
 (function(){function init(){const b=document.getElementById('openLaserMarkingBtnV325');if(!b||b.dataset.ready==='1')return;b.dataset.ready='1';b.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const p=document.getElementById('jobwork');if(p)p.classList.add('active');const sec=document.getElementById('laserMarkingSectionV325');if(sec)sec.scrollIntoView({behavior:'smooth',block:'start'});},true);}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();
+</script>
+
+<style id="v325LaserModuleStyle">
+#laserMarking{padding-bottom:30px}
+.v325LaserBox{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.v325LaserBox h2{margin:0 0 6px}.v325LaserHint{color:#64748b;font-size:13px;margin-bottom:16px}
+.v325LaserMsg{margin-top:10px;padding:9px 12px;border-radius:8px;display:none}
+.v325LaserMsg.ok{display:block;background:#ecfdf5;color:#166534}.v325LaserMsg.err{display:block;background:#fef2f2;color:#991b1b}
+.v325LaserTable{width:100%;border-collapse:collapse;margin-top:16px}.v325LaserTable th,.v325LaserTable td{padding:9px;border:1px solid #e5e7eb;text-align:left}.v325LaserTable th{background:#f8fafc}
+.v325LaserSuggest{position:absolute;left:0;right:0;top:100%;z-index:10000;background:#fff;border:1px solid #cbd5e1;border-radius:0 0 8px 8px;display:none;max-height:220px;overflow:auto;box-shadow:0 5px 15px rgba(0,0,0,.12)}
+.v325LaserSuggest div{padding:9px 10px;cursor:pointer;border-bottom:1px solid #eef2f7}.v325LaserSuggest div:hover{background:#f1f5f9}
+</style>
+<section id="laserMarking" class="page">
+  <div class="v325LaserBox">
+    <h2>🔖 Laser Marking</h2>
+    <div class="v325LaserHint">Part stockમાંથી quantity deduct થશે અને marking થયા પછી પસંદ કરેલા customer માટે અલગ marked item stockમાં add થશે.</div>
+    <div class="grid">
+      <input id="v325LaserDate" type="date" title="Date">
+      <div class="autowrap" style="position:relative">
+        <input id="v325LaserPart" placeholder="Part Name (e.g. Round Arm)" autocomplete="off">
+        <div id="v325LaserPartSuggest" class="v325LaserSuggest"></div>
+      </div>
+      <input id="v325LaserQty" type="number" min="0.001" step="1" placeholder="Quantity">
+      <div class="autowrap" style="position:relative">
+        <input id="v325LaserCustomer" placeholder="Customer Name" autocomplete="off">
+        <div id="v325LaserCustomerSuggest" class="v325LaserSuggest"></div>
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <button type="button" class="primary" id="v325LaserSaveBtn">🔖 Save Laser Marking</button>
+      <button type="button" id="v325LaserClearBtn">✖ Clear</button>
+    </div>
+    <div id="v325LaserMsg" class="v325LaserMsg"></div>
+    <div style="overflow:auto">
+      <table class="v325LaserTable"><thead><tr><th>Customer</th><th>Marked Item</th><th>Stock</th></tr></thead><tbody id="v325LaserStockBody"></tbody></table>
+    </div>
+    <div style="overflow:auto;margin-top:20px">
+      <h3>Laser Marking History</h3>
+      <table class="v325LaserTable"><thead><tr><th>Date</th><th>Part</th><th>Customer</th><th>Qty</th><th>Marked Item</th></tr></thead><tbody id="v325LaserHistoryBody"></tbody></table>
+    </div>
+  </div>
+</section>
+<script id="v325LaserStandaloneModule">
+(function(){
+  function el(id){return document.getElementById(id)}
+  function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+  function showMsg(text,ok){var m=el('v325LaserMsg');if(!m)return;m.textContent=text;m.className='v325LaserMsg '+(ok?'ok':'err');m.style.display='block'}
+  function customers(){var out=[];function add(v){v=String(v||'').trim();if(v&&!out.some(function(x){return x.toLowerCase()===v.toLowerCase()}))out.push(v)}try{var a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]');if(Array.isArray(a))a.forEach(function(x){add(x.customer||x.customerName||x.name)})}catch(e){};if(typeof transactions!=='undefined'&&Array.isArray(transactions))transactions.forEach(function(t){add(t.customer)});return out}
+  function openPage(){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});var p=el('laserMarking');if(p)p.classList.add('active');document.querySelectorAll('.tabs button[data-page]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-page')==='laserMarking')});var d=el('v325LaserDate');if(d&&!d.value)d.value=today();render()}
+  function partList(){return (typeof items!=='undefined'&&Array.isArray(items)?items:[]).filter(function(x){return x&&x.code&&!String(x.code).startsWith('LM-')&&String(x.cat||'').toLowerCase()!=='raw material'})}
+  function selectedPart(){var p=el('v325LaserPart');if(!p)return null;var code=p.dataset.selectedCode||'';return partList().find(function(x){return String(x.code)===code})||partList().find(function(x){return String(x.code).toLowerCase()===p.value.trim().toLowerCase()||String(x.name||'').toLowerCase()===p.value.trim().toLowerCase()})||null}
+  function partSuggest(){var p=el('v325LaserPart'),box=el('v325LaserPartSuggest');if(!p||!box)return;p.dataset.selectedCode='';var q=p.value.trim().toLowerCase();box.innerHTML='';if(!q){box.style.display='none';return}partList().filter(function(x){return (String(x.name||'')+' '+String(x.code||'')).toLowerCase().includes(q)}).slice(0,20).forEach(function(x){var d=document.createElement('div');d.textContent=(x.name||x.code)+' — '+x.code+' | Stock: '+Number(x.stock||0);d.onmousedown=function(e){e.preventDefault();p.value=x.name||x.code;p.dataset.selectedCode=x.code;box.style.display='none'};box.appendChild(d)});box.style.display=box.children.length?'block':'none'}
+  function customerSuggest(){var p=el('v325LaserCustomer'),box=el('v325LaserCustomerSuggest');if(!p||!box)return;var q=p.value.trim().toLowerCase();box.innerHTML='';var list=customers().filter(function(x){return !q||x.toLowerCase().includes(q)}).slice(0,20);list.forEach(function(x){var d=document.createElement('div');d.textContent=x;d.onmousedown=function(e){e.preventDefault();p.value=x;box.style.display='none'};box.appendChild(d)});box.style.display=list.length?'block':'none'}
+  function markedCode(source,customer){var slug=customer.toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,35);return 'LM-'+source+'-'+slug}
+  function render(){var body=el('v325LaserStockBody'),histBody=el('v325LaserHistoryBody');if(!body||!histBody)return;var map={};(typeof items!=='undefined'?items:[]).filter(function(x){return x&&String(x.code||'').startsWith('LM-')}).forEach(function(x){map[x.code]=x});body.innerHTML=Object.values(map).map(function(x){var parts=String(x.name||'').split(' - ');var customer=parts.length>1?parts[parts.length-1].replace(/\s*\(Laser Marked\)\s*$/,''):'';return '<tr><td>'+esc(customer)+'</td><td>'+esc(x.name||x.code)+'</td><td><b>'+Number(x.stock||0)+'</b> '+esc(x.unit||'PCS')+'</td></tr>'}).join('')||'<tr><td colspan="3">No Laser Marked Stock</td></tr>';var h=[];try{h=JSON.parse(localStorage.getItem('adr_laser_marking_v2')||'[]')}catch(e){h=[]}histBody.innerHTML=h.slice().reverse().map(function(x){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.sourceName||x.sourceCode)+'</td><td>'+esc(x.customer)+'</td><td>'+Number(x.qty||0)+' '+esc(x.unit||'PCS')+'</td><td>'+esc(x.markedName||x.markedCode)+'</td></tr>'}).join('')||'<tr><td colspan="5">No Laser Marking History</td></tr>'}
+  function saveMarking(){var source=selectedPart(),qty=Number(el('v325LaserQty')?.value||0),cust=el('v325LaserCustomer')?.value.trim(),date=el('v325LaserDate')?.value||today();if(!source)return showMsg('Part Name select કરો.',false);if(!cust)return showMsg('Customer select / enter કરો.',false);if(qty<=0)return showMsg('Quantity નાખો.',false);if(Number(source.stock||0)<qty)return showMsg('Part stock ઓછો છે. Available: '+Number(source.stock||0),false);var code=markedCode(source.code,cust),marked=(typeof items!=='undefined'?items:[]).find(function(x){return x.code===code});if(!marked){marked={code:code,name:(source.name||source.code)+' - '+cust+' (Laser Marked)',cat:source.cat||'Component',unit:source.unit||'PCS',weight:Number(source.weight||0),stock:0,min:0};items.push(marked)}source.stock=Number(source.stock||0)-qty;marked.stock=Number(marked.stock||0)+qty;var ref='LM-'+Date.now();transactions.push({id:Date.now()+Math.random(),date:date,type:'LASER MARKING',ref:ref,item:source.code,qty:-qty,unit:source.unit||'PCS',customer:cust,markedItem:marked.code});transactions.push({id:Date.now()+Math.random()+1,date:date,type:'LASER MARKING',ref:ref,item:marked.code,qty:qty,unit:marked.unit||'PCS',customer:cust,sourceItem:source.code});var h=[];try{h=JSON.parse(localStorage.getItem('adr_laser_marking_v2')||'[]')}catch(e){h=[]}h.push({id:ref,date:date,sourceCode:source.code,sourceName:source.name,customer:cust,qty:qty,unit:source.unit||'PCS',markedCode:marked.code,markedName:marked.name});localStorage.setItem('adr_laser_marking_v2',JSON.stringify(h));if(typeof save==='function')save();el('v325LaserPart').value='';el('v325LaserPart').dataset.selectedCode='';el('v325LaserQty').value='';el('v325LaserCustomer').value='';showMsg('Saved: '+qty+' '+(source.unit||'PCS')+' '+source.name+' → '+cust+' | Source −'+qty+' | Marked +'+qty,true);render();if(typeof refreshDropdowns==='function')try{refreshDropdowns()}catch(e){}}
+  function init(){var d=el('v325LaserDate');if(d&&!d.value)d.value=today();var b=el('v325LaserTopBtn');if(b){b.onclick=function(e){e.preventDefault();e.stopPropagation();openPage()}};el('v325LaserPart')?.addEventListener('input',partSuggest);el('v325LaserPart')?.addEventListener('focus',partSuggest);el('v325LaserCustomer')?.addEventListener('input',customerSuggest);el('v325LaserCustomer')?.addEventListener('focus',customerSuggest);el('v325LaserSaveBtn')?.addEventListener('click',saveMarking);el('v325LaserClearBtn')?.addEventListener('click',function(){['v325LaserPart','v325LaserQty','v325LaserCustomer'].forEach(function(id){if(el(id))el(id).value=''});if(el('v325LaserPart'))el('v325LaserPart').dataset.selectedCode='';if(el('v325LaserPartSuggest'))el('v325LaserPartSuggest').style.display='none';if(el('v325LaserCustomerSuggest'))el('v325LaserCustomerSuggest').style.display='none';showMsg('',true);el('v325LaserMsg').style.display='none'});render()}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
 </script>
 </body></html>`);w.document.close();
 }
@@ -7807,117 +7833,6 @@ window.v315RefreshDashboardCharts=render;
    if(lm){lm.textContent='🔖 Round Arm Laser Marking'; lm.onclick=function(e){e.preventDefault();e.stopImmediatePropagation();go('jobwork');var sec=document.getElementById('laserMarkingSectionV325');if(sec)sec.scrollIntoView({behavior:'smooth',block:'start'});};}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-})();
-</script>
-
-<style id="v325-laser-module-style">
-.v325-laser-panel{background:linear-gradient(135deg,#fff,#f0f9ff);border:1px solid #cbd5e1}
-.v325-laser-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.v325-laser-title h2{margin:0 0 4px}
-#v325LaserStockBody td:nth-child(4){font-weight:800;color:#15803d}
-#v325LaserHistoryBody td:nth-child(4){font-weight:700}
-/* V325: use the new dedicated top-level module instead of the older Job Work embedded panel */
-#laserMarkingSectionV325{display:none!important}
-#openLaserMarkingBtnV325{display:none!important}
-</style>
-<script id="v325-laser-module-script">
-(function(){
-  'use strict';
-  const $325=id=>document.getElementById(id);
-  const esc325=v=>String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  function date325(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-  function customers325(){
-    try{
-      const a=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]');
-      return [...new Set(a.map(x=>String(x.name||'').trim()).filter(Boolean))];
-    }catch(e){return []}
-  }
-  function markedCode325(sourceCode,customer){
-    const a=String(customer).trim().toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,35);
-    return 'LM-'+String(sourceCode).trim()+'-'+a;
-  }
-  function findItem325(value){
-    const v=String(value||'').trim().toLowerCase();
-    return items.find(x=>String(x.code||'').toLowerCase()===v)||items.find(x=>String(x.name||'').toLowerCase()===v);
-  }
-  function show325(id,text){const e=$325(id);if(e)e.textContent=text||'';}
-  function renderStock325(){
-    const body=$325('v325LaserStockBody'); if(!body)return;
-    const rows=items.filter(x=>String(x.code||'').startsWith('LM-') && Number(x.stock||0)>0.000001);
-    body.innerHTML=rows.map(x=>{
-      const parts=String(x.name||'').split(' - ');
-      const customer=parts.length>1?parts[parts.length-1]:'';
-      return '<tr><td>'+esc325(x.code)+'</td><td>'+esc325(x.name)+'</td><td>'+esc325(customer)+'</td><td>'+Number(x.stock||0).toFixed(x.unit==='PCS'?0:3)+'</td><td>'+esc325(x.unit||'PCS')+'</td></tr>';
-    }).join('')||'<tr><td colspan="5">No Laser Marked Stock</td></tr>';
-  }
-  function renderHistory325(){
-    const body=$325('v325LaserHistoryBody'); if(!body)return;
-    let rows=[];
-    try{rows=JSON.parse(localStorage.getItem('adr_laser_marking_v2')||'[]');}catch(e){rows=[]}
-    body.innerHTML=rows.slice().reverse().map(r=>'<tr><td>'+esc325(r.date)+'</td><td>'+esc325(r.sourceName||r.sourceCode)+'</td><td>'+esc325(r.customer)+'</td><td>'+Number(r.qty||0).toFixed(r.unit==='PCS'?0:3)+'</td><td>'+esc325(r.markedName||r.markedCode)+'</td></tr>').join('')||'<tr><td colspan="5">No Laser Marking Entry</td></tr>';
-  }
-  function render325(){renderStock325();renderHistory325();}
-  function suggestPart325(){
-    const inp=$325('v325LaserPart'),box=$325('v325LaserPartSuggest');if(!inp||!box)return;
-    const q=inp.value.trim().toLowerCase();box.innerHTML='';inp.dataset.selectedCode='';
-    if(!q){box.style.display='none';return;}
-    const matches=items.filter(x=>x.cat!=='Raw Material' && !String(x.code||'').startsWith('LM-') && (String(x.name||'')+' '+String(x.code||'')).toLowerCase().includes(q)).slice(0,15);
-    matches.forEach(x=>{const d=document.createElement('div');d.textContent=x.name+' — '+x.code+' | Stock: '+Number(x.stock||0);d.style.cssText='padding:9px;cursor:pointer;border-bottom:1px solid #ddd;background:#fff';d.onmousedown=e=>{e.preventDefault();inp.value=x.name;inp.dataset.selectedCode=x.code;box.style.display='none';};box.appendChild(d)});
-    box.style.display=box.children.length?'block':'none';
-  }
-  function suggestCustomer325(){
-    const inp=$325('v325LaserCustomer'),box=$325('v325LaserCustomerSuggest');if(!inp||!box)return;
-    const q=inp.value.trim().toLowerCase();box.innerHTML='';
-    const matches=customers325().filter(x=>x.toLowerCase().includes(q)).slice(0,15);
-    if(!matches.length){box.style.display='none';return;}
-    matches.forEach(x=>{const d=document.createElement('div');d.textContent=x;d.style.cssText='padding:9px;cursor:pointer;border-bottom:1px solid #ddd;background:#fff';d.onmousedown=e=>{e.preventDefault();inp.value=x;box.style.display='none';};box.appendChild(d)});
-    box.style.display='block';
-  }
-  function saveLaser325(){
-    const date=$325('v325LaserDate'),part=$325('v325LaserPart'),qtyEl=$325('v325LaserQty'),customer=$325('v325LaserCustomer');
-    const source=findItem325(part?.dataset.selectedCode||part?.value),qty=Number(qtyEl?.value||0),cust=customer?.value.trim();
-    if(!source)return alert('Part Name select કરો.');
-    if(!cust)return alert('Customer select / enter કરો.');
-    if(qty<=0)return alert('Quantity નાખો.');
-    if(Number(source.stock||0)+0.000001<qty)return alert('Source item stock ઓછો છે. Available: '+Number(source.stock||0));
-    if(String(source.code||'').startsWith('LM-'))return alert('Laser Marked item ફરી Laser Markingમાં ન લઈ શકાય.');
-    const code=markedCode325(source.code,cust);
-    let marked=items.find(x=>x.code===code);
-    if(!marked){
-      marked={code:code,name:source.name+' - '+cust+' (Laser Marked)',cat:source.cat==='Finished Goods'?'Finished Goods':'Component',unit:source.unit||'PCS',weight:Number(source.weight||0),stock:0,min:0};
-      items.push(marked);
-    }
-    source.stock=Number(source.stock||0)-qty;
-    marked.stock=Number(marked.stock||0)+qty;
-    const dt=date?.value||date325();
-    const ref='LM-'+Date.now();
-    transactions.push({id:Date.now()+Math.random(),date:dt,type:'LASER MARKING ISSUE',ref:ref,item:source.code,qty:-qty,unit:source.unit||'PCS',customer:cust,markedItem:marked.code});
-    transactions.push({id:Date.now()+Math.random()+1,date:dt,type:'LASER MARKING COMPLETE',ref:ref,item:marked.code,qty:qty,unit:marked.unit||'PCS',customer:cust,sourceItem:source.code});
-    let hist=[];try{hist=JSON.parse(localStorage.getItem('adr_laser_marking_v2')||'[]')}catch(e){hist=[]}
-    hist.push({id:ref,date:dt,sourceCode:source.code,sourceName:source.name,customer:cust,qty:qty,unit:source.unit||'PCS',markedCode:marked.code,markedName:marked.name});
-    localStorage.setItem('adr_laser_marking_v2',JSON.stringify(hist));
-    save();
-    part.value='';part.dataset.selectedCode='';qtyEl.value='';customer.value='';
-    show325('v325LaserMsg','✅ '+qty+' '+(source.unit||'PCS')+' '+source.name+' → '+cust+' | Source Stock −'+qty+' | '+marked.name+' Stock +'+qty);
-    render325();
-  }
-  function clear325(){['v325LaserPart','v325LaserQty','v325LaserCustomer'].forEach(id=>{const e=$325(id);if(e)e.value='';});const p=$325('v325LaserPart');if(p)p.dataset.selectedCode='';show325('v325LaserMsg','');}
-  function openPage325(){
-    const p=$325('laserMarking');if(!p)return;
-    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));p.classList.add('active');
-    document.querySelectorAll('.tabs button[data-page]').forEach(b=>b.classList.toggle('active',b.getAttribute('data-page')==='laserMarking'));
-    const d=$325('v325LaserDate');if(d&&!d.value)d.value=date325();render325();
-  }
-  function init325(){
-    const b=$325('v325LaserTopBtn'); if(b && b.dataset.laserReady!=='1'){b.dataset.laserReady='1';b.addEventListener('click',openPage325,true);}
-    const p=$325('v325LaserPart'),c=$325('v325LaserCustomer');
-    p?.addEventListener('input',suggestPart325);p?.addEventListener('focus',suggestPart325);
-    c?.addEventListener('input',suggestCustomer325);c?.addEventListener('focus',suggestCustomer325);
-    $325('v325LaserSaveBtn')?.addEventListener('click',saveLaser325);
-    $325('v325LaserClearBtn')?.addEventListener('click',clear325);
-    const d=$325('v325LaserDate');if(d&&!d.value)d.value=date325();render325();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init325);else init325();
 })();
 </script>
 </body></html>
