@@ -699,7 +699,7 @@ tr.low-stock-row td * {
 <table><thead><tr><th>Vendor</th><th>Component</th><th>Rate / PCS</th><th>Action</th></tr></thead><tbody id="rateTable"></tbody></table>
 <hr style="margin:28px 0">
 <h3>🔦 Laser Marking Rate Master</h3>
-<p>Vendor + Laser Mark Logo Name પ્રમાણે marking rate save કરો. Laser Marking entryમાં Vendor અને Logo પસંદ કરતાં rate automatic આવશે.</p>
+<p>Vendor + Laser Mark Logo Name પ્રમાણે marking rate save કરો. Laser Marking entryમાં rate automatic આવશે.</p>
 <div class="grid">
 <div class="autowrap" style="position:relative"><input id="lmRateVendor" placeholder="Type Vendor Name" autocomplete="off"><div id="lmRateVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
 <div class="autowrap" style="position:relative"><input id="lmRateLogo" placeholder="Type Laser Mark Logo Name" autocomplete="off"><div id="lmRateLogoSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
@@ -1308,76 +1308,6 @@ function printRawSaleInvoice(rows,invoiceNo,customer,date){
 
 
 
-<script>
-(function(){
-  const LS='adr_laser_rates_v1';
-  const $e=id=>document.getElementById(id);
-  const norm=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
-  function getRates(){try{const a=JSON.parse(localStorage.getItem(LS)||'[]');return Array.isArray(a)?a:[]}catch(e){return []}}
-  function saveRates(a){localStorage.setItem(LS,JSON.stringify(a));}
-  function getVendors(){
-    const out=[]; const add=n=>{n=String(n||'').trim();if(n&&!out.some(x=>norm(x)===norm(n)))out.push(n)};
-    try{const a=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]');if(Array.isArray(a))a.forEach(x=>add(x.name||x.vendor||x.vendorName))}catch(e){}
-    try{(window.vendors||[]).forEach(x=>add(x.name||x.vendor||x.vendorName))}catch(e){}
-    return out;
-  }
-  function getItems(){try{const a=JSON.parse(localStorage.getItem('adr_items_v2')||'[]');return Array.isArray(a)?a:[]}catch(e){return []}}
-  function logoNames(){return [...new Set(getRates().map(x=>String(x.logo||'').trim()).filter(Boolean))]}
-  function bindSuggest(inputId,boxId,getList,onSelect){
-    const input=$e(inputId),box=$e(boxId); if(!input||!box||input.dataset.lmSuggestBound==='1')return;
-    input.dataset.lmSuggestBound='1';
-    const hide=()=>{box.style.display='none'};
-    const show=()=>{
-      const q=norm(input.value); box.innerHTML='';
-      const list=getList().filter(x=>!q||norm(x).includes(q)).slice(0,15);
-      list.forEach(v=>{const d=document.createElement('div');d.textContent=v;d.style.cssText='padding:10px 12px;background:#fff;color:#111;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();input.value=v;hide();if(onSelect)onSelect(v)};box.appendChild(d)});
-      box.style.display=list.length?'block':'none';
-    };
-    input.addEventListener('input',show); input.addEventListener('focus',show); input.addEventListener('click',show);
-    document.addEventListener('click',e=>{if(e.target!==input&&!box.contains(e.target))hide()});
-  }
-  function findRate(vendor,logo){
-    const a=getRates(),v=norm(vendor),l=norm(logo);
-    const exact=a.filter(x=>norm(x.vendor)===v&&norm(x.logo)===l);
-    if(exact.length)return Number(exact[exact.length-1].rate)||0;
-    const logoOnly=a.filter(x=>norm(x.logo)===l);
-    if(logoOnly.length===1)return Number(logoOnly[0].rate)||0;
-    return 0;
-  }
-  function renderRates(){
-    const body=$e('lmRateTable'); if(!body)return;
-    const a=getRates();
-    body.innerHTML=a.map((x,i)=>`<tr><td>${String(x.vendor||'')}</td><td>${String(x.logo||'')}</td><td>₹${Number(x.rate||0).toFixed(3)}</td><td><button type="button" data-lm-rate-del="${i}">🗑 Delete</button></td></tr>`).join('')||'<tr><td colspan="4">No Laser Marking rates saved</td></tr>';
-    body.querySelectorAll('[data-lm-rate-del]').forEach(b=>b.onclick=()=>{const a=getRates();a.splice(Number(b.dataset.lmRateDel),1);saveRates(a);renderRates();});
-  }
-  function updateLaserRate(){
-    const v=$e('lmVendor')?.value||''; const l=$e('lmLogoName')?.value||'';
-    const r=findRate(v,l); const rate=$e('lmRate'); if(rate){rate.value=r?String(r):''}
-  }
-  function updateNewItem(){
-    const src=($e('lmFromItem')?.value||'').trim(), logo=($e('lmLogoName')?.value||'').trim();
-    const n=$e('lmNewItemName'); if(n && src && logo) n.value=logo+' '+src;
-    updateLaserRate();
-  }
-  function setup(){
-    bindSuggest('lmRateVendor','lmRateVendorSuggest',getVendors);
-    bindSuggest('lmRateLogo','lmRateLogoSuggest',logoNames);
-    bindSuggest('lmVendor','lmVendorSuggest',getVendors,updateLaserRate);
-    bindSuggest('lmLogoName','lmLogoSuggest',logoNames,updateNewItem);
-    const itemInput=$e('lmFromItem'),itemBox=$e('lmFromItemSuggest');
-    if(itemInput&&itemBox&&!itemInput.dataset.lmSuggestBound){
-      itemInput.dataset.lmSuggestBound='1';
-      const show=()=>{const q=norm(itemInput.value);itemBox.innerHTML='';const list=getItems().filter(i=>String(i.name||'').trim()&&(!q||norm(i.name).includes(q)||norm(i.code).includes(q))).slice(0,15);list.forEach(i=>{const d=document.createElement('div');d.textContent=String(i.name||'')+' — '+String(i.code||'');d.style.cssText='padding:10px 12px;background:#fff;color:#111;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();itemInput.value=i.name||'';itemInput.dataset.selectedCode=i.code||'';itemBox.style.display='none';updateNewItem()};itemBox.appendChild(d)});itemBox.style.display=list.length?'block':'none'};
-      itemInput.addEventListener('input',show);itemInput.addEventListener('focus',show);itemInput.addEventListener('click',show);document.addEventListener('click',e=>{if(e.target!==itemInput&&!itemBox.contains(e.target))itemBox.style.display='none'});
-    }
-    ['lmVendor','lmLogoName'].forEach(id=>{const el=$e(id);if(el)el.addEventListener('input',updateLaserRate)});
-    const save=$e('lmSaveRateBtn');
-    if(save&&!save.dataset.bound){save.dataset.bound='1';save.onclick=()=>{const vendor=($e('lmRateVendor')?.value||'').trim(),logo=($e('lmRateLogo')?.value||'').trim(),rate=Number($e('lmRateValue')?.value);if(!vendor||!logo||!Number.isFinite(rate)||rate<0){alert('Vendor, Laser Mark Logo Name અને valid Rate નાખો.');return}const a=getRates();const old=a.find(x=>norm(x.vendor)===norm(vendor)&&norm(x.logo)===norm(logo));if(old)old.rate=rate;else a.push({vendor,logo,rate});saveRates(a);renderRates();$e('lmRateValue').value='';if($e('lmRateMsg'))$e('lmRateMsg').textContent='Laser Marking Rate saved.';}};
-    renderRates(); updateLaserRate();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
-})();
-</script>
 </body></html>`);w.document.close();
 }
 function saveRawSaleInvoice(){
@@ -7808,7 +7738,7 @@ window.v315RefreshDashboardCharts=render;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){[500,1200,2500,5000].forEach(t=>setTimeout(addAll,t))});
   else [500,1200,2500,5000].forEach(t=>setTimeout(addAll,t));
   new MutationObserver(function(){addAll()}).observe(document.body,{childList:true,subtree:true});
-})();
+})();\n<script>\n/* V327: Laser Marking Rate Master */\n(function(){\n  const KEY='adr_laser_marking_rates_v1';\n  function getRates(){try{const a=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return []}}\n  function saveRates(a){localStorage.setItem(KEY,JSON.stringify(a))}\n  function namesFromVendors(){try{const a=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]');return [...new Set(a.map(x=>String(x.name||x.vendor||'').trim()).filter(Boolean))]}catch(e){return []}}\n  function logoNames(){return [...new Set(getRates().map(x=>String(x.logo||'').trim()).filter(Boolean))]}\n  function bindSuggest(id,boxId,getNames){\n    const input=document.getElementById(id),box=document.getElementById(boxId);if(!input||!box||input.dataset.rateReady==='1')return;\n    input.dataset.rateReady='1';\n    function show(){const q=input.value.trim().toLowerCase();box.innerHTML='';if(!q){box.style.display='none';return;}const list=getNames().filter(n=>n.toLowerCase().includes(q)).slice(0,15);list.forEach(n=>{const d=document.createElement('div');d.textContent=n;d.style.cssText='padding:10px;cursor:pointer;background:#fff;border-bottom:1px solid #ddd';d.onmousedown=e=>{e.preventDefault();input.value=n;box.style.display='none';if(id==='lmRateVendor')updateLaserRate();if(id==='lmRateLogo')updateLaserRate();};box.appendChild(d)});box.style.display=list.length?'block':'none'}\n    input.addEventListener('input',show);input.addEventListener('focus',show);\n  }\n  function updateLaserRate(){const v=(document.getElementById('lmVendor')?.value||'').trim().toLowerCase();const logo=(document.getElementById('lmLogoName')?.value||'').trim().toLowerCase();const rates=getRates();const r=rates.find(x=>String(x.vendor||'').trim().toLowerCase()===v&&String(x.logo||'').trim().toLowerCase()===logo);const el=document.getElementById('lmRate');if(el&&r)el.value=Number(r.rate||0).toFixed(3)}\n  function render(){const b=document.getElementById('lmRateTable');if(!b)return;b.innerHTML=getRates().map((r,i)=>`<tr><td>${r.vendor}</td><td>${r.logo}</td><td>₹${Number(r.rate||0).toFixed(3)}</td><td><button type="button" data-lm-rate-del="${i}">🗑 Delete</button></td></tr>`).join('')||'<tr><td colspan="4">No Laser Marking rates saved</td></tr>';b.querySelectorAll('[data-lm-rate-del]').forEach(btn=>btn.onclick=function(){const a=getRates();a.splice(Number(btn.dataset.lmRateDel),1);saveRates(a);render();});}\n  function saveRate(){const v=(document.getElementById('lmRateVendor')?.value||'').trim(),logo=(document.getElementById('lmRateLogo')?.value||'').trim(),rate=Number(document.getElementById('lmRateValue')?.value);if(!v||!logo||!Number.isFinite(rate)||rate<0){alert('Vendor, Logo Name અને Rate નાખો.');return}const a=getRates();const old=a.find(x=>x.vendor.toLowerCase()===v.toLowerCase()&&x.logo.toLowerCase()===logo.toLowerCase());if(old)old.rate=rate;else a.push({vendor:v,logo,rate});saveRates(a);render();document.getElementById('lmRateMsg').textContent='Laser Marking Rate saved.';document.getElementById('lmRateVendor').value='';document.getElementById('lmRateLogo').value='';document.getElementById('lmRateValue').value=''}\n  function init(){bindSuggest('lmRateVendor','lmRateVendorSuggest',namesFromVendors);bindSuggest('lmRateLogo','lmRateLogoSuggest',logoNames);const b=document.getElementById('lmSaveRateBtn');if(b&&b.dataset.bound!=='1'){b.dataset.bound='1';b.onclick=saveRate}const v=document.getElementById('lmVendor'),l=document.getElementById('lmLogoName');if(v)v.addEventListener('input',updateLaserRate);if(l)l.addEventListener('input',updateLaserRate);render()}\n  window.setTimeout(init,300);window.setTimeout(init,1000);window.setTimeout(init,2000);\n})();\n</script>\n
 <script>
 /* V325: Laser Marking Conversion
    From Item stock is reduced; New Item is created in Item Master if missing,
@@ -7822,9 +7752,9 @@ window.v315RefreshDashboardCharts=render;
   function lmFindItem(text, code){
     const q=String(text||'').trim().toLowerCase();
     const c=String(code||'').trim();
-    return (window.items||[]).find(i=>c && String(i.code)===c) ||
-           (window.items||[]).find(i=>String(i.name||'').trim().toLowerCase()===q) ||
-           (window.items||[]).find(i=>(String(i.name||'')+' '+String(i.code||'')).toLowerCase().includes(q));
+    return JSON.parse(localStorage.getItem('adr_items_v2')||'[]').find(i=>c && String(i.code)===c) ||
+           JSON.parse(localStorage.getItem('adr_items_v2')||'[]').find(i=>String(i.name||'').trim().toLowerCase()===q) ||
+           JSON.parse(localStorage.getItem('adr_items_v2')||'[]').find(i=>(String(i.name||'')+' '+String(i.code||'')).toLowerCase().includes(q));
   }
   function lmSetupItemSuggest(){
     const input=document.getElementById('lmFromItem'), box=document.getElementById('lmFromItemSuggest');
@@ -7834,7 +7764,7 @@ window.v315RefreshDashboardCharts=render;
       const q=input.value.trim().toLowerCase();
       box.innerHTML='';
       if(!q){box.style.display='none';return;}
-      const list=(window.items||[]).filter(i=>
+      const list=JSON.parse(localStorage.getItem('adr_items_v2')||'[]').filter(i=>
         (String(i.name||'')+' '+String(i.code||'')).toLowerCase().includes(q)
       ).slice(0,15);
       if(!list.length){box.style.display='none';return;}
@@ -7865,7 +7795,7 @@ window.v315RefreshDashboardCharts=render;
       const q=input.value.trim().toLowerCase();
       box.innerHTML='';
       if(!q){box.style.display='none';return;}
-      const list=(window.vendors||[]).filter(v=>String(v.name||'').toLowerCase().includes(q)).slice(0,15);
+      const list=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]').filter(v=>String(v.name||'').toLowerCase().includes(q)).slice(0,15);
       if(!list.length){box.style.display='none';return;}
       list.forEach(v=>{
         const d=document.createElement('div');
@@ -7953,7 +7883,5 @@ window.v315RefreshDashboardCharts=render;
     });
   });
 })();
-</script>
-
 </script>
 </body></html>
