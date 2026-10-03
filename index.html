@@ -697,17 +697,6 @@ tr.low-stock-row td * {
 <button class="primary" id="addRateBtn">➕ Save Rate</button>
 <div class="msg" id="rateMsg"></div>
 <table><thead><tr><th>Vendor</th><th>Component</th><th>Rate / PCS</th><th>Action</th></tr></thead><tbody id="rateTable"></tbody></table>
-<hr style="margin:28px 0">
-<h3>🔦 Laser Marking Rate Master</h3>
-<p>Vendor + Laser Mark Logo Name પ્રમાણે marking rate save કરો. Laser Marking entryમાં rate automatic આવશે.</p>
-<div class="grid">
-<div class="autowrap" style="position:relative"><input id="lmRateVendor" placeholder="Type Vendor Name" autocomplete="off"><div id="lmRateVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
-<div class="autowrap" style="position:relative"><input id="lmRateLogo" placeholder="Type Laser Mark Logo Name" autocomplete="off"><div id="lmRateLogoSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;display:none"></div></div>
-<input id="lmRateValue" type="number" step="0.001" min="0" placeholder="Marking Rate / PCS">
-</div><br>
-<button class="primary" type="button" id="lmSaveRateBtn">➕ Save Laser Marking Rate</button>
-<div class="msg" id="lmRateMsg"></div>
-<div style="overflow:auto"><table><thead><tr><th>Vendor</th><th>Laser Mark Logo Name</th><th>Rate / PCS</th><th>Action</th></tr></thead><tbody id="lmRateTable"></tbody></table></div>
 </div></section>
 
 <section id="accounting" class="page">
@@ -7738,7 +7727,7 @@ window.v315RefreshDashboardCharts=render;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){[500,1200,2500,5000].forEach(t=>setTimeout(addAll,t))});
   else [500,1200,2500,5000].forEach(t=>setTimeout(addAll,t));
   new MutationObserver(function(){addAll()}).observe(document.body,{childList:true,subtree:true});
-})();\n<script>\n/* V327: Laser Marking Rate Master */\n(function(){\n  const KEY='adr_laser_marking_rates_v1';\n  function getRates(){try{const a=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return []}}\n  function saveRates(a){localStorage.setItem(KEY,JSON.stringify(a))}\n  function namesFromVendors(){try{const a=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]');return [...new Set(a.map(x=>String(x.name||x.vendor||'').trim()).filter(Boolean))]}catch(e){return []}}\n  function logoNames(){return [...new Set(getRates().map(x=>String(x.logo||'').trim()).filter(Boolean))]}\n  function bindSuggest(id,boxId,getNames){\n    const input=document.getElementById(id),box=document.getElementById(boxId);if(!input||!box||input.dataset.rateReady==='1')return;\n    input.dataset.rateReady='1';\n    function show(){const q=input.value.trim().toLowerCase();box.innerHTML='';if(!q){box.style.display='none';return;}const list=getNames().filter(n=>n.toLowerCase().includes(q)).slice(0,15);list.forEach(n=>{const d=document.createElement('div');d.textContent=n;d.style.cssText='padding:10px;cursor:pointer;background:#fff;border-bottom:1px solid #ddd';d.onmousedown=e=>{e.preventDefault();input.value=n;box.style.display='none';if(id==='lmRateVendor')updateLaserRate();if(id==='lmRateLogo')updateLaserRate();};box.appendChild(d)});box.style.display=list.length?'block':'none'}\n    input.addEventListener('input',show);input.addEventListener('focus',show);\n  }\n  function updateLaserRate(){const v=(document.getElementById('lmVendor')?.value||'').trim().toLowerCase();const logo=(document.getElementById('lmLogoName')?.value||'').trim().toLowerCase();const rates=getRates();const r=rates.find(x=>String(x.vendor||'').trim().toLowerCase()===v&&String(x.logo||'').trim().toLowerCase()===logo);const el=document.getElementById('lmRate');if(el&&r)el.value=Number(r.rate||0).toFixed(3)}\n  function render(){const b=document.getElementById('lmRateTable');if(!b)return;b.innerHTML=getRates().map((r,i)=>`<tr><td>${r.vendor}</td><td>${r.logo}</td><td>₹${Number(r.rate||0).toFixed(3)}</td><td><button type="button" data-lm-rate-del="${i}">🗑 Delete</button></td></tr>`).join('')||'<tr><td colspan="4">No Laser Marking rates saved</td></tr>';b.querySelectorAll('[data-lm-rate-del]').forEach(btn=>btn.onclick=function(){const a=getRates();a.splice(Number(btn.dataset.lmRateDel),1);saveRates(a);render();});}\n  function saveRate(){const v=(document.getElementById('lmRateVendor')?.value||'').trim(),logo=(document.getElementById('lmRateLogo')?.value||'').trim(),rate=Number(document.getElementById('lmRateValue')?.value);if(!v||!logo||!Number.isFinite(rate)||rate<0){alert('Vendor, Logo Name અને Rate નાખો.');return}const a=getRates();const old=a.find(x=>x.vendor.toLowerCase()===v.toLowerCase()&&x.logo.toLowerCase()===logo.toLowerCase());if(old)old.rate=rate;else a.push({vendor:v,logo,rate});saveRates(a);render();document.getElementById('lmRateMsg').textContent='Laser Marking Rate saved.';document.getElementById('lmRateVendor').value='';document.getElementById('lmRateLogo').value='';document.getElementById('lmRateValue').value=''}\n  function init(){bindSuggest('lmRateVendor','lmRateVendorSuggest',namesFromVendors);bindSuggest('lmRateLogo','lmRateLogoSuggest',logoNames);const b=document.getElementById('lmSaveRateBtn');if(b&&b.dataset.bound!=='1'){b.dataset.bound='1';b.onclick=saveRate}const v=document.getElementById('lmVendor'),l=document.getElementById('lmLogoName');if(v)v.addEventListener('input',updateLaserRate);if(l)l.addEventListener('input',updateLaserRate);render()}\n  window.setTimeout(init,300);window.setTimeout(init,1000);window.setTimeout(init,2000);\n})();\n</script>\n
+})();
 <script>
 /* V325: Laser Marking Conversion
    From Item stock is reduced; New Item is created in Item Master if missing,
@@ -7752,9 +7741,9 @@ window.v315RefreshDashboardCharts=render;
   function lmFindItem(text, code){
     const q=String(text||'').trim().toLowerCase();
     const c=String(code||'').trim();
-    return JSON.parse(localStorage.getItem('adr_items_v2')||'[]').find(i=>c && String(i.code)===c) ||
-           JSON.parse(localStorage.getItem('adr_items_v2')||'[]').find(i=>String(i.name||'').trim().toLowerCase()===q) ||
-           JSON.parse(localStorage.getItem('adr_items_v2')||'[]').find(i=>(String(i.name||'')+' '+String(i.code||'')).toLowerCase().includes(q));
+    return (window.items||[]).find(i=>c && String(i.code)===c) ||
+           (window.items||[]).find(i=>String(i.name||'').trim().toLowerCase()===q) ||
+           (window.items||[]).find(i=>(String(i.name||'')+' '+String(i.code||'')).toLowerCase().includes(q));
   }
   function lmSetupItemSuggest(){
     const input=document.getElementById('lmFromItem'), box=document.getElementById('lmFromItemSuggest');
@@ -7764,7 +7753,7 @@ window.v315RefreshDashboardCharts=render;
       const q=input.value.trim().toLowerCase();
       box.innerHTML='';
       if(!q){box.style.display='none';return;}
-      const list=JSON.parse(localStorage.getItem('adr_items_v2')||'[]').filter(i=>
+      const list=(window.items||[]).filter(i=>
         (String(i.name||'')+' '+String(i.code||'')).toLowerCase().includes(q)
       ).slice(0,15);
       if(!list.length){box.style.display='none';return;}
@@ -7795,7 +7784,7 @@ window.v315RefreshDashboardCharts=render;
       const q=input.value.trim().toLowerCase();
       box.innerHTML='';
       if(!q){box.style.display='none';return;}
-      const list=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]').filter(v=>String(v.name||'').toLowerCase().includes(q)).slice(0,15);
+      const list=(window.vendors||[]).filter(v=>String(v.name||'').toLowerCase().includes(q)).slice(0,15);
       if(!list.length){box.style.display='none';return;}
       list.forEach(v=>{
         const d=document.createElement('div');
@@ -7883,5 +7872,7 @@ window.v315RefreshDashboardCharts=render;
     });
   });
 })();
+</script>
+
 </script>
 </body></html>
