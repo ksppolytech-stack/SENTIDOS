@@ -1646,6 +1646,26 @@ function setupAllAutocomplete(){
 }
 
 
+function setupLaserRateVendorSuggestionV327(){
+ const input=document.getElementById('rateVendor'),box=document.getElementById('rateVendorSuggest');
+ if(!input||!box||input.dataset.laserVendorSuggestV327==='1')return;
+ input.dataset.laserVendorSuggestV327='1';
+ const render=()=>{
+  const q=input.value.trim().toLowerCase(); box.innerHTML='';
+  if(!q){box.style.display='none';return;}
+  const list=(Array.isArray(vendors)?vendors:[]).filter(v=>String(v.name||'').toLowerCase().includes(q)).slice(0,15);
+  list.forEach(v=>{
+   const d=document.createElement('div'); d.textContent=v.name;
+   d.style.cssText='padding:10px;cursor:pointer;background:#fff;border-bottom:1px solid #ddd';
+   d.onmousedown=e=>{e.preventDefault();input.value=v.name;input.dataset.selectedVendor=v.name;box.style.display='none';};
+   box.appendChild(d);
+  });
+  box.style.display=list.length?'block':'none';
+ };
+ input.addEventListener('input',render); input.addEventListener('focus',render);
+ document.addEventListener('click',e=>{if(e.target!==input&&!box.contains(e.target))box.style.display='none';});
+}
+
 function setupVendorSuggest(inputId,boxId){
  const input=$(inputId),box=$(boxId);if(!input||!box)return;
  input.addEventListener('input',function(){const q=input.value.trim().toLowerCase();box.innerHTML='';if(!q){box.style.display='none';return;}
@@ -3712,7 +3732,7 @@ $('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;if($('di
 if($('openProductionReport'))$('openProductionReport').onclick=()=>{document.querySelector('[data-page="reports"]').click();};
 if($('printProductionReport'))$('printProductionReport').onclick=()=>printOnlyReport('productionReportPanel',generateProductionReport);
 if($('printJWReport'))$('printJWReport').onclick=()=>printOnlyReport('jobWorkMonthlyReportPanel',generateJWReport);if($('printDispatchReportMain'))$('printDispatchReportMain').onclick=()=>printOnlyReport('dispatchReportPanel',generateDispatchMainReport);$('addVendorBtn').onclick=addVendor;$('jwReceiveQty').addEventListener('input',updateJWConsumption);$('jwReceiveVendor').addEventListener('input',updateAutoJobRate);$('jwComponent').addEventListener('input',updateAutoJobRate);
-addBomRow();refreshDropdowns();renderVendorMasterV223();
+addBomRow();refreshDropdowns();renderVendorMasterV223();setupLaserRateVendorSuggestionV327();
 if($('addCustomerBtn'))$('addCustomerBtn').onclick=addCustomerMaster;renderCustomerMaster();if($('addFgRateBtn'))$('addFgRateBtn').onclick=addFgRateMaster;setupFgRateItemSuggest();renderFgRateMaster();if($('dispatchBtn'))$('dispatchBtn').onclick=dispatch;setupDispatchClearButtonsV83();if($('dispatchTaxRate'))$('dispatchTaxRate').addEventListener('input',dispatchUpdateAmount);if($('accPaymentBtn'))$('accPaymentBtn').onclick=saveAccountingPayment;setupAccountingPaymentButtonsV133();setupAccountingPaymentCustomerSuggest();renderAccounting();setupAccountingPaymentClear();setupAccountingCustomerAndDateV94();setPaymentDateToday();if($('downloadCustomerLedgerPdf'))$('downloadCustomerLedgerPdf').onclick=downloadCustomerLedgerPDF;setupDueCustomerFilter();renderCustomerDueSummary();if($('dispatchReportMainBtn'))$('dispatchReportMainBtn').onclick=generateDispatchMainReport;setupDispatchMainReportSuggestions();setupDispatchReportClearButtons();setupAllReportClearButtons();if($('dispatchReportBtn'))$('dispatchReportBtn').onclick=generateDispatchReport;setupDispatchReportSuggestions();setupDispatchCustomerSuggest();if($('dispatchQty'))$('dispatchQty').addEventListener('input',dispatchUpdateAmount);if($('dispatchRate'))$('dispatchRate').addEventListener('input',dispatchUpdateAmount);if($('dispatchDate')&&!$('dispatchDate').value)$('dispatchDate').value=getSystemDateISO();if($('dispatchTaxRate')&&!$('dispatchTaxRate').value)$('dispatchTaxRate').value='18';dispatchUpdateAmount();renderDispatchEntries();showNextDispatchBillNo();if($('pmAddBtn')) $('pmAddBtn').onclick=pmAdd;if($('purchaseInlineReportBtn'))$('purchaseInlineReportBtn').onclick=generatePurchaseInlineReport;setupPurchaseInlineSupplierSuggest();
 window._generatePurchaseReport=generatePurchaseReport;window._generateProductionReport=generateProductionReport;
 pmInit();
