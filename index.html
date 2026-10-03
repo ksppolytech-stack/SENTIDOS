@@ -7805,7 +7805,8 @@ window.v315RefreshDashboardCharts=render;
   function lmRender(){
     const body=document.querySelector('#lmTable tbody');
     if(!body)return;
-    const rows=(window.transactions||[]).filter(t=>String(t.type||'').toUpperCase()==='LASER MARKING CONVERSION').slice().reverse();
+    const allTx=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]');
+    const rows=allTx.filter(t=>String(t.type||'').toUpperCase()==='LASER MARKING CONVERSION').slice().reverse();
     body.innerHTML=rows.map(t=>`
       <tr>
         <td>${lmEsc(t.date||'')}</td>
@@ -7825,70 +7826,31 @@ window.v315RefreshDashboardCharts=render;
     const newName=document.getElementById('lmNewItemName').value.trim();
     const vendor=document.getElementById('lmVendor').value.trim();
     const rate=Number(document.getElementById('lmRate').value)||0;
-    const from=lmFindItem(fromInput.value,fromInput.dataset.selectedCode);
+    let items=JSON.parse(localStorage.getItem('adr_items_v2')||'[]');
+    let transactions=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]');
+    const selectedCode=String(fromInput.dataset.selectedCode||'').trim();
+    const q=String(fromInput.value||'').trim().toLowerCase();
+    const from=items.find(i=>selectedCode && String(i.code)===selectedCode)||items.find(i=>String(i.name||'').trim().toLowerCase()===q)||items.find(i=>(String(i.name||'')+' '+String(i.code||'')).toLowerCase().includes(q));
     if(!from)return alert('From Item select કરો.');
     if(qty<=0)return alert('Quantity નાખો.');
-    if(qty>Number(from.stock||0))return alert('Insufficient stock: '+from.name+' — Available '+from.stock+' '+(from.unit||'PCS'));
+    if(qty>Number(from.stock||0)+0.000001)return alert('Insufficient stock: '+from.name+' — Available '+Number(from.stock||0)+' '+(from.unit||'PCS'));
     if(!logo)return alert('Laser Mark Logo Name નાખો.');
     if(!newName)return alert('New Item Name નાખો.');
-    if(newName.trim().toLowerCase()===String(from.name||'').trim().toLowerCase())
-      return alert('New Item Name મૂળ Itemથી અલગ હોવું જોઈએ.');
-
-    let to=(window.items||[]).find(i=>String(i.name||'').trim().toLowerCase()===newName.toLowerCase());
-    if(!to){
-      const base='LM-'+Date.now();
-      to={code:base,name:newName,cat:'Finished Goods',unit:from.unit||'PCS',weight:Number(from.weight||0),stock:0,min:0};
-      window.items.push(to);
-    }else if(String(to.unit||'PCS').toUpperCase()!==String(from.unit||'PCS').toUpperCase()){
-      return alert('New Item અને From Itemની Unit match હોવી જોઈએ.');
-    }
-
+    if(newName.toLowerCase()===String(from.name||'').trim().toLowerCase())return alert('New Item Name મૂળ Itemથી અલગ હોવું જોઈએ.');
+    let to=items.find(i=>String(i.name||'').trim().toLowerCase()===newName.toLowerCase());
+    if(to && String(to.unit||'PCS').toUpperCase()!==String(from.unit||'PCS').toUpperCase())return alert('New Item અને From Itemની Unit match હોવી જોઈએ.');
+    if(!to){to={code:'LM-'+Date.now(),name:newName,cat:'Finished Goods',unit:from.unit||'PCS',weight:Number(from.weight||0),stock:0,min:0};items.push(to);}
     from.stock=Number(from.stock||0)-qty;
     to.stock=Number(to.stock||0)+qty;
-
     const ref='LM-'+Date.now();
-    if(typeof addTxn==='function'){
-      addTxn('LASER MARKING CONVERSION',ref,to.code,qty,to.unit||from.unit||'PCS');
-      const tr=window.transactions[window.transactions.length-1];
-      tr.date=new Date().toISOString().slice(0,10);
-      tr.ref=ref;
-      tr.fromItem=from.code;
-      tr.fromItemName=from.name;
-      tr.newItem=to.code;
-      tr.newItemName=to.name;
-      tr.logoName=logo;
-      tr.vendor=vendor;
-      tr.markingRate=rate;
-      tr.amount=qty*rate;
-      tr.unit=to.unit||from.unit||'PCS';
-      tr.stockEffect='FROM_ITEM_DEDUCT_TO_ITEM_ADD';
-    }else{
-      window.transactions=window.transactions||[];
-      window.transactions.push({id:Date.now(),type:'LASER MARKING CONVERSION',ref,date:new Date().toISOString().slice(0,10),
-        item:to.code,itemName:to.name,fromItem:from.code,fromItemName:from.name,newItem:to.code,newItemName:to.name,
-        logoName:logo,vendor,qty,unit:to.unit||from.unit||'PCS',markingRate:rate,amount:qty*rate,
-        stockEffect:'FROM_ITEM_DEDUCT_TO_ITEM_ADD'});
-    }
-
-    if(typeof save==='function')save();
-    if(typeof render==='function')render();
-    if(typeof setupAllAutocomplete==='function')setupAllAutocomplete();
-    lmRender();
-
-    document.getElementById('lmMsg').textContent=
-      'Conversion saved: '+from.name+' − '+qty.toFixed(3)+' '+(from.unit||'PCS')+
-      ' → '+to.name+' + '+qty.toFixed(3)+' '+(to.unit||'PCS')+
-      ' | Amount ₹'+(qty*rate).toFixed(2);
-
-    document.getElementById('lmQty').value='';
-    document.getElementById('lmLogoName').value='';
-    document.getElementById('lmNewItemName').value='';
-    document.getElementById('lmVendor').value='';
-    document.getElementById('lmRate').value='';
-    fromInput.value='';
-    fromInput.dataset.selectedCode='';
+    transactions.push({id:Date.now(),type:'LASER MARKING CONVERSION',ref,date:new Date().toISOString().slice(0,10),item:to.code,itemName:to.name,fromItem:from.code,fromItemName:from.name,newItem:to.code,newItemName:to.name,logoName:logo,vendor,qty,unit:to.unit||from.unit||'PCS',markingRate:rate,amount:qty*rate,stockEffect:'FROM_ITEM_DEDUCT_TO_ITEM_ADD'});
+    localStorage.setItem('adr_items_v2',JSON.stringify(items));
+    localStorage.setItem('adr_tx_v2',JSON.stringify(transactions));
+    document.getElementById('lmMsg').textContent='Conversion saved: '+from.name+' − '+qty.toFixed(3)+' '+(from.unit||'PCS')+' → '+to.name+' + '+qty.toFixed(3)+' '+(to.unit||'PCS')+' | Amount ₹'+(qty*rate).toFixed(2);
+    ['lmQty','lmLogoName','lmNewItemName','lmVendor','lmRate'].forEach(id=>document.getElementById(id).value='');
+    fromInput.value=''; fromInput.dataset.selectedCode='';
+    setTimeout(function(){location.reload();},300);
   }
-
   function lmInit(){
     lmSetupItemSuggest();
     lmSetupVendorSuggest();
