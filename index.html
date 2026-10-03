@@ -1309,77 +1309,7 @@ function printRawSaleInvoice(rows,invoiceNo,customer,date){
 
 
 
-<script id="v325LaserMarkingModule">
-/* V325: Laser Marking module. Separate localStorage key; existing ERP transactions are untouched. */
-(function(){
-  const KEY='sentidos_laser_marking_v1';
-  const $lm=id=>document.getElementById(id);
-  let editId=null;
-  function read(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}}
-  function write(a){localStorage.setItem(KEY,JSON.stringify(a))}
-  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-  function today(){return new Date().toISOString().slice(0,10)}
-  function clearForm(){
-    editId=null;
-    if($lm('lmDate'))$lm('lmDate').value=today();
-    ['lmItem','lmQty','lmBatch','lmMarkText','lmMachine','lmOperator','lmRemark'].forEach(id=>{if($lm(id)){$lm(id).value='';delete $lm(id).dataset.selectedCode}});
-    if($lm('lmStatus'))$lm('lmStatus').value='Pending';
-    if($lm('lmSaveBtn'))$lm('lmSaveBtn').textContent='💾 Save Laser Marking';
-  }
-  function itemList(){
-    try{
-      if(Array.isArray(window.items))return window.items.filter(x=>x&&x.name);
-      return JSON.parse(localStorage.getItem('adr_items_v2')||'[]').filter(x=>x&&x.name);
-    }catch(e){return []}
-  }
-  function setupSuggest(){
-    const input=$lm('lmItem'),box=$lm('lmItemSuggest');if(!input||!box)return;
-    function show(){
-      const q=String(input.value||'').trim().toLowerCase(), list=itemList().filter(i=>!q||String(i.name||'').toLowerCase().includes(q)||String(i.code||'').toLowerCase().includes(q)).slice(0,30);
-      box.innerHTML=list.map(i=>`<div data-code="${esc(i.code||'')}">${esc(i.name||'')} ${i.code?'('+esc(i.code)+')':''}</div>`).join('');
-      box.style.display=list.length?'block':'none';
-      box.querySelectorAll('div').forEach(d=>d.onmousedown=e=>{e.preventDefault();input.value=d.textContent.replace(/\s+\([^)]*\)$/,'');input.dataset.selectedCode=d.dataset.code||'';box.style.display='none';});
-    }
-    input.addEventListener('input',show);input.addEventListener('focus',show);
-    document.addEventListener('click',e=>{if(e.target!==input&&!box.contains(e.target))box.style.display='none'});
-  }
-  function saveEntry(){
-    const date=$lm('lmDate').value||today(),item=$lm('lmItem').value.trim(),qty=Number($lm('lmQty').value),batch=$lm('lmBatch').value.trim(),mark=$lm('lmMarkText').value.trim(),machine=$lm('lmMachine').value.trim(),operator=$lm('lmOperator').value.trim(),status=$lm('lmStatus').value,remark=$lm('lmRemark').value.trim(),code=$lm('lmItem').dataset.selectedCode||'';
-    if(!item)return alert('Finished Good / Item select કરો.');
-    if(!Number.isFinite(qty)||qty<=0)return alert('Valid Qty નાખો.');
-    if(!mark)return alert('Laser Mark Text / Code નાખો.');
-    const a=read();
-    if(editId){const x=a.find(z=>String(z.id)===String(editId));if(x)Object.assign(x,{date,item,itemCode:code,qty,batch,mark,machine,operator,status,remark,updatedAt:new Date().toISOString()});}
-    else a.push({id:'LM-'+Date.now(),date,item,itemCode:code,qty,batch,mark,machine,operator,status,remark,createdAt:new Date().toISOString()});
-    write(a);render();msg(editId?'Laser marking entry updated.':'Laser marking entry saved.');clearForm();
-  }
-  function msg(t){if($lm('lmMsg')){$lm('lmMsg').textContent=t;setTimeout(()=>{if($lm('lmMsg'))$lm('lmMsg').textContent=''},2500)}}
-  function filtered(){
-    const from=$lm('lmFilterFrom')?.value||'',to=$lm('lmFilterTo')?.value||'',q=String($lm('lmFilterSearch')?.value||'').toLowerCase().trim(),st=$lm('lmFilterStatus')?.value||'';
-    return read().filter(x=>(!from||x.date>=from)&&(!to||x.date<=to)&&(!st||x.status===st)&&(!q||[x.item,x.batch,x.mark,x.machine,x.operator,x.remark].join(' ').toLowerCase().includes(q))).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-  }
-  function render(){
-    const a=read(),rows=filtered(),body=$lm('lmTable')?.querySelector('tbody');if(!body)return;
-    const total=a.reduce((n,x)=>n+Number(x.qty||0),0),pending=a.filter(x=>x.status==='Pending'||x.status==='In Process').reduce((n,x)=>n+Number(x.qty||0),0),completed=a.filter(x=>x.status==='Completed').reduce((n,x)=>n+Number(x.qty||0),0);
-    if($lm('lmTotalEntries'))$lm('lmTotalEntries').textContent=a.length;
-    if($lm('lmTotalQty'))$lm('lmTotalQty').textContent=total.toFixed(3);
-    if($lm('lmPendingQty'))$lm('lmPendingQty').textContent=pending.toFixed(3);
-    if($lm('lmCompletedQty'))$lm('lmCompletedQty').textContent=completed.toFixed(3);
-    body.innerHTML=rows.length?rows.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.item)}</td><td>${Number(x.qty||0).toFixed(3)}</td><td>${esc(x.batch)}</td><td>${esc(x.mark)}</td><td>${esc(x.machine)}</td><td>${esc(x.operator)}</td><td><b>${esc(x.status)}</b></td><td>${esc(x.remark)}</td><td><button type="button" data-lm-edit="${esc(x.id)}">✏️</button> <button type="button" data-lm-del="${esc(x.id)}">🗑</button></td></tr>`).join(''):'<tr><td colspan="10">No laser marking entries</td></tr>';
-    body.querySelectorAll('[data-lm-edit]').forEach(b=>b.onclick=()=>editEntry(b.dataset.lmEdit));
-    body.querySelectorAll('[data-lm-del]').forEach(b=>b.onclick=()=>deleteEntry(b.dataset.lmDel));
-  }
-  function editEntry(id){const x=read().find(z=>String(z.id)===String(id));if(!x)return;editId=x.id;$lm('lmDate').value=x.date||today();$lm('lmItem').value=x.item||'';$lm('lmItem').dataset.selectedCode=x.itemCode||'';$lm('lmQty').value=x.qty||'';$lm('lmBatch').value=x.batch||'';$lm('lmMarkText').value=x.mark||'';$lm('lmMachine').value=x.machine||'';$lm('lmOperator').value=x.operator||'';$lm('lmStatus').value=x.status||'Pending';$lm('lmRemark').value=x.remark||'';$lm('lmSaveBtn').textContent='✏️ Update Laser Marking';document.querySelector('[data-page="laserMarking"]')?.scrollIntoView({behavior:'smooth',block:'start'})}
-  function deleteEntry(id){if(!confirm('આ Laser Marking entry delete કરવી છે?'))return;write(read().filter(x=>String(x.id)!==String(id)));render();}
-  function tableExcel(){const rows=filtered();if(!rows.length)return alert('Export કરવા માટે data નથી.');const head=['Date','Item','Qty','Batch/Lot','Mark Text','Machine','Operator','Status','Remark'];const csv=[head,...rows.map(x=>[x.date,x.item,x.qty,x.batch,x.mark,x.machine,x.operator,x.status,x.remark])].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Laser_Marking_Report.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-  function printReport(){const rows=filtered();const w=window.open('','_blank');if(!w)return;w.document.write('<html><head><title>Laser Marking Report</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:7px;text-align:left;font-size:12px}h2{margin-bottom:15px}</style></head><body><h2>Laser Marking Report</h2><table><thead><tr><th>Date</th><th>Item</th><th>Qty</th><th>Batch/Lot</th><th>Mark Text</th><th>Machine</th><th>Operator</th><th>Status</th><th>Remark</th></tr></thead><tbody>'+rows.map(x=>'<tr>'+[x.date,x.item,Number(x.qty||0).toFixed(3),x.batch,x.mark,x.machine,x.operator,x.status,x.remark].map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>');w.document.close()}
-  function init(){
-    if($lm('lmDate')&&!$lm('lmDate').value)$lm('lmDate').value=today();
-    $lm('lmSaveBtn')?.addEventListener('click',saveEntry);$lm('lmClearBtn')?.addEventListener('click',clearForm);$lm('lmFilterBtn')?.addEventListener('click',render);$lm('lmResetFilterBtn')?.addEventListener('click',()=>{['lmFilterFrom','lmFilterTo','lmFilterSearch'].forEach(id=>$lm(id).value='');$lm('lmFilterStatus').value='';render()});$lm('lmExcelBtn')?.addEventListener('click',tableExcel);$lm('lmPrintBtn')?.addEventListener('click',printReport);['lmFilterSearch'].forEach(id=>$lm(id)?.addEventListener('input',render));setupSuggest();render();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-})();
-</script>
+
 </body></html>`);w.document.close();
 }
 function saveRawSaleInvoice(){
@@ -6938,7 +6868,10 @@ document.addEventListener('click',function(e){
 })();
 </script>
 
-\n<!-- V302: RAW MATERIAL STOCK card opens month-wise raw material transaction history. -->\n<script id="v302RawMaterialMonthHistory">\n(function(){\n  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}\n  function monthLabel(k){\n    var p=String(k).split('-');\n    var names=['January','February','March','April','May','June','July','August','September','October','November','December'];\n    return p.length>=2 ? (names[Math.max(0,Number(p[1])-1)]||p[1])+' '+p[0] : k;\n  }\n  function rawHistory(){\n    var rows=Array.isArray(window.transactions)?window.transactions:[];\n    var months={};\n    rows.forEach(function(t){\n      var type=String(t.type||'').toUpperCase();\n      if(['RAW MATERIAL COMPANY INWARD','JOB WORK ISSUE','PRODUCTION','RAW MATERIAL SALE'].indexOf(type)<0)return;\n      var code=String(t.item||'').replace(/^RM:/,'');\n      var raw=(window.rawMaterials||[]).find(function(r){return String(r.code)===code;});\n      if(!raw)return;\n      var d=String(t.date||''); if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(d))return;\n      var k=d.slice(0,7);\n      if(!months[k])months[k]={inward:0,issue:0,production:0,sale:0,rows:[]};\n      var q=Math.abs(Number(t.qty)||0);\n      if(type==='RAW MATERIAL COMPANY INWARD')months[k].inward+=q;\n      else if(type==='JOB WORK ISSUE')months[k].issue+=q;\n      else if(type==='PRODUCTION')months[k].production+=q;\n      else if(type==='RAW MATERIAL SALE')months[k].sale+=q;\n      months[k].rows.push({date:d,type:type,code:code,name:raw.name||code,qty:q,unit:t.unit||raw.unit||'KG',ref:t.ref||t.inwardRef||t.billNo||t.invoiceNo||'',party:t.supplier||t.vendor||t.customer||''});\n    });\n    var keys=Object.keys(months).sort().reverse();\n    var box=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');\n    if(!box||!title||!table)return;\n    var th=table.querySelector('thead');if(th)th.style.display='none';title.textContent='RAW MATERIAL STOCK — Transaction History Month Wise';\n    table.innerHTML='<tr><th>Month</th><th>Inward</th><th>Job Work Issue</th><th>Production Used</th><th>Raw Material Sale</th><th>Total Outward</th></tr>'+\n      (keys.map(function(k){var m=months[k],out=m.issue+m.production+m.sale;return '<tr><td><b>'+esc(monthLabel(k))+'</b></td><td>'+m.inward.toFixed(3)+'</td><td>'+m.issue.toFixed(3)+'</td><td>'+m.production.toFixed(3)+'</td><td>'+m.sale.toFixed(3)+'</td><td>'+out.toFixed(3)+'</td></tr>';}).join('')||'<tr><td colspan="6">No raw material transaction history found</td></tr>');\n    box.style.display='block';\n    box.dataset.dashboardFilter='raw';\n    box.scrollIntoView({behavior:'smooth',block:'start'});\n  }\n  function bind(){\n    document.querySelectorAll('#dashboard .dashCard[data-filter="raw"]').forEach(function(card){\n      card.onclick=function(e){\n        e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();\n        var box=document.getElementById('dashboardDetails');\n        if(box && box.style.display!=='none' && box.dataset.dashboardFilter==='raw'){\n          if(typeof hideDashboardDetailsOnNavigation==='function')hideDashboardDetailsOnNavigation();\n          else box.style.display='none';\n          return false;\n        }\n        if(typeof hideDashboardDetailsOnNavigation==='function')hideDashboardDetailsOnNavigation();\n        rawHistory();\n        return false;\n      };\n    });\n  }\n  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();\n  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});\n})();\n</script>\n<!-- V303: RAW MATERIAL STOCK click shows current stock followed by month-wise transaction history. -->
+
+<!-- V302: RAW MATERIAL STOCK card opens month-wise raw material transaction history. -->
+<script id="v302RawMaterialMonthHistory">\n(function(){\n  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}\n  function monthLabel(k){\n    var p=String(k).split('-');\n    var names=['January','February','March','April','May','June','July','August','September','October','November','December'];\n    return p.length>=2 ? (names[Math.max(0,Number(p[1])-1)]||p[1])+' '+p[0] : k;\n  }\n  function rawHistory(){\n    var rows=Array.isArray(window.transactions)?window.transactions:[];\n    var months={};\n    rows.forEach(function(t){\n      var type=String(t.type||'').toUpperCase();\n      if(['RAW MATERIAL COMPANY INWARD','JOB WORK ISSUE','PRODUCTION','RAW MATERIAL SALE'].indexOf(type)<0)return;\n      var code=String(t.item||'').replace(/^RM:/,'');\n      var raw=(window.rawMaterials||[]).find(function(r){return String(r.code)===code;});\n      if(!raw)return;\n      var d=String(t.date||''); if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(d))return;\n      var k=d.slice(0,7);\n      if(!months[k])months[k]={inward:0,issue:0,production:0,sale:0,rows:[]};\n      var q=Math.abs(Number(t.qty)||0);\n      if(type==='RAW MATERIAL COMPANY INWARD')months[k].inward+=q;\n      else if(type==='JOB WORK ISSUE')months[k].issue+=q;\n      else if(type==='PRODUCTION')months[k].production+=q;\n      else if(type==='RAW MATERIAL SALE')months[k].sale+=q;\n      months[k].rows.push({date:d,type:type,code:code,name:raw.name||code,qty:q,unit:t.unit||raw.unit||'KG',ref:t.ref||t.inwardRef||t.billNo||t.invoiceNo||'',party:t.supplier||t.vendor||t.customer||''});\n    });\n    var keys=Object.keys(months).sort().reverse();\n    var box=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');\n    if(!box||!title||!table)return;\n    var th=table.querySelector('thead');if(th)th.style.display='none';title.textContent='RAW MATERIAL STOCK — Transaction History Month Wise';\n    table.innerHTML='<tr><th>Month</th><th>Inward</th><th>Job Work Issue</th><th>Production Used</th><th>Raw Material Sale</th><th>Total Outward</th></tr>'+\n      (keys.map(function(k){var m=months[k],out=m.issue+m.production+m.sale;return '<tr><td><b>'+esc(monthLabel(k))+'</b></td><td>'+m.inward.toFixed(3)+'</td><td>'+m.issue.toFixed(3)+'</td><td>'+m.production.toFixed(3)+'</td><td>'+m.sale.toFixed(3)+'</td><td>'+out.toFixed(3)+'</td></tr>';}).join('')||'<tr><td colspan="6">No raw material transaction history found</td></tr>');\n    box.style.display='block';\n    box.dataset.dashboardFilter='raw';\n    box.scrollIntoView({behavior:'smooth',block:'start'});\n  }\n  function bind(){\n    document.querySelectorAll('#dashboard .dashCard[data-filter="raw"]').forEach(function(card){\n      card.onclick=function(e){\n        e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();\n        var box=document.getElementById('dashboardDetails');\n        if(box && box.style.display!=='none' && box.dataset.dashboardFilter==='raw'){\n          if(typeof hideDashboardDetailsOnNavigation==='function')hideDashboardDetailsOnNavigation();\n          else box.style.display='none';\n          return false;\n        }\n        if(typeof hideDashboardDetailsOnNavigation==='function')hideDashboardDetailsOnNavigation();\n        rawHistory();\n        return false;\n      };\n    });\n  }\n  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();\n  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});\n})();\n</script>
+<!-- V303: RAW MATERIAL STOCK click shows current stock followed by month-wise transaction history. -->
 <script id="v304RawMaterialStockAndHistory">
 (function(){
  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -7503,7 +7436,8 @@ window.v315RefreshDashboardCharts=render;
 /* V320: keep dashboard charts hidden while switching between different cards */
 #v315Charts.v320-dashboard-charts-hidden{display:none!important;}
 </style>
-\n<script id="v320DashboardCardStateFix">
+
+<script id="v320DashboardCardStateFix">
 (function(){
   var selectedType=null;
   var detailOpen=false;
@@ -7601,7 +7535,8 @@ window.v315RefreshDashboardCharts=render;
   function init(){bind();watchCharts();setTimeout(bind,300);setTimeout(bind,1000);setTimeout(bind,2000);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
-</script>\n
+</script>
+
 <script id="v321RawMonthHistoryRestore">
 (function(){
   function showRawMonths(){
@@ -7810,6 +7745,78 @@ window.v315RefreshDashboardCharts=render;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){[500,1200,2500,5000].forEach(t=>setTimeout(addAll,t))});
   else [500,1200,2500,5000].forEach(t=>setTimeout(addAll,t));
   new MutationObserver(function(){addAll()}).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<script id="v325LaserMarkingModule">
+/* V325: Laser Marking module. Separate localStorage key; existing ERP transactions are untouched. */
+(function(){
+  const KEY='sentidos_laser_marking_v1';
+  const $lm=id=>document.getElementById(id);
+  let editId=null;
+  function read(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}}
+  function write(a){localStorage.setItem(KEY,JSON.stringify(a))}
+  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+  function today(){return new Date().toISOString().slice(0,10)}
+  function clearForm(){
+    editId=null;
+    if($lm('lmDate'))$lm('lmDate').value=today();
+    ['lmItem','lmQty','lmBatch','lmMarkText','lmMachine','lmOperator','lmRemark'].forEach(id=>{if($lm(id)){$lm(id).value='';delete $lm(id).dataset.selectedCode}});
+    if($lm('lmStatus'))$lm('lmStatus').value='Pending';
+    if($lm('lmSaveBtn'))$lm('lmSaveBtn').textContent='💾 Save Laser Marking';
+  }
+  function itemList(){
+    try{
+      if(Array.isArray(window.items))return window.items.filter(x=>x&&x.name);
+      return JSON.parse(localStorage.getItem('adr_items_v2')||'[]').filter(x=>x&&x.name);
+    }catch(e){return []}
+  }
+  function setupSuggest(){
+    const input=$lm('lmItem'),box=$lm('lmItemSuggest');if(!input||!box)return;
+    function show(){
+      const q=String(input.value||'').trim().toLowerCase(), list=itemList().filter(i=>!q||String(i.name||'').toLowerCase().includes(q)||String(i.code||'').toLowerCase().includes(q)).slice(0,30);
+      box.innerHTML=list.map(i=>`<div data-code="${esc(i.code||'')}">${esc(i.name||'')} ${i.code?'('+esc(i.code)+')':''}</div>`).join('');
+      box.style.display=list.length?'block':'none';
+      box.querySelectorAll('div').forEach(d=>d.onmousedown=e=>{e.preventDefault();input.value=d.textContent.replace(/\s+\([^)]*\)$/,'');input.dataset.selectedCode=d.dataset.code||'';box.style.display='none';});
+    }
+    input.addEventListener('input',show);input.addEventListener('focus',show);
+    document.addEventListener('click',e=>{if(e.target!==input&&!box.contains(e.target))box.style.display='none'});
+  }
+  function saveEntry(){
+    const date=$lm('lmDate').value||today(),item=$lm('lmItem').value.trim(),qty=Number($lm('lmQty').value),batch=$lm('lmBatch').value.trim(),mark=$lm('lmMarkText').value.trim(),machine=$lm('lmMachine').value.trim(),operator=$lm('lmOperator').value.trim(),status=$lm('lmStatus').value,remark=$lm('lmRemark').value.trim(),code=$lm('lmItem').dataset.selectedCode||'';
+    if(!item)return alert('Finished Good / Item select કરો.');
+    if(!Number.isFinite(qty)||qty<=0)return alert('Valid Qty નાખો.');
+    if(!mark)return alert('Laser Mark Text / Code નાખો.');
+    const a=read();
+    if(editId){const x=a.find(z=>String(z.id)===String(editId));if(x)Object.assign(x,{date,item,itemCode:code,qty,batch,mark,machine,operator,status,remark,updatedAt:new Date().toISOString()});}
+    else a.push({id:'LM-'+Date.now(),date,item,itemCode:code,qty,batch,mark,machine,operator,status,remark,createdAt:new Date().toISOString()});
+    write(a);render();msg(editId?'Laser marking entry updated.':'Laser marking entry saved.');clearForm();
+  }
+  function msg(t){if($lm('lmMsg')){$lm('lmMsg').textContent=t;setTimeout(()=>{if($lm('lmMsg'))$lm('lmMsg').textContent=''},2500)}}
+  function filtered(){
+    const from=$lm('lmFilterFrom')?.value||'',to=$lm('lmFilterTo')?.value||'',q=String($lm('lmFilterSearch')?.value||'').toLowerCase().trim(),st=$lm('lmFilterStatus')?.value||'';
+    return read().filter(x=>(!from||x.date>=from)&&(!to||x.date<=to)&&(!st||x.status===st)&&(!q||[x.item,x.batch,x.mark,x.machine,x.operator,x.remark].join(' ').toLowerCase().includes(q))).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  }
+  function render(){
+    const a=read(),rows=filtered(),body=$lm('lmTable')?.querySelector('tbody');if(!body)return;
+    const total=a.reduce((n,x)=>n+Number(x.qty||0),0),pending=a.filter(x=>x.status==='Pending'||x.status==='In Process').reduce((n,x)=>n+Number(x.qty||0),0),completed=a.filter(x=>x.status==='Completed').reduce((n,x)=>n+Number(x.qty||0),0);
+    if($lm('lmTotalEntries'))$lm('lmTotalEntries').textContent=a.length;
+    if($lm('lmTotalQty'))$lm('lmTotalQty').textContent=total.toFixed(3);
+    if($lm('lmPendingQty'))$lm('lmPendingQty').textContent=pending.toFixed(3);
+    if($lm('lmCompletedQty'))$lm('lmCompletedQty').textContent=completed.toFixed(3);
+    body.innerHTML=rows.length?rows.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.item)}</td><td>${Number(x.qty||0).toFixed(3)}</td><td>${esc(x.batch)}</td><td>${esc(x.mark)}</td><td>${esc(x.machine)}</td><td>${esc(x.operator)}</td><td><b>${esc(x.status)}</b></td><td>${esc(x.remark)}</td><td><button type="button" data-lm-edit="${esc(x.id)}">✏️</button> <button type="button" data-lm-del="${esc(x.id)}">🗑</button></td></tr>`).join(''):'<tr><td colspan="10">No laser marking entries</td></tr>';
+    body.querySelectorAll('[data-lm-edit]').forEach(b=>b.onclick=()=>editEntry(b.dataset.lmEdit));
+    body.querySelectorAll('[data-lm-del]').forEach(b=>b.onclick=()=>deleteEntry(b.dataset.lmDel));
+  }
+  function editEntry(id){const x=read().find(z=>String(z.id)===String(id));if(!x)return;editId=x.id;$lm('lmDate').value=x.date||today();$lm('lmItem').value=x.item||'';$lm('lmItem').dataset.selectedCode=x.itemCode||'';$lm('lmQty').value=x.qty||'';$lm('lmBatch').value=x.batch||'';$lm('lmMarkText').value=x.mark||'';$lm('lmMachine').value=x.machine||'';$lm('lmOperator').value=x.operator||'';$lm('lmStatus').value=x.status||'Pending';$lm('lmRemark').value=x.remark||'';$lm('lmSaveBtn').textContent='✏️ Update Laser Marking';document.querySelector('[data-page="laserMarking"]')?.scrollIntoView({behavior:'smooth',block:'start'})}
+  function deleteEntry(id){if(!confirm('આ Laser Marking entry delete કરવી છે?'))return;write(read().filter(x=>String(x.id)!==String(id)));render();}
+  function tableExcel(){const rows=filtered();if(!rows.length)return alert('Export કરવા માટે data નથી.');const head=['Date','Item','Qty','Batch/Lot','Mark Text','Machine','Operator','Status','Remark'];const csv=[head,...rows.map(x=>[x.date,x.item,x.qty,x.batch,x.mark,x.machine,x.operator,x.status,x.remark])].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Laser_Marking_Report.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+  function printReport(){const rows=filtered();const w=window.open('','_blank');if(!w)return;w.document.write('<html><head><title>Laser Marking Report</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:7px;text-align:left;font-size:12px}h2{margin-bottom:15px}</style></head><body><h2>Laser Marking Report</h2><table><thead><tr><th>Date</th><th>Item</th><th>Qty</th><th>Batch/Lot</th><th>Mark Text</th><th>Machine</th><th>Operator</th><th>Status</th><th>Remark</th></tr></thead><tbody>'+rows.map(x=>'<tr>'+[x.date,x.item,Number(x.qty||0).toFixed(3),x.batch,x.mark,x.machine,x.operator,x.status,x.remark].map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>');w.document.close()}
+  function init(){
+    if($lm('lmDate')&&!$lm('lmDate').value)$lm('lmDate').value=today();
+    $lm('lmSaveBtn')?.addEventListener('click',saveEntry);$lm('lmClearBtn')?.addEventListener('click',clearForm);$lm('lmFilterBtn')?.addEventListener('click',render);$lm('lmResetFilterBtn')?.addEventListener('click',()=>{['lmFilterFrom','lmFilterTo','lmFilterSearch'].forEach(id=>$lm(id).value='');$lm('lmFilterStatus').value='';render()});$lm('lmExcelBtn')?.addEventListener('click',tableExcel);$lm('lmPrintBtn')?.addEventListener('click',printReport);['lmFilterSearch'].forEach(id=>$lm(id)?.addEventListener('input',render));setupSuggest();render();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
 </body></html>
