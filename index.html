@@ -7753,10 +7753,10 @@ window.v315RefreshDashboardCharts=render;
 })();
 </script>
 
-<script id="v326LaserMarkingModule">
+<script id="v329LaserMarkingModule">
 (function(){
 const K="sentidos_laser_marking_v1",RK="sentidos_laser_marking_rates_v1",$=id=>document.getElementById(id),N=v=>String(v??"").trim().toLowerCase().replace(/\s+/g," "),E=v=>String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"),today=()=>new Date().toISOString().slice(0,10);
-function rd(k,d=[]){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}} function wr(k,v){localStorage.setItem(k,JSON.stringify(v))} function vs(){return Array.isArray(window.vendors)?window.vendors.filter(x=>x&&x.name):[]} function its(){return Array.isArray(window.items)?window.items.filter(x=>x&&x.name):[]}
+function rd(k,d=[]){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}} function wr(k,v){localStorage.setItem(k,JSON.stringify(v))} function vs(){let a=[];try{a=JSON.parse(localStorage.getItem("adr_vendors_v2")||"[]")}catch(e){a=[]} if(!Array.isArray(a)||!a.length){a=Array.isArray(window.vendors)?window.vendors:[]} return a.map(x=>{if(typeof x==="string")return {name:x}; return x||{}}).filter(x=>String(x.name||x.vendor||x.vendorName||"").trim()).map(x=>({...x,name:String(x.name||x.vendor||x.vendorName).trim()}))} function its(){return Array.isArray(window.items)?window.items.filter(x=>x&&x.name):rd("adr_items_v2",[])}
 function migrate(){let a=rd(K);wr(K,a.map(x=>({...x,vendor:x.vendor||x.operator||"",rate:+x.rate||0,totalAmount:+x.totalAmount||((+x.qty||0)*(+x.rate||0))})))}
 function rate(v,l){let x=rd(RK).find(x=>N(x.vendor)===N(v)&&N(x.logoName)===N(l));return x?+x.rate||0:0}
 function calc(){let r=rate($("lmVendor")?.value,$("lmMarkText")?.value),q=+$ ("lmQty")?.value||0;if($("lmMarkingRate"))$("lmMarkingRate").value=r?r.toFixed(3):"";if($("lmTotalAmount"))$("lmTotalAmount").value=(q*r).toFixed(2)}
@@ -7782,6 +7782,7 @@ function rateVendorSuggest(){
  };
  input.addEventListener("input",show);
  input.addEventListener("focus",show);
+ input.addEventListener("keyup",show);
  document.addEventListener("click",e=>{if(e.target!==input&&!box.contains(e.target))box.style.display="none"});
 }
 function renderRates(){let b=$("lmRateTable");if(!b)return;let a=rd(RK);b.innerHTML=a.length?a.map((x,i)=>`<tr><td>${E(x.vendor)}</td><td>${E(x.logoName)}</td><td>₹${(+x.rate||0).toFixed(3)}</td><td><button type="button" data-e="${i}">✏️ Edit</button> <button type="button" data-d="${i}">🗑 Delete</button></td></tr>`).join(""):"<tr><td colspan=4>No Laser Marking rates saved</td></tr>";b.querySelectorAll("[data-e]").forEach(z=>z.onclick=()=>{let x=rd(RK)[+z.dataset.e];$("lmRateVendor").value=x.vendor;$("lmRateLogo").value=x.logoName;$("lmRateValue").value=x.rate});b.querySelectorAll("[data-d]").forEach(z=>z.onclick=()=>{if(confirm("આ Laser Marking Rate delete કરવો છે?")){let a=rd(RK);a.splice(+z.dataset.d,1);wr(RK,a);renderRates();calc()}})}
