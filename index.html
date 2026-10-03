@@ -331,9 +331,9 @@ tr.low-stock-row td * {
 <div id="jobWorkSubMenuV225" class="v225JobWorkSubMenu" hidden>
 <button type="button" id="openJWIssueBtnV225">🧱 Raw Material Issue to Vendor</button>
 <button type="button" id="openJWReceiveBtnV225">🔩 Component Receive from Vendor</button>
-
+<button type="button" id="openLaserMarkingBtnV325">🔖 Round Arm Laser Marking</button>
 </div>
-</div><button type="button" id="laserMarkingNavBtnV325">🔖 Laser Marking</button><div class="v255BackupSideGroup">
+</div><div class="v255BackupSideGroup">
 <button type="button" id="v255BackupBtn" class="v255BackupSideBtn" aria-expanded="false">💾 Backup / Restore</button>
 <div id="v255BackupSubMenu" class="v255BackupSubMenu" hidden>
 <button type="button" id="v255DownloadBackupBtn">💾 Download Backup</button>
@@ -660,7 +660,7 @@ tr.low-stock-row td * {
 <hr><div id="vendorRawMaterialBalanceV230"><h3 style="font-size:22px;font-weight:800">Vendor Raw Material Balance</h3>
 <table><thead><tr><th>Vendor</th><th>Raw Material</th><th>Qty at Vendor</th><th>Unit</th></tr></thead><tbody id="jwTable"></tbody></table></div>
 
-<div id="laserMarkingSectionV325" class="panel" style="display:none!important">
+<div id="laserMarkingSectionV325" class="panel" style="margin-top:18px;background:#fff7ed">
 <h3>🔖 Customer Specific Laser Marking — Round Arm</h3>
 <p class="small">Round Arm પહેલા Laser Marking માટે issue થશે. Marking થયા પછી તે જ Customer માટે Final Stockમાં જશે. Customer-wise stock અલગ રહેશે.</p>
 <div class="grid">
@@ -676,37 +676,6 @@ tr.low-stock-row td * {
 </div>
 </div></section>
 
-
-
-<section id="laserMarking" class="page">
-  <div class="panel" style="border-top:4px solid #7c3aed">
-    <h2>🔖 Laser Marking</h2>
-    <p class="small">આ અલગ Laser Marking module છે. અત્યારે માત્ર entry screen તૈયાર છે; Stock deduct/add કરવાની rule તમે કહેશો પછી લાગુ કરવામાં આવશે.</p>
-    <div class="grid">
-      <input id="lmDateV325" type="date" title="Date">
-      <div class="autowrap" style="position:relative">
-        <input id="lmPartV325" placeholder="Part Name (જેમ કે Round Arm)" autocomplete="off">
-        <div id="lmPartSuggestV325" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #aaa;display:none;max-height:220px;overflow:auto"></div>
-      </div>
-      <input id="lmQtyV325" type="number" min="0" step="1" placeholder="Qty">
-      <div class="autowrap" style="position:relative">
-        <input id="lmCustomerV325" placeholder="Customer Name" autocomplete="off">
-        <div id="lmCustomerSuggestV325" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #aaa;display:none;max-height:220px;overflow:auto"></div>
-      </div>
-    </div>
-    <br>
-    <button type="button" class="primary" id="lmSaveEntryV325">💾 Save Laser Marking Entry</button>
-    <button type="button" id="lmClearV325">✖ Clear</button>
-    <div class="msg" id="lmMsgV325"></div>
-    <div class="panel" style="margin-top:14px;background:#fafafa">
-      <h3>Laser Marking Entry History</h3>
-      <div style="overflow:auto">
-        <table><thead><tr><th>Date</th><th>Part Name</th><th>Qty</th><th>Customer</th><th>Status</th></tr></thead>
-        <tbody id="lmHistoryV325"><tr><td colspan="5">No Laser Marking entries yet.</td></tr></tbody></table>
-      </div>
-    </div>
-  </div>
-</section>
 
 <section id="jwrates" class="page"><div class="panel"><h2>Job Work Rate Master</h2>
 <p>Vendor + Component પ્રમાણે rate એકવાર save કરો. પછી Job Work Receive વખતે rate automatic આવશે.</p>
@@ -7804,54 +7773,6 @@ window.v315RefreshDashboardCharts=render;
    if(lm){lm.textContent='🔖 Round Arm Laser Marking'; lm.onclick=function(e){e.preventDefault();e.stopImmediatePropagation();go('jobwork');var sec=document.getElementById('laserMarkingSectionV325');if(sec)sec.scrollIntoView({behavior:'smooth',block:'start'});};}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-})();
-</script>
-
-<script id="v325LaserMarkingModule">
-(function(){
-  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);});}
-  function goLaser(){
-    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
-    var p=document.getElementById('laserMarking'); if(p)p.classList.add('active');
-    document.querySelectorAll('.tabs button[data-page]').forEach(function(b){b.classList.remove('active');});
-    var nav=document.getElementById('laserMarkingNavBtnV325'); if(nav)nav.classList.add('active');
-  }
-  function init(){
-    var nav=document.getElementById('laserMarkingNavBtnV325');
-    if(nav && nav.dataset.ready!=='1'){nav.dataset.ready='1';nav.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();goLaser();},true);}
-    var d=document.getElementById('lmDateV325'); if(d && !d.value)d.value=new Date().toISOString().slice(0,10);
-    var part=document.getElementById('lmPartV325'), ps=document.getElementById('lmPartSuggestV325');
-    if(part && ps && part.dataset.ready!=='1'){
-      part.dataset.ready='1'; part.addEventListener('input',function(){
-        var q=part.value.trim().toLowerCase(); ps.innerHTML='';
-        if(!q){ps.style.display='none';return;}
-        var arr=(window.items||[]).filter(function(x){return String(x.name||'').toLowerCase().includes(q)||String(x.code||'').toLowerCase().includes(q);}).slice(0,12);
-        arr.forEach(function(x){var el=document.createElement('div');el.textContent=(x.name||'')+' ['+(x.code||'')+']';el.style.cssText='padding:9px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';el.onmousedown=function(e){e.preventDefault();part.value=x.name||x.code;ps.style.display='none';};ps.appendChild(el);});
-        ps.style.display=ps.children.length?'block':'none';
-      });
-    }
-    var cust=document.getElementById('lmCustomerV325'), cs=document.getElementById('lmCustomerSuggestV325');
-    if(cust && cs && cust.dataset.ready!=='1'){
-      cust.dataset.ready='1'; cust.addEventListener('input',function(){
-        var q=cust.value.trim().toLowerCase(); cs.innerHTML='';
-        if(!q){cs.style.display='none';return;}
-        var arr=[]; try{arr=JSON.parse(localStorage.getItem('adr_customer_master_v1')||'[]').map(function(x){return String(x.name||'').trim();}).filter(Boolean);}catch(e){}
-        arr=[...new Set(arr)].filter(function(x){return x.toLowerCase().includes(q);}).slice(0,12);
-        arr.forEach(function(n){var el=document.createElement('div');el.textContent=n;el.style.cssText='padding:9px;background:#fff;border-bottom:1px solid #ddd;cursor:pointer';el.onmousedown=function(e){e.preventDefault();cust.value=n;cs.style.display='none';};cs.appendChild(el);});
-        cs.style.display=cs.children.length?'block':'none';
-      });
-    }
-    var clear=document.getElementById('lmClearV325');
-    if(clear && clear.dataset.ready!=='1'){clear.dataset.ready='1';clear.onclick=function(){['lmPartV325','lmQtyV325','lmCustomerV325'].forEach(function(id){var x=document.getElementById(id);if(x)x.value='';});var m=document.getElementById('lmMsgV325');if(m)m.textContent='';};}
-    var save=document.getElementById('lmSaveEntryV325');
-    if(save && save.dataset.ready!=='1'){save.dataset.ready='1';save.onclick=function(){
-      var date=document.getElementById('lmDateV325')?.value||'';var part=document.getElementById('lmPartV325')?.value.trim()||'';var qty=Number(document.getElementById('lmQtyV325')?.value)||0;var customer=document.getElementById('lmCustomerV325')?.value.trim()||'';
-      if(!part||qty<=0||!customer){alert('Part Name, Qty અને Customer ભરો.');return;}
-      var m=document.getElementById('lmMsgV325');if(m)m.textContent='Entry ready: '+part+' | '+qty+' PCS | '+customer+' — Stock rule હજુ લાગુ નથી.';
-      var tb=document.getElementById('lmHistoryV325');if(tb)tb.innerHTML='<tr><td>'+esc(date)+'</td><td>'+esc(part)+'</td><td>'+esc(qty)+'</td><td>'+esc(customer)+'</td><td>Entry Only</td></tr>';
-    };}
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
 </body></html>
