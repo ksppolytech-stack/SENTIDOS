@@ -784,11 +784,8 @@ tr.low-stock-row td * {
 <input id="lmDate" type="date" title="Date">
 <div class="autowrap"><input id="lmItem" placeholder="Finished Good / Item" autocomplete="off"><div id="lmItemSuggest" class="suggestbox"></div></div>
 <input id="lmQty" type="number" step="0.001" min="0.001" placeholder="Qty">
-<input id="lmBatch" placeholder="Batch / Lot No.">
-<input id="lmMarkText" placeholder="Laser Mark Text / Code">
-<input id="lmMachine" placeholder="Laser Machine / No.">
-<input id="lmOperator" placeholder="Operator Name">
-<select id="lmStatus"><option>Pending</option><option>In Process</option><option>Completed</option><option>Rejected</option></select>
+<input id="lmMarkText" placeholder="Laser Mark Logo Name">
+<input id="lmOperator" placeholder="Vendor Name">
 <input id="lmRemark" placeholder="Remark (Optional)">
 </div>
 <br>
@@ -802,8 +799,7 @@ tr.low-stock-row td * {
 <div class="cards" style="grid-template-columns:repeat(4,1fr)">
 <div class="card"><span>Total Entries</span><b id="lmTotalEntries">0</b></div>
 <div class="card"><span>Total Qty</span><b id="lmTotalQty">0</b></div>
-<div class="card"><span>Pending Qty</span><b id="lmPendingQty">0</b></div>
-<div class="card"><span>Completed Qty</span><b id="lmCompletedQty">0</b></div>
+<div class="card"><span>Vendor Entries</span><b id="lmVendorEntries">0</b></div>
 </div>
 </div>
 
@@ -812,15 +808,14 @@ tr.low-stock-row td * {
 <div class="grid">
 <input id="lmFilterFrom" type="date" placeholder="From Date">
 <input id="lmFilterTo" type="date" placeholder="To Date">
-<input id="lmFilterSearch" placeholder="Search Item / Batch / Mark Text / Operator">
-<select id="lmFilterStatus"><option value="">All Status</option><option>Pending</option><option>In Process</option><option>Completed</option><option>Rejected</option></select>
+<input id="lmFilterSearch" placeholder="Search Item / Laser Mark Logo Name / Vendor Name">
 </div>
 <br>
 <button type="button" id="lmFilterBtn">🔍 Search</button>
 <button type="button" id="lmResetFilterBtn">↻ Reset</button>
 <button type="button" id="lmPrintBtn">🖨 Print</button>
 <button type="button" id="lmExcelBtn">📊 Save to Excel</button>
-<div style="overflow:auto"><table id="lmTable"><thead><tr><th>Date</th><th>Item</th><th>Qty</th><th>Batch/Lot</th><th>Mark Text</th><th>Machine</th><th>Operator</th><th>Status</th><th>Remark</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+<div style="overflow:auto"><table id="lmTable"><thead><tr><th>Date</th><th>Item</th><th>Qty</th><th>Laser Mark Logo Name</th><th>Vendor Name</th><th>Remark</th><th>Action</th></tr></thead><tbody></tbody></table></div>
 </div>
 </section>
 
@@ -7755,14 +7750,14 @@ window.v315RefreshDashboardCharts=render;
   const $lm=id=>document.getElementById(id);
   let editId=null;
   function read(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return []}}
+  function migrate(){const a=read();if(!a.length)return;const clean=a.map(x=>({id:x.id||('LM-'+Date.now()+Math.random()),date:x.date||today(),item:x.item||'',itemCode:x.itemCode||'',qty:Number(x.qty||0),mark:x.mark||'',vendor:x.vendor||x.operator||'',remark:x.remark||'',createdAt:x.createdAt||new Date().toISOString()}));write(clean)}
   function write(a){localStorage.setItem(KEY,JSON.stringify(a))}
   function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
   function today(){return new Date().toISOString().slice(0,10)}
   function clearForm(){
     editId=null;
     if($lm('lmDate'))$lm('lmDate').value=today();
-    ['lmItem','lmQty','lmBatch','lmMarkText','lmMachine','lmOperator','lmRemark'].forEach(id=>{if($lm(id)){$lm(id).value='';delete $lm(id).dataset.selectedCode}});
-    if($lm('lmStatus'))$lm('lmStatus').value='Pending';
+    ['lmItem','lmQty','lmMarkText','lmOperator','lmRemark'].forEach(id=>{if($lm(id)){$lm(id).value='';delete $lm(id).dataset.selectedCode}});
     if($lm('lmSaveBtn'))$lm('lmSaveBtn').textContent='💾 Save Laser Marking';
   }
   function itemList(){
@@ -7783,38 +7778,38 @@ window.v315RefreshDashboardCharts=render;
     document.addEventListener('click',e=>{if(e.target!==input&&!box.contains(e.target))box.style.display='none'});
   }
   function saveEntry(){
-    const date=$lm('lmDate').value||today(),item=$lm('lmItem').value.trim(),qty=Number($lm('lmQty').value),batch=$lm('lmBatch').value.trim(),mark=$lm('lmMarkText').value.trim(),machine=$lm('lmMachine').value.trim(),operator=$lm('lmOperator').value.trim(),status=$lm('lmStatus').value,remark=$lm('lmRemark').value.trim(),code=$lm('lmItem').dataset.selectedCode||'';
+    const date=$lm('lmDate').value||today(),item=$lm('lmItem').value.trim(),qty=Number($lm('lmQty').value),mark=$lm('lmMarkText').value.trim(),vendor=$lm('lmOperator').value.trim(),remark=$lm('lmRemark').value.trim(),code=$lm('lmItem').dataset.selectedCode||'';
     if(!item)return alert('Finished Good / Item select કરો.');
     if(!Number.isFinite(qty)||qty<=0)return alert('Valid Qty નાખો.');
     if(!mark)return alert('Laser Mark Text / Code નાખો.');
     const a=read();
-    if(editId){const x=a.find(z=>String(z.id)===String(editId));if(x)Object.assign(x,{date,item,itemCode:code,qty,batch,mark,machine,operator,status,remark,updatedAt:new Date().toISOString()});}
-    else a.push({id:'LM-'+Date.now(),date,item,itemCode:code,qty,batch,mark,machine,operator,status,remark,createdAt:new Date().toISOString()});
+    if(editId){const x=a.find(z=>String(z.id)===String(editId));if(x)Object.assign(x,{date,item,itemCode:code,qty,mark,vendor,remark,updatedAt:new Date().toISOString()});}
+    else a.push({id:'LM-'+Date.now(),date,item,itemCode:code,qty,mark,vendor,remark,createdAt:new Date().toISOString()});
     write(a);render();msg(editId?'Laser marking entry updated.':'Laser marking entry saved.');clearForm();
   }
   function msg(t){if($lm('lmMsg')){$lm('lmMsg').textContent=t;setTimeout(()=>{if($lm('lmMsg'))$lm('lmMsg').textContent=''},2500)}}
   function filtered(){
-    const from=$lm('lmFilterFrom')?.value||'',to=$lm('lmFilterTo')?.value||'',q=String($lm('lmFilterSearch')?.value||'').toLowerCase().trim(),st=$lm('lmFilterStatus')?.value||'';
-    return read().filter(x=>(!from||x.date>=from)&&(!to||x.date<=to)&&(!st||x.status===st)&&(!q||[x.item,x.batch,x.mark,x.machine,x.operator,x.remark].join(' ').toLowerCase().includes(q))).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+    const from=$lm('lmFilterFrom')?.value||'',to=$lm('lmFilterTo')?.value||'',q=String($lm('lmFilterSearch')?.value||'').toLowerCase().trim();
+    return read().filter(x=>(!from||x.date>=from)&&(!to||x.date<=to)&&(!q||[x.item,x.mark,x.vendor,x.remark].join(' ').toLowerCase().includes(q))).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
   }
   function render(){
     const a=read(),rows=filtered(),body=$lm('lmTable')?.querySelector('tbody');if(!body)return;
-    const total=a.reduce((n,x)=>n+Number(x.qty||0),0),pending=a.filter(x=>x.status==='Pending'||x.status==='In Process').reduce((n,x)=>n+Number(x.qty||0),0),completed=a.filter(x=>x.status==='Completed').reduce((n,x)=>n+Number(x.qty||0),0);
+    const total=a.reduce((n,x)=>n+Number(x.qty||0),0);
     if($lm('lmTotalEntries'))$lm('lmTotalEntries').textContent=a.length;
     if($lm('lmTotalQty'))$lm('lmTotalQty').textContent=total.toFixed(3);
-    if($lm('lmPendingQty'))$lm('lmPendingQty').textContent=pending.toFixed(3);
-    if($lm('lmCompletedQty'))$lm('lmCompletedQty').textContent=completed.toFixed(3);
-    body.innerHTML=rows.length?rows.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.item)}</td><td>${Number(x.qty||0).toFixed(3)}</td><td>${esc(x.batch)}</td><td>${esc(x.mark)}</td><td>${esc(x.machine)}</td><td>${esc(x.operator)}</td><td><b>${esc(x.status)}</b></td><td>${esc(x.remark)}</td><td><button type="button" data-lm-edit="${esc(x.id)}">✏️</button> <button type="button" data-lm-del="${esc(x.id)}">🗑</button></td></tr>`).join(''):'<tr><td colspan="10">No laser marking entries</td></tr>';
+    body.innerHTML=rows.length?rows.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.item)}</td><td>${Number(x.qty||0).toFixed(3)}</td><td>${esc(x.mark)}</td><td>${esc(x.vendor||x.operator||'')}</td><td>${esc(x.remark)}</td><td><button type="button" data-lm-edit="${esc(x.id)}">✏️</button> <button type="button" data-lm-del="${esc(x.id)}">🗑</button></td></tr>`).join(''):'<tr><td colspan="7">No laser marking entries</td></tr>';
+    if($lm('lmVendorEntries'))$lm('lmVendorEntries').textContent=new Set(a.map(x=>x.vendor||x.operator||'').filter(Boolean)).size;
     body.querySelectorAll('[data-lm-edit]').forEach(b=>b.onclick=()=>editEntry(b.dataset.lmEdit));
     body.querySelectorAll('[data-lm-del]').forEach(b=>b.onclick=()=>deleteEntry(b.dataset.lmDel));
   }
-  function editEntry(id){const x=read().find(z=>String(z.id)===String(id));if(!x)return;editId=x.id;$lm('lmDate').value=x.date||today();$lm('lmItem').value=x.item||'';$lm('lmItem').dataset.selectedCode=x.itemCode||'';$lm('lmQty').value=x.qty||'';$lm('lmBatch').value=x.batch||'';$lm('lmMarkText').value=x.mark||'';$lm('lmMachine').value=x.machine||'';$lm('lmOperator').value=x.operator||'';$lm('lmStatus').value=x.status||'Pending';$lm('lmRemark').value=x.remark||'';$lm('lmSaveBtn').textContent='✏️ Update Laser Marking';document.querySelector('[data-page="laserMarking"]')?.scrollIntoView({behavior:'smooth',block:'start'})}
+  function editEntry(id){const x=read().find(z=>String(z.id)===String(id));if(!x)return;editId=x.id;$lm('lmDate').value=x.date||today();$lm('lmItem').value=x.item||'';$lm('lmItem').dataset.selectedCode=x.itemCode||'';$lm('lmQty').value=x.qty||'';$lm('lmMarkText').value=x.mark||'';$lm('lmOperator').value=x.vendor||x.operator||'';$lm('lmRemark').value=x.remark||'';$lm('lmSaveBtn').textContent='✏️ Update Laser Marking';document.querySelector('[data-page="laserMarking"]')?.scrollIntoView({behavior:'smooth',block:'start'})}
   function deleteEntry(id){if(!confirm('આ Laser Marking entry delete કરવી છે?'))return;write(read().filter(x=>String(x.id)!==String(id)));render();}
-  function tableExcel(){const rows=filtered();if(!rows.length)return alert('Export કરવા માટે data નથી.');const head=['Date','Item','Qty','Batch/Lot','Mark Text','Machine','Operator','Status','Remark'];const csv=[head,...rows.map(x=>[x.date,x.item,x.qty,x.batch,x.mark,x.machine,x.operator,x.status,x.remark])].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Laser_Marking_Report.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-  function printReport(){const rows=filtered();const w=window.open('','_blank');if(!w)return;w.document.write('<html><head><title>Laser Marking Report</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:7px;text-align:left;font-size:12px}h2{margin-bottom:15px}</style></head><body><h2>Laser Marking Report</h2><table><thead><tr><th>Date</th><th>Item</th><th>Qty</th><th>Batch/Lot</th><th>Mark Text</th><th>Machine</th><th>Operator</th><th>Status</th><th>Remark</th></tr></thead><tbody>'+rows.map(x=>'<tr>'+[x.date,x.item,Number(x.qty||0).toFixed(3),x.batch,x.mark,x.machine,x.operator,x.status,x.remark].map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>');w.document.close()}
+  function tableExcel(){const rows=filtered();if(!rows.length)return alert('Export કરવા માટે data નથી.');const head=['Date','Item','Qty','Laser Mark Logo Name','Vendor Name','Remark'];const csv=[head,...rows.map(x=>[x.date,x.item,x.qty,x.mark,x.vendor||x.operator||'',x.remark])].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Laser_Marking_Report.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+  function printReport(){const rows=filtered();const w=window.open('','_blank');if(!w)return;w.document.write('<html><head><title>Laser Marking Report</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:7px;text-align:left;font-size:12px}h2{margin-bottom:15px}</style></head><body><h2>Laser Marking Report</h2><table><thead><tr><th>Date</th><th>Item</th><th>Qty</th><th>Laser Mark Logo Name</th><th>Vendor Name</th><th>Remark</th></tr></thead><tbody>'+rows.map(x=>'<tr>'+[x.date,x.item,Number(x.qty||0).toFixed(3),x.mark,x.vendor||x.operator||'',x.remark].map(v=>'<td>'+esc(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>');w.document.close()}
   function init(){
+    migrate();
     if($lm('lmDate')&&!$lm('lmDate').value)$lm('lmDate').value=today();
-    $lm('lmSaveBtn')?.addEventListener('click',saveEntry);$lm('lmClearBtn')?.addEventListener('click',clearForm);$lm('lmFilterBtn')?.addEventListener('click',render);$lm('lmResetFilterBtn')?.addEventListener('click',()=>{['lmFilterFrom','lmFilterTo','lmFilterSearch'].forEach(id=>$lm(id).value='');$lm('lmFilterStatus').value='';render()});$lm('lmExcelBtn')?.addEventListener('click',tableExcel);$lm('lmPrintBtn')?.addEventListener('click',printReport);['lmFilterSearch'].forEach(id=>$lm(id)?.addEventListener('input',render));setupSuggest();render();
+    $lm('lmSaveBtn')?.addEventListener('click',saveEntry);$lm('lmClearBtn')?.addEventListener('click',clearForm);$lm('lmFilterBtn')?.addEventListener('click',render);$lm('lmResetFilterBtn')?.addEventListener('click',()=>{['lmFilterFrom','lmFilterTo','lmFilterSearch'].forEach(id=>$lm(id).value='');render()});$lm('lmExcelBtn')?.addEventListener('click',tableExcel);$lm('lmPrintBtn')?.addEventListener('click',printReport);['lmFilterSearch'].forEach(id=>$lm(id)?.addEventListener('input',render));setupSuggest();render();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
