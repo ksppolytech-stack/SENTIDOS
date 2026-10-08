@@ -663,8 +663,12 @@ tr.low-stock-row td * {
     <div id="lmFromItemSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:9999;display:none"></div>
   </div>
   <input id="lmQty" type="number" step="0.001" min="0" placeholder="Quantity">
+  <div class="autowrap" style="position:relative">
+    <input id="lmConvertItem" placeholder="To / Convert Item" autocomplete="off">
+    <div id="lmConvertItemSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:9999;display:none"></div>
+  </div>
   <input id="lmLogoName" placeholder="Laser Mark Logo Name (e.g. HiraPlaza)">
-  <input id="lmNewItemName" placeholder="New Item Name (e.g. HiraPlaza Round Arm)">
+  <input id="lmNewItemName" placeholder="New Item Name (auto)">
   <div class="autowrap" style="position:relative">
     <input id="lmVendor" placeholder="Vendor Name (optional)" autocomplete="off">
     <div id="lmVendorSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:9999;display:none"></div>
@@ -7741,9 +7745,9 @@ window.v315RefreshDashboardCharts=render;
   function lmFindItem(text, code){
     const q=String(text||'').trim().toLowerCase();
     const c=String(code||'').trim();
-    return (window.items||[]).find(i=>c && String(i.code)===c) ||
-           (window.items||[]).find(i=>String(i.name||'').trim().toLowerCase()===q) ||
-           (window.items||[]).find(i=>(String(i.name||'')+' '+String(i.code||'')).toLowerCase().includes(q));
+    return JSON.parse(localStorage.getItem('adr_items_v2')||'[]').find(i=>c && String(i.code)===c) ||
+           JSON.parse(localStorage.getItem('adr_items_v2')||'[]').find(i=>String(i.name||'').trim().toLowerCase()===q) ||
+           JSON.parse(localStorage.getItem('adr_items_v2')||'[]').find(i=>(String(i.name||'')+' '+String(i.code||'')).toLowerCase().includes(q));
   }
   function lmSetupItemSuggest(){
     const input=document.getElementById('lmFromItem'), box=document.getElementById('lmFromItemSuggest');
@@ -7753,7 +7757,7 @@ window.v315RefreshDashboardCharts=render;
       const q=input.value.trim().toLowerCase();
       box.innerHTML='';
       if(!q){box.style.display='none';return;}
-      const list=(window.items||[]).filter(i=>
+      const list=JSON.parse(localStorage.getItem('adr_items_v2')||'[]').filter(i=>
         (String(i.name||'')+' '+String(i.code||'')).toLowerCase().includes(q)
       ).slice(0,15);
       if(!list.length){box.style.display='none';return;}
@@ -7776,6 +7780,27 @@ window.v315RefreshDashboardCharts=render;
     input.addEventListener('input',function(){input.dataset.selectedCode='';show();});
     input.addEventListener('focus',show);
   }
+  function lmSetupConvertItemSuggest(){
+    const input=document.getElementById('lmConvertItem'), box=document.getElementById('lmConvertItemSuggest');
+    if(!input||!box||input.dataset.lmReady==='1')return;
+    input.dataset.lmReady='1';
+    const show=function(){
+      const q=input.value.trim().toLowerCase(); box.innerHTML='';
+      if(!q){box.style.display='none';return;}
+      let arr=[]; try{arr=JSON.parse(localStorage.getItem('adr_items_v2')||'[]')}catch(e){arr=[]}
+      const list=arr.filter(i=>(String(i.name||'')+' '+String(i.code||'')).toLowerCase().includes(q)).slice(0,15);
+      list.forEach(i=>{
+        const d=document.createElement('div'); d.textContent=String(i.name||'')+' — '+String(i.code||'');
+        d.style.cssText='padding:10px;cursor:pointer;background:#fff;border-bottom:1px solid #ddd;';
+        d.onmousedown=function(e){e.preventDefault();input.value=String(i.name||'');input.dataset.selectedCode=String(i.code||'');box.style.display='none';};
+        box.appendChild(d);
+      });
+      box.style.display=list.length?'block':'none';
+    };
+    input.addEventListener('input',function(){input.dataset.selectedCode='';show();});
+    input.addEventListener('focus',show); input.addEventListener('keyup',show);
+  }
+
   function lmSetupVendorSuggest(){
     const input=document.getElementById('lmVendor'), box=document.getElementById('lmVendorSuggest');
     if(!input||!box||input.dataset.lmReady==='1')return;
@@ -7784,7 +7809,7 @@ window.v315RefreshDashboardCharts=render;
       const q=input.value.trim().toLowerCase();
       box.innerHTML='';
       if(!q){box.style.display='none';return;}
-      const list=(window.vendors||[]).filter(v=>String(v.name||'').toLowerCase().includes(q)).slice(0,15);
+      const list=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]').filter(v=>String(v.name||'').toLowerCase().includes(q)).slice(0,15);
       if(!list.length){box.style.display='none';return;}
       list.forEach(v=>{
         const d=document.createElement('div');
@@ -7853,6 +7878,7 @@ window.v315RefreshDashboardCharts=render;
   }
   function lmInit(){
     lmSetupItemSuggest();
+    lmSetupConvertItemSuggest();
     lmSetupVendorSuggest();
     const logo=document.getElementById('lmLogoName');
     const from=document.getElementById('lmFromItem');
