@@ -7750,7 +7750,7 @@ bind('lmConvertItem','lmConvertItemSuggest',readItems,function(i){return String(
 bind('lmVendor','lmVendorSuggest',readVendors,function(v){return String(v.name||v.vendor||v.vendorName||'')},function(v){var x=document.getElementById('lmVendor');x.value=v.name||v.vendor||v.vendorName||''});
 }
 setTimeout(init,100);setTimeout(init,500);setTimeout(init,1500);setTimeout(init,3000);
-})();</script>
+})();<\/script>
 </body></html>';
     const blob=new Blob(['\ufeff',html],{type:'application/vnd.ms-excel;charset=utf-8;'});
     const url=URL.createObjectURL(blob);
@@ -7806,8 +7806,10 @@ setTimeout(init,100);setTimeout(init,500);setTimeout(init,1500);setTimeout(init,
   else [500,1200,2500,5000].forEach(t=>setTimeout(addAll,t));
   new MutationObserver(function(){addAll()}).observe(document.body,{childList:true,subtree:true});
 })();
+</script>
+
 <script>
-/* V329: Laser Marking Conversion */
+/* V330: Laser Marking Conversion */
 (function(){
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function arr(k){try{let a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
@@ -7825,8 +7827,8 @@ function init(){bindSuggest('lmFromItem','lmFromItemSuggest',items,i=>String(i.n
 document.addEventListener('click',e=>['lmFromItemSuggest','lmConvertItemSuggest','lmLogoSuggest','lmVendorSuggest'].forEach(id=>{let b=document.getElementById(id);if(b&&!b.parentElement.contains(e.target))b.style.display='none'}));
 })();
 </script>
-<style id="v329LaserFix">#lmFromItemSuggest,#lmConvertItemSuggest,#lmLogoSuggest,#lmVendorSuggest{display:none;position:absolute!important;left:0!important;right:0!important;top:100%!important;z-index:2147483647!important;background:#fff!important;color:#111!important;border:1px solid #999!important;box-shadow:0 4px 14px rgba(0,0,0,.2)!important;max-height:260px!important;overflow:auto!important;width:100%!important}#lmFromItemSuggest div,#lmConvertItemSuggest div,#lmLogoSuggest div,#lmVendorSuggest div{display:block!important;padding:10px 12px!important;background:#fff!important;color:#111!important;border-bottom:1px solid #ddd!important;cursor:pointer!important}#lmRate,#lmTotalAmount{background:#f5f5f5!important;font-weight:700!important}</style>
-<script id="v329LaserRateMaster">
+<style id="v330LaserFix">#lmFromItemSuggest,#lmConvertItemSuggest,#lmLogoSuggest,#lmVendorSuggest{display:none;position:absolute!important;left:0!important;right:0!important;top:100%!important;z-index:2147483647!important;background:#fff!important;color:#111!important;border:1px solid #999!important;box-shadow:0 4px 14px rgba(0,0,0,.2)!important;max-height:260px!important;overflow:auto!important;width:100%!important}#lmFromItemSuggest div,#lmConvertItemSuggest div,#lmLogoSuggest div,#lmVendorSuggest div{display:block!important;padding:10px 12px!important;background:#fff!important;color:#111!important;border-bottom:1px solid #ddd!important;cursor:pointer!important}#lmRate,#lmTotalAmount{background:#f5f5f5!important;font-weight:700!important}</style>
+<script id="v330LaserRateMaster">
 (function(){
 const K='sentidos_laser_marking_rates_v1';
 const $=id=>document.getElementById(id);
