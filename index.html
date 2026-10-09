@@ -720,6 +720,12 @@ tr.low-stock-row td * {
 <section id="accounting" class="page">
 <div class="panel">
 <h2>💰 Accounting</h2>
+<div class="panel" id="laserAccountingLedgerV333" style="margin:12px 0;padding:14px;border:1px solid #aaa;border-radius:8px">
+<h3>🔦 Laser Marking Ledger</h3>
+<div class="grid"><div><input id="laserLedgerVendorV333" placeholder="Filter by Laser Vendor (optional)" autocomplete="off"></div><div><button type="button" class="primary" id="laserLedgerRefreshV333">Refresh Ledger</button></div></div>
+<div style="overflow:auto;margin-top:10px"><table id="laserLedgerTableV333"><thead><tr><th>Date</th><th>Vendor</th><th>Laser Logo</th><th>From Item</th><th>Convert Item</th><th>Qty</th><th>Rate / PCS</th><th>Debit / Job Amount</th><th>Reference</th></tr></thead><tbody><tr><td colspan="9">Loading ledger…</td></tr></tbody></table></div>
+<div style="font-weight:700;margin-top:8px" id="laserLedgerTotalV333">Total Laser Marking Amount: ₹0.00</div>
+</div>
 
 <div id="receivePaymentSection" style="display:none">
 <hr>
@@ -7842,6 +7848,17 @@ function save(){let v=$('lmRateVendor')?.value.trim()||'',l=$('lmRateLogo')?.val
 function init(){suggestVendor();$('lmSaveRateBtn')?.addEventListener('click',save);render()}
 setTimeout(init,300);setTimeout(init,1200);setTimeout(init,2500);
 document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parentElement;if(b&&p&&!p.contains(e.target))b.style.display='none'});
+})();
+</script>
+
+<script id="v333LaserAccountingLedger">
+(function(){
+ const $=id=>document.getElementById(id);
+ const norm=v=>String(v??'').trim().toLowerCase();
+ function read(){try{const a=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+ function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+ function render(){const body=$('laserLedgerTableV333')?.querySelector('tbody');if(!body)return;const q=norm($('laserLedgerVendorV333')?.value);const rows=read().filter(t=>norm(t.type)==='laser marking conversion'&&(!q||norm(t.vendor).includes(q))).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));let total=0;body.innerHTML=rows.map(t=>{const amount=Number(t.amount)||((Number(t.qty)||0)*(Number(t.markingRate)||0));total+=amount;return `<tr><td>${esc(t.date||'')}</td><td>${esc(t.vendor||'')}</td><td>${esc(t.logoName||'')}</td><td>${esc(t.fromItemName||t.fromItem||'')}</td><td>${esc(t.newItemName||t.itemName||t.newItem||t.item||'')}</td><td>${(Number(t.qty)||0).toFixed(3)}</td><td>₹${(Number(t.markingRate)||0).toFixed(3)}</td><td>₹${amount.toFixed(2)}</td><td>${esc(t.ref||'')}</td></tr>`}).join('')||'<tr><td colspan="9">No Laser Marking ledger entries found</td></tr>';$('laserLedgerTotalV333').textContent='Total Laser Marking Amount: ₹'+total.toFixed(2)}
+ document.addEventListener('input',e=>{if(e.target&&e.target.id==='laserLedgerVendorV333')render()});document.addEventListener('click',e=>{if(e.target&&e.target.id==='laserLedgerRefreshV333')render()});document.addEventListener('DOMContentLoaded',render);[500,1500,3000].forEach(t=>setTimeout(render,t));
 })();
 </script>
 </body></html>
