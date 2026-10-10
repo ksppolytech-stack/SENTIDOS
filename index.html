@@ -1495,12 +1495,12 @@ function renderDispatchCart(){
  body.innerHTML=dispatchCart.map((x,n)=>{
   const a=x.qty*x.rate,t=a*x.taxRate/100,g=a+t;taxable+=a;tax+=t;grand+=g;
   const bomRows=(dispatchBoms||[]).filter(b=>String(b.product)===String(x.code));
-  const opts=bomRows.map(b=>{const ci=items.find(it=>String(it.code)===String(b.component));if(!ci)return '';const checked=!(x.dispatchBomSelections&&x.dispatchBomSelections[b.component]===false);const need=b.type==='Box'?Math.ceil(Number(x.qty||0)/Math.max(1,Number(b.packSize||250)))*Number(b.qty||1):Number(b.qty||0)*Number(x.qty||0);const label=b.type==='Box'?`Box (${Number(b.packSize||250)} PCS દીઠ)`:'Loose';return `<label style="display:inline-flex;align-items:center;gap:5px;margin:4px 12px 4px 0;padding:5px 8px;border:1px solid #d8dee8;border-radius:6px;background:#f8fafc"><input type="checkbox" data-dc-bom="${n}" data-component="${b.component}" ${checked?'checked':''}> ${ci.name} — ${label} <small>(${need.toFixed(3)} ${ci.unit||''})</small></label>`;}).join('');
-  return `<tr><td>${x.name}${bomRows.length?`<div style="margin-top:6px;font-size:12px;color:#334155"><b>Dispatch BOM:</b><br>${opts}</div>`:''}</td><td>${x.qty.toFixed(3)}</td><td>${x.unit}</td><td>₹${x.rate.toFixed(2)}</td><td>₹${a.toFixed(2)}</td><td>₹${t.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td><button type="button" data-dc-del="${n}">🗑</button></td></tr>`;
+  const opts=bomRows.map((b,bi)=>{const ci=items.find(it=>String(it.code)===String(b.component));if(!ci)return '';const checked=!(x.dispatchBomSelections&&x.dispatchBomSelections[b.component]===false);const need=b.type==='Box'?Math.ceil(Number(x.qty||0)/Math.max(1,Number(b.packSize||250)))*Number(b.qty||1):Number(b.qty||0)*Number(x.qty||0);const label=b.type==='Box'?`Box / Packing — 1 per ${Number(b.packSize||250)} PCS`:'Loose Component';return `<label style="display:inline-flex;align-items:center;gap:6px;margin:4px 8px 4px 0;padding:6px 9px;border:1px solid ${b.type==='Box'?'#c08457':'#d8dee8'};border-radius:6px;background:${b.type==='Box'?'#fff7ed':'#f8fafc'}"><input type="checkbox" data-dc-bom="${n}" data-component="${b.component}" ${checked?'checked':''}> <span><b>${ci.name}</b> — ${label}<br><small>Deduct: ${need.toFixed(3)} ${ci.unit||b.unit||'PCS'}</small></span></label>`;}).join('');
+  return `<tr><td>${x.name}${bomRows.length?`<div style="margin-top:8px;padding:8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff"><b>Dispatch BOM Components (checkbox tick = deduct stock)</b><div style="display:flex;flex-wrap:wrap;margin-top:4px">${opts}</div></div>`:`<div style="margin-top:5px;color:#b45309;font-size:12px">Dispatch BOM set નથી — Master માં BOM બનાવો.</div>`}</td><td>${x.qty.toFixed(3)}</td><td>${x.unit}</td><td>₹${x.rate.toFixed(2)}</td><td>₹${a.toFixed(2)}</td><td>₹${t.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td><button type="button" data-dc-del="${n}">🗑</button></td></tr>`;
  }).join('')||'<tr><td colspan="8">No items added</td></tr>';
  $('dispatchCartTotal').textContent=taxable.toFixed(2);$('dispatchCartTaxTotal').textContent=tax.toFixed(2);$('dispatchCartGrandTotal').textContent=grand.toFixed(2);
- document.querySelectorAll('[data-dc-del]').forEach(b=>b.onclick=()=>{dispatchCart.splice(Number(b.dataset.dcDel),1);renderDispatchCart();});
- document.querySelectorAll('[data-dc-bom]').forEach(c=>c.onchange=()=>{const x=dispatchCart[Number(c.dataset.dcBom)];if(!x)return;x.dispatchBomSelections=x.dispatchBomSelections||{};x.dispatchBomSelections[c.dataset.component]=c.checked;renderDispatchCart();});
+ body.querySelectorAll('[data-dc-del]').forEach(b=>b.onclick=()=>{dispatchCart.splice(Number(b.dataset.dcDel),1);renderDispatchCart();});
+ body.querySelectorAll('[data-dc-bom]').forEach(c=>c.onchange=()=>{const x=dispatchCart[Number(c.dataset.dcBom)];if(!x)return;x.dispatchBomSelections=x.dispatchBomSelections||{};x.dispatchBomSelections[c.dataset.component]=c.checked;renderDispatchCart();});
 }
 
 function addDispatchItem(){
@@ -1519,13 +1519,22 @@ function dispatch(){
  const customer=$('dispatchCustomer').value.trim();
  if(!customer)return alert('Customer Name નાખો.');
  if(!dispatchCart.length){
-   // Backward-compatible: if user has filled the item fields, add it automatically.
    const code=$('dispatchCode')?.dataset.selectedCode||$('dispatchCode')?.value.trim();
    if(code && Number($('dispatchQty')?.value)>0)addDispatchItem();
  }
  if(!dispatchCart.length)return alert('ઓછામાં ઓછો એક Finished Good Item Add કરો.');
+ // Calculate finished goods plus all checked Dispatch BOM components before changing any stock.
  const stockNeed={};
- for(const x of dispatchCart)stockNeed[x.code]=(stockNeed[x.code]||0)+Number(x.qty||0);
+ for(const x of dispatchCart){
+   stockNeed[x.code]=(stockNeed[x.code]||0)+Number(x.qty||0);
+   const rows=(dispatchBoms||[]).filter(b=>String(b.product)===String(x.code));
+   for(const b of rows){
+     const checked=!(x.dispatchBomSelections&&x.dispatchBomSelections[b.component]===false);
+     if(!checked)continue;
+     const need=b.type==='Box'?Math.ceil(Number(x.qty||0)/Math.max(1,Number(b.packSize||250)))*Number(b.qty||1):Number(b.qty||0)*Number(x.qty||0);
+     stockNeed[b.component]=(stockNeed[b.component]||0)+need;
+   }
+ }
  for(const code in stockNeed){
    const it=items.find(i=>String(i.code)===String(code));
    if(!it||stockNeed[code]>Number(it.stock||0))return alert('Insufficient stock: '+(it?.name||code)+' — Required '+stockNeed[code].toFixed(3)+' '+(it?.unit||'')+', Available '+Number(it?.stock||0).toFixed(3)+' '+(it?.unit||''));
@@ -1538,12 +1547,20 @@ function dispatch(){
    addTxn('DISPATCH','',i.code,-q,i.unit);
    const tr=transactions[transactions.length-1];
    tr.date=dispatchDate;tr.billNo=billNo;tr.customer=customer;tr.dispatchRate=r;tr.amount=amount;tr.taxRate=taxRate;tr.tax=tax;tr.grandTotal=amount+tax;tr.remark=x.remark||'';tr.itemName=i.name;
+   const rows=(dispatchBoms||[]).filter(b=>String(b.product)===String(x.code));
+   rows.forEach(b=>{
+     const checked=!(x.dispatchBomSelections&&x.dispatchBomSelections[b.component]===false);if(!checked)return;
+     const ci=items.find(it=>String(it.code)===String(b.component));if(!ci)return;
+     const cq=b.type==='Box'?Math.ceil(q/Math.max(1,Number(b.packSize||250)))*Number(b.qty||1):Number(b.qty||0)*q;
+     ci.stock-=cq;
+     addTxn('DISPATCH_COMPONENT','',ci.code,-cq,ci.unit||b.unit||'PCS');
+     const ct=transactions[transactions.length-1];ct.date=dispatchDate;ct.billNo=billNo;ct.customer=customer;ct.itemName=ci.name;ct.remark='Dispatch BOM for '+i.name+'; '+(b.type==='Box'?'Box/Packing':'Loose Component')+'; Product Qty '+q;
+   });
  });
- save();renderDispatchEntries();msg('dispatchMsg','Dispatch saved. Bill No. '+billNo+' — '+dispatchCart.length+' item(s).');
+ save();renderDispatchEntries();msg('dispatchMsg','Dispatch saved. Bill No. '+billNo+' — finished goods and checked BOM components deducted.');
  dispatchCart=[];renderDispatchCart();
  $('dispatchCustomer').value='';
  if($('dispatchDate') && !$('dispatchDate').value)$('dispatchDate').value=getSystemDateISO();
- showNextDispatchBillNo();
 }
 
 function deleteTransaction(ref){
