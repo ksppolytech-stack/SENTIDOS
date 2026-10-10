@@ -4432,8 +4432,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     rate=Number(t.purchaseRate)||0;amount=Number(t.amount)||(q*rate);total=Number(t.grandTotal)||(amount+gst);d.purchase+=total;label='Purchase';
    }else if(type==='RAW MATERIAL COMPANY INWARD'){
     rate=Number(t.inwardRate)||0;amount=Number(t.amount)||(q*rate);total=Number(t.grandTotal)||(amount+gst);d.purchase+=total;label='Raw Material Inward';
+   }else if(type==='LASER MARKING CONVERSION'){
+    rate=Number(t.markingRate)||0;amount=Number(t.amount)||(q*rate);total=amount;d.jobwork+=total;label='Laser Marking Job Work';
    }else return;
-   d.details.push({date:t.date||'',label,ref:t.billNo||t.invoiceNo||t.inwardRef||t.ref||'',item:item(t),qty:q,unit:t.unit||'',rate,amount,gst,total,debit:(type==='DISPATCH'||type==='RAW MATERIAL SALE')?total:0,credit:(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD'||type==='JOB WORK RECEIVE')?total:0,remark:t.remark||''});
+   d.details.push({date:t.date||'',label,ref:t.billNo||t.invoiceNo||t.inwardRef||t.ref||'',item:item(t),qty:q,unit:t.unit||'',rate,amount,gst,total,debit:(type==='DISPATCH'||type==='RAW MATERIAL SALE')?total:0,credit:(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD'||type==='JOB WORK RECEIVE'||type==='LASER MARKING CONVERSION')?total:0,remark:t.remark||''});
   });
   getPay().forEach(x=>{if(String(x.customer||'').trim().toLowerCase()===k){const a=Number(x.amount)||0;d.received+=a;d.details.push({date:x.date||'',label:'Payment Received',ref:x.ref||'',item:'-',qty:0,unit:'',rate:0,amount:a,gst:0,total:a,debit:0,credit:a,remark:x.remark||''})}});
   getSPay().forEach(x=>{if(String(x.party||'').trim().toLowerCase()===k){const a=Number(x.amount)||0;d.given+=a;d.details.push({date:x.date||'',label:'Payment Given',ref:x.ref||'',item:'-',qty:0,unit:'',rate:0,amount:a,gst:0,total:a,debit:a,credit:0,remark:x.remark||''})}});
@@ -4542,13 +4544,18 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
        amount=Number(t.amount)||(q*rate);
        total=Number(t.grandTotal)||(amount+gst);
        d.purchase+=total; label='Raw Material Inward';
+     }else if(type==='LASER MARKING CONVERSION'){
+       rate=Number(t.markingRate)||0;
+       amount=Number(t.amount)||(q*rate);
+       total=amount;
+       d.jobwork+=total; label='Laser Marking Job Work';
      }else return;
 
      d.details.push({
        date:t.date||'', type, label, ref:refOf(t), item:item(t), qty:q, unit:t.unit||'',
        rate, amount, gst, total,
        debit:(type==='DISPATCH'||type==='RAW MATERIAL SALE')?total:0,
-       credit:(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD'||type==='JOB WORK RECEIVE')?total:0,
+       credit:(type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD'||type==='JOB WORK RECEIVE'||type==='LASER MARKING CONVERSION')?total:0,
        remark:t.remark||'', source:t
      });
    });
