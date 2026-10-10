@@ -440,7 +440,7 @@ tr.low-stock-row td * {
 <section id="dispatchBomMaster" class="page"><div class="panel"><h2>📦 Dispatch BOM Master</h2>
 <p class="small">BOM Master જેવી જ રીતે Product / Component નામ type કરીને suggestion પસંદ કરો, Qty અને Unit નાખો. Loose Component, Box અથવા Bag સેટ કરો. Box માટે PCS per Box પણ તમે સેટ કરી શકો છો.</p>
 <div class="autowrap" style="position:relative"><input id="dbmProduct" placeholder="Type Product Name / Code"><div class="suggestbox" id="dbmProductSuggest"></div></div>
-<div style="overflow:auto;margin-top:10px"><table id="dbmEntryTable"><thead><tr><th>Component / Material Code</th><th>Qty</th><th>Unit</th><th>Type</th><th>PCS per Box</th><th>Action</th></tr></thead><tbody id="dbmEntryBody"></tbody></table></div>
+<div style="overflow:visible;margin-top:10px;position:relative;z-index:20"><table id="dbmEntryTable" style="overflow:visible"><thead><tr><th>Component / Material Code</th><th>Qty</th><th>Unit</th><th>Type</th><th>PCS per Box</th><th>Action</th></tr></thead><tbody id="dbmEntryBody"></tbody></table></div>
 <br><button type="button" id="dbmAddComponentBtn">➕ Add Component</button> <button type="button" class="primary" id="dbmSaveBtn">💾 Save Complete Dispatch BOM</button> <button type="button" id="dbmClearBtn">Clear</button><div class="msg" id="dbmMsg"></div>
 <div style="overflow:auto"><table id="dispatchBomMasterTable"><thead><tr><th>Finished Good</th><th>Component</th><th>Qty</th><th>Type</th><th>PCS per Box</th><th>Action</th></tr></thead><tbody></tbody></table></div>
 </div></section>
@@ -1455,10 +1455,15 @@ let dispatchBomEntryCounter=0;
 function addDispatchBomEntryRow(value={}){
  const body=$('dbmEntryBody');if(!body)return;
  const row=document.createElement('tr');row.dataset.rowId=String(++dispatchBomEntryCounter);
- row.innerHTML='<td><div class="autowrap" style="position:relative"><input class="dbm-row-component" placeholder="Type Component / Material" style="min-width:220px"><div class="suggestbox dbm-row-suggest" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div></td><td><input class="dbm-row-qty" type="number" min="0.001" step="0.001" value="'+Number(value.qty||1)+'" style="width:100px"></td><td><select class="dbm-row-unit"><option>PCS</option><option>KG</option><option>G</option></select></td><td><select class="dbm-row-type"><option value="Loose">Loose Component</option><option value="Box">Box / Packing</option></select></td><td><input class="dbm-row-packsize" type="number" min="1" step="1" value="'+Number(value.packSize||250)+'" title="PCS per Box" style="width:100px"></td><td><button type="button" class="dbm-row-remove">✖ Remove</button></td>';
+ row.innerHTML='<td><div class="autowrap" style="position:relative"><input class="dbm-row-component" placeholder="Type Component / Material" autocomplete="off" style="min-width:220px;position:relative;z-index:30"><div class="suggestbox dbm-row-suggest" style="position:absolute;left:0;right:0;top:100%;z-index:99999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto;min-width:240px;box-shadow:0 4px 12px rgba(0,0,0,.18)"></div></div></td><td><input class="dbm-row-qty" type="number" min="0.001" step="0.001" value="'+Number(value.qty||1)+'" style="width:100px"></td><td><select class="dbm-row-unit"><option>PCS</option><option>KG</option><option>G</option></select></td><td><select class="dbm-row-type"><option value="Loose">Loose Component</option><option value="Box">Box / Packing</option></select></td><td><input class="dbm-row-packsize" type="number" min="1" step="1" value="'+Number(value.packSize||250)+'" title="PCS per Box" style="width:100px"></td><td><button type="button" class="dbm-row-remove">✖ Remove</button></td>';
  body.appendChild(row);
  const ci=items.find(i=>String(i.code)===String(value.component));const comp=row.querySelector('.dbm-row-component');if(value.component){comp.value=ci?ci.name:String(value.component);comp.dataset.selectedCode=String(value.component);}if(value.unit)row.querySelector('.dbm-row-unit').value=value.unit;row.querySelector('.dbm-row-type').value=value.type||'Loose';
- setupAutocomplete(comp,row.querySelector('.dbm-row-suggest'),()=>true);
+ const suggest=row.querySelector('.dbm-row-suggest');
+ setupAutocomplete(comp,suggest,()=>true);
+ // Ensure component suggestions are layered above table rows and visible while typing.
+ comp.addEventListener('input',()=>{row.style.position='relative';row.style.zIndex='40';});
+ comp.addEventListener('focus',()=>{row.style.position='relative';row.style.zIndex='40';});
+ comp.addEventListener('blur',()=>setTimeout(()=>{row.style.zIndex='';},180));
  const pack=row.querySelector('.dbm-row-packsize');const syncPack=()=>{pack.disabled=row.querySelector('.dbm-row-type').value!=='Box';pack.style.background=pack.disabled?'#eee':'';};row.querySelector('.dbm-row-type').addEventListener('change',syncPack);syncPack();
  row.querySelector('.dbm-row-remove').onclick=()=>{row.remove();if(!body.children.length)addDispatchBomEntryRow();};
 }
