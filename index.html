@@ -776,12 +776,6 @@ tr.low-stock-row td * {
 <table id="mergedPartyLedgerTable"><thead><tr><th>Date</th><th>Type</th><th>Reference</th><th>Debit</th><th>Credit</th><th>Balance</th><th>Remark</th></tr></thead><tbody></tbody></table>
 </div>
 
-<div class="panel" id="laserAccountingLedgerV333" style="margin:16px 0 0;padding:14px;border:1px solid #aaa;border-radius:8px">
-<h3>🔦 Laser Marking Ledger</h3>
-<div class="grid"><div><input id="laserLedgerVendorV333" placeholder="Filter by Laser Vendor (optional)" autocomplete="off"></div><div><button type="button" class="primary" id="laserLedgerRefreshV333">Refresh Ledger</button></div></div>
-<div style="overflow:auto;margin-top:10px"><table id="laserLedgerTableV333"><thead><tr><th>Date</th><th>Vendor</th><th>Laser Logo</th><th>From Item</th><th>Convert Item</th><th>Qty</th><th>Rate / PCS</th><th>Debit / Job Amount</th><th>Reference</th></tr></thead><tbody><tr><td colspan="9">Loading ledger…</td></tr></tbody></table></div>
-<div style="font-weight:700;margin-top:8px" id="laserLedgerTotalV333">Total Laser Marking Amount: ₹0.00</div>
-</div>
 </section>
 
 <section class="panel" id="customerDueSummary" style="display:none">
@@ -3093,7 +3087,7 @@ function renderMergedPartyDetailV96(party){
           ? String(t.customer||t.customerName||'').trim()
           : type==='PURCHASE'||type==='RAW MATERIAL COMPANY INWARD'
             ? String(t.supplier||t.supplierName||'').trim()
-            : type==='JOB WORK RECEIVE'||type==='JOB WORK ISSUE'
+            : type==='JOB WORK RECEIVE'||type==='JOB WORK ISSUE'||type==='LASER MARKING CONVERSION'
               ? String(t.vendor||t.vendorName||t.supplier||t.supplierName||'').trim()
               : String(t.customer||t.supplier||t.vendor||t.customerName||t.supplierName||t.vendorName||'').trim();
       if(partyName.toLowerCase()!==target)return;
@@ -3121,6 +3115,10 @@ function renderMergedPartyDetailV96(party){
       }else if(type==='JOB WORK ISSUE'){
         amount=Number(t.issueAmount??qty*rate)||0; total=Number(t.grandTotal??amount)||0;
         label='Job Work Issue';
+      }else if(type==='LASER MARKING CONVERSION'){
+        amount=Number(t.amount??qty*Number(t.markingRate||0))||0; total=amount;
+        rate=Number(t.markingRate)||0;
+        credit=total; label='Laser Marking Job Work';
       }else return;
 
       events.push({
