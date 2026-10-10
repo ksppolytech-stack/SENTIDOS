@@ -658,8 +658,8 @@ tr.low-stock-row td * {
 <p>Laser marking conversion: From Itemમાંથી stock deduct થશે અને Convert Itemમાં એટલી જ Qty stock add થશે. Logo પ્રમાણે rate automatic આવશે અને Total Amount automatic ગણાશે.</p>
 
 <div class="grid">
-  <input id="lmChallanNo" placeholder="Challan No." autocomplete="off">
   <input id="lmDate" type="date" aria-label="Laser Marking Date">
+  <input id="lmChallanNo" placeholder="Challan No." autocomplete="off">
   <div class="autowrap" style="position:relative">
     <input id="lmFromItem" placeholder="From Item (e.g. Round Arm)" autocomplete="off">
     <div id="lmFromItemSuggest" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:9999;display:none"></div>
@@ -7822,7 +7822,7 @@ setTimeout(init,100);setTimeout(init,500);setTimeout(init,1500);setTimeout(init,
 </script>
 
 <script>
-/* V338: Laser Marking editable date field */
+/* V339: Laser Marking editable date field */
 (function(){const setDate=()=>{const el=document.getElementById('lmDate');if(el&&!el.value)el.value=new Date().toISOString().slice(0,10)};document.addEventListener('DOMContentLoaded',setDate);setTimeout(setDate,500);})();
 /* V330: Laser Marking Conversion */
 (function(){
