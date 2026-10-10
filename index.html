@@ -2531,9 +2531,27 @@ function renderDispatchEntries(){
  });
  document.querySelectorAll('[data-dispatch-del]').forEach(b=>b.onclick=()=>{
   const t=(transactions||[]).find((x,n)=>String(x.id||n)===String(b.dataset.dispatchDel));if(!t)return;
-  if(!confirm('Delete Dispatch and reverse stock?'))return;
+  if(!confirm('Delete Dispatch and reverse finished goods + checked component/packing stock?'))return;
+  // Reverse the finished good quantity for the selected dispatch row.
   const it=items.find(i=>String(i.code||'')===String(t.item||''));if(it)it.stock+=Math.abs(Number(t.qty)||0);
-  const ix=transactions.indexOf(t);if(ix>=0)transactions.splice(ix,1);save();if($('dispatchDate') && !$('dispatchDate').value)$('dispatchDate').value=getSystemDateISO();renderDispatchEntries();renderDispatchCart();showNextDispatchBillNo();
+  // Component/packing deductions are stored as separate DISPATCH_COMPONENT transactions.
+  // Match them to this dispatch row by bill number and the product name recorded in the remark.
+  const productName=String(t.itemName||(it&&it.name)||t.item||'');
+  const bill=String(t.billNo||'');
+  const relatedComponents=(transactions||[]).filter(ct=>{
+    if(String(ct.type||'').toUpperCase()!=='DISPATCH_COMPONENT')return false;
+    if(bill && String(ct.billNo||'')!==bill)return false;
+    const remark=String(ct.remark||'');
+    return remark.startsWith('Dispatch BOM for '+productName+';');
+  });
+  relatedComponents.forEach(ct=>{
+    const ci=items.find(i=>String(i.code||'')===String(ct.item||''));
+    if(ci)ci.stock+=Math.abs(Number(ct.qty)||0);
+  });
+  // Remove linked component transactions so they cannot be reversed twice.
+  relatedComponents.forEach(ct=>{const ci=transactions.indexOf(ct);if(ci>=0)transactions.splice(ci,1);});
+  const ix=transactions.indexOf(t);if(ix>=0)transactions.splice(ix,1);
+  save();if($('dispatchDate') && !$('dispatchDate').value)$('dispatchDate').value=getSystemDateISO();renderDispatchEntries();renderDispatchCart();showNextDispatchBillNo();
  });
 }
 function setupDispatchCustomerSuggest(){
