@@ -438,14 +438,13 @@ tr.low-stock-row td * {
 
 <!-- V342: Dispatch BOM Master fields are fully placed on their own Master page. -->
 <section id="dispatchBomMaster" class="page"><div class="panel"><h2>📦 Dispatch BOM Master</h2>
-<p class="small">દરેક Finished Good માટે loose component અથવા box અહીં સેટ કરો. Component quantity પ્રતિ Finished Good PCS પ્રમાણે રાખો. 250 PCS દીઠ 1 Box માટે Type = Box અને Qty = 1 રાખો.</p>
+<p class="small">દરેક Finished Good માટે Loose Component, Box અથવા Bag સેટ કરો. Box માટે દરેક Boxમાં કેટલા PCS આવે તે પણ તમે જાતે સેટ કરી શકો છો (ઉદાહરણ: 250 PCS).</p>
 <div class="grid">
 <select id="dbmProduct"><option value="">Select Finished Good</option></select>
-<select id="dbmComponent"><option value="">Select Component / Box Item</option></select>
-<input id="dbmQty" type="number" step="0.001" min="0.001" value="1" placeholder="Qty per Finished Good">
-<select id="dbmType"><option value="Loose">Loose Component</option><option value="Box">Box / Packing (1 per 250 PCS)</option></select>
-</div><br><button type="button" class="primary" id="dbmSaveBtn">➕ Save Dispatch BOM</button> <button type="button" id="dbmClearBtn">Clear</button><div class="msg" id="dbmMsg"></div>
-<div style="overflow:auto"><table id="dispatchBomMasterTable"><thead><tr><th>Finished Good</th><th>Component</th><th>Qty / PCS</th><th>Type</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+</div>
+<div style="overflow:auto;margin-top:10px"><table id="dbmEntryTable"><thead><tr><th>Component / Box / Bag</th><th>Qty</th><th>Type</th><th>PCS per Box</th><th>Action</th></tr></thead><tbody id="dbmEntryBody"></tbody></table></div>
+<br><button type="button" id="dbmAddComponentBtn">➕ Add Component</button> <button type="button" class="primary" id="dbmSaveBtn">💾 Save Complete Dispatch BOM</button> <button type="button" id="dbmClearBtn">Clear</button><div class="msg" id="dbmMsg"></div>
+<div style="overflow:auto"><table id="dispatchBomMasterTable"><thead><tr><th>Finished Good</th><th>Component</th><th>Qty</th><th>Type</th><th>PCS per Box</th><th>Action</th></tr></thead><tbody></tbody></table></div>
 </div></section>
 
 <section id="purchase" class="page"><div class="panel"><h2>🛒 Purchase</h2>
@@ -1454,33 +1453,45 @@ function getSystemDateISO(){const d=new Date();return d.getFullYear()+'-'+String
 
 let dispatchCart=[];
 
+let dispatchBomEntryCounter=0;
+function addDispatchBomEntryRow(value={}){
+ const body=$('dbmEntryBody');if(!body)return;
+ const row=document.createElement('tr');row.dataset.rowId=String(++dispatchBomEntryCounter);
+ const compOptions='<option value="">Select Component / Box / Bag</option>'+items.map(i=>`<option value="${String(i.code).replace(/\"/g,'&quot;')}">${i.name} (${i.code}) — ${i.unit||''}</option>`).join('');
+ row.innerHTML=`<td><select class="dbm-row-component" style="min-width:220px">${compOptions}</select></td><td><input class="dbm-row-qty" type="number" min="0.001" step="0.001" value="${Number(value.qty||1)}" style="width:100px"></td><td><select class="dbm-row-type"><option value="Loose">Loose Component</option><option value="Box">Box / Packing</option></select></td><td><input class="dbm-row-packsize" type="number" min="1" step="1" value="${Number(value.packSize||250)}" title="PCS per Box" style="width:100px"></td><td><button type="button" class="dbm-row-remove">✖ Remove</button></td>`;
+ body.appendChild(row);if(value.component)row.querySelector('.dbm-row-component').value=String(value.component);row.querySelector('.dbm-row-type').value=value.type||'Loose';const pack=row.querySelector('.dbm-row-packsize');const syncPack=()=>{pack.disabled=row.querySelector('.dbm-row-type').value!=='Box';if(pack.disabled)pack.style.background='#eee';else pack.style.background='';};row.querySelector('.dbm-row-type').addEventListener('change',syncPack);syncPack();
+ row.querySelector('.dbm-row-remove').onclick=()=>{row.remove();if(!body.children.length)addDispatchBomEntryRow();};
+}
 function renderDispatchBomMaster(){
- const prod=$('dbmProduct'),comp=$('dbmComponent');if(!prod||!comp)return;
- const oldP=prod.value,oldC=comp.value;
+ const prod=$('dbmProduct');if(!prod)return;const oldP=prod.value;
  const finished=items.filter(i=>String(i.cat||'').toLowerCase()==='finished goods');
  prod.innerHTML='<option value="">Select Finished Good</option>'+finished.map(i=>`<option value="${i.code}">${i.name} (${i.code})</option>`).join('');
- comp.innerHTML='<option value="">Select Component / Box Item</option>'+items.map(i=>`<option value="${i.code}">${i.name} (${i.code}) — ${i.unit||''}</option>`).join('');
- if(finished.some(i=>i.code===oldP))prod.value=oldP;if(items.some(i=>i.code===oldC))comp.value=oldC;
+ if(finished.some(i=>String(i.code)===String(oldP)))prod.value=oldP;
+ if(!$('dbmEntryBody').children.length)addDispatchBomEntryRow();
  const body=$('dispatchBomMasterTable')?.querySelector('tbody');if(!body)return;
- body.innerHTML=dispatchBoms.map((b,n)=>{const pi=items.find(i=>String(i.code)===String(b.product)),ci=items.find(i=>String(i.code)===String(b.component));return `<tr><td>${pi?.name||b.product}</td><td>${ci?.name||b.component}</td><td>${Number(b.qty||1).toFixed(3)}</td><td>${b.type==='Box'?'Box / Packing':'Loose Component'}</td><td><button type="button" data-dbm-edit="${n}">✏️ Edit</button> <button type="button" data-dbm-del="${n}">🗑 Delete</button></td></tr>`}).join('')||'<tr><td colspan="5">હજુ Dispatch BOM બનાવેલ નથી.</td></tr>';
- body.querySelectorAll('[data-dbm-edit]').forEach(btn=>btn.onclick=()=>{const b=dispatchBoms[Number(btn.dataset.dbmEdit)];if(!b)return;$('dbmProduct').value=b.product;$('dbmComponent').value=b.component;$('dbmQty').value=b.qty;$('dbmType').value=b.type||'Loose';$('dbmMsg').textContent='Edit કરવા માટે ફેરફાર કરીને Save Dispatch BOM દબાવો.';});
+ body.innerHTML=dispatchBoms.map((b,n)=>{const pi=items.find(i=>String(i.code)===String(b.product)),ci=items.find(i=>String(i.code)===String(b.component));return `<tr><td>${pi?.name||b.product}</td><td>${ci?.name||b.component}</td><td>${Number(b.qty||1).toFixed(3)}</td><td>${b.type==='Box'?'Box / Packing':'Loose Component'}</td><td>${b.type==='Box'?Number(b.packSize||250)+' PCS':''}</td><td><button type="button" data-dbm-edit="${n}">✏️ Edit Product BOM</button> <button type="button" data-dbm-del="${n}">🗑 Delete</button></td></tr>`}).join('')||'<tr><td colspan="6">હજુ Dispatch BOM બનાવેલ નથી.</td></tr>';
+ body.querySelectorAll('[data-dbm-edit]').forEach(btn=>btn.onclick=()=>{const b=dispatchBoms[Number(btn.dataset.dbmEdit)];if(!b)return;const product=b.product;$('dbmProduct').value=product;const rows=dispatchBoms.filter(x=>String(x.product)===String(product));$('dbmEntryBody').innerHTML='';rows.forEach(x=>addDispatchBomEntryRow(x));$('dbmMsg').textContent='આ Product ના બધા components નીચે આવ્યા છે. ફેરફાર કરીને Save Complete Dispatch BOM દબાવો.';$('dbmProduct').scrollIntoView({behavior:'smooth',block:'center'});});
  body.querySelectorAll('[data-dbm-del]').forEach(btn=>btn.onclick=()=>{dispatchBoms.splice(Number(btn.dataset.dbmDel),1);save();renderDispatchBomMaster();renderDispatchCart();});
 }
 function saveDispatchBomRow(){
- const product=$('dbmProduct').value,component=$('dbmComponent').value,qty=Number($('dbmQty').value)||0,type=$('dbmType').value;
- if(!product||!component||qty<=0)return alert('Finished Good, Component અને Qty ભરો.');
- if(product===component)return alert('Finished Good અને Component એક જ ન હોઈ શકે.');
- dispatchBoms=dispatchBoms.filter(b=>!(String(b.product)===product&&String(b.component)===component));
- dispatchBoms.push({product,component,qty,type});save();renderDispatchBomMaster();msg('dbmMsg','Dispatch BOM saved. હવે આ Finished Good Dispatchમાં ઉમેરશો ત્યારે checkbox દેખાશે.');
- $('dbmComponent').value='';$('dbmQty').value='1';
+ const product=$('dbmProduct').value;const rows=[...$('dbmEntryBody').querySelectorAll('tr')].map(r=>({component:r.querySelector('.dbm-row-component').value,qty:Number(r.querySelector('.dbm-row-qty').value)||0,type:r.querySelector('.dbm-row-type').value,packSize:Number(r.querySelector('.dbm-row-packsize').value)||250})).filter(r=>r.component);
+ if(!product)return alert('Finished Good પસંદ કરો.');
+ if(!rows.length)return alert('ઓછામાં ઓછો એક Component ઉમેરો.');
+ if(rows.some(r=>r.qty<=0))return alert('દરેક Component માટે Qty 0 કરતાં વધુ નાખો.');
+ if(rows.some(r=>r.type==='Box'&&r.packSize<1))return alert('Box માટે PCS per Box 1 કે તેથી વધુ નાખો.');
+ if(rows.some(r=>String(r.component)===String(product)))return alert('Finished Good અને Component એક જ ન હોઈ શકે.');
+ const seen=new Set();for(const r of rows){if(seen.has(String(r.component)))return alert('એક જ Component બે વાર ઉમેરાયો છે. અલગ Qty જોઈએ તો એક જ row માં Qty બદલો.');seen.add(String(r.component));}
+ dispatchBoms=dispatchBoms.filter(b=>String(b.product)!==String(product));rows.forEach(r=>dispatchBoms.push({product,component:r.component,qty:r.qty,type:r.type,packSize:r.type==='Box'?Math.max(1,Math.floor(r.packSize||250)):250}));
+ save();renderDispatchBomMaster();renderDispatchCart();msg('dbmMsg','Complete Dispatch BOM save થયું. હવે એક પછી એક Arm, Dish, Box, Bag વગેરે Add Component થી ઉમેરો.');
 }
+function clearDispatchBomForm(){if($('dbmProduct'))$('dbmProduct').value='';if($('dbmEntryBody'))$('dbmEntryBody').innerHTML='';addDispatchBomEntryRow();if($('dbmMsg'))$('dbmMsg').textContent='';}
 function renderDispatchCart(){
  const body=$('dispatchCartTable')?.querySelector('tbody');if(!body)return;
  let taxable=0,tax=0,grand=0;
  body.innerHTML=dispatchCart.map((x,n)=>{
   const a=x.qty*x.rate,t=a*x.taxRate/100,g=a+t;taxable+=a;tax+=t;grand+=g;
   const bomRows=(dispatchBoms||[]).filter(b=>String(b.product)===String(x.code));
-  const opts=bomRows.map(b=>{const ci=items.find(it=>String(it.code)===String(b.component));if(!ci)return '';const checked=!(x.dispatchBomSelections&&x.dispatchBomSelections[b.component]===false);const need=b.type==='Box'?Math.ceil(Number(x.qty||0)/250)*Number(b.qty||1):Number(b.qty||0)*Number(x.qty||0);const label=b.type==='Box'?'Box (250 PCS દીઠ)':'Loose';return `<label style="display:inline-flex;align-items:center;gap:5px;margin:4px 12px 4px 0;padding:5px 8px;border:1px solid #d8dee8;border-radius:6px;background:#f8fafc"><input type="checkbox" data-dc-bom="${n}" data-component="${b.component}" ${checked?'checked':''}> ${ci.name} — ${label} <small>(${need.toFixed(3)} ${ci.unit||''})</small></label>`;}).join('');
+  const opts=bomRows.map(b=>{const ci=items.find(it=>String(it.code)===String(b.component));if(!ci)return '';const checked=!(x.dispatchBomSelections&&x.dispatchBomSelections[b.component]===false);const need=b.type==='Box'?Math.ceil(Number(x.qty||0)/Math.max(1,Number(b.packSize||250)))*Number(b.qty||1):Number(b.qty||0)*Number(x.qty||0);const label=b.type==='Box'?`Box (${Number(b.packSize||250)} PCS દીઠ)`:'Loose';return `<label style="display:inline-flex;align-items:center;gap:5px;margin:4px 12px 4px 0;padding:5px 8px;border:1px solid #d8dee8;border-radius:6px;background:#f8fafc"><input type="checkbox" data-dc-bom="${n}" data-component="${b.component}" ${checked?'checked':''}> ${ci.name} — ${label} <small>(${need.toFixed(3)} ${ci.unit||''})</small></label>`;}).join('');
   return `<tr><td>${x.name}${bomRows.length?`<div style="margin-top:6px;font-size:12px;color:#334155"><b>Dispatch BOM:</b><br>${opts}</div>`:''}</td><td>${x.qty.toFixed(3)}</td><td>${x.unit}</td><td>₹${x.rate.toFixed(2)}</td><td>₹${a.toFixed(2)}</td><td>₹${t.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td><button type="button" data-dc-del="${n}">🗑</button></td></tr>`;
  }).join('')||'<tr><td colspan="8">No items added</td></tr>';
  $('dispatchCartTotal').textContent=taxable.toFixed(2);$('dispatchCartTaxTotal').textContent=tax.toFixed(2);$('dispatchCartGrandTotal').textContent=grand.toFixed(2);
@@ -3803,7 +3814,7 @@ function printOnlyReport(panelId, generateFn){
 }
 renderPurchaseCart();
 if($('productionDate')&&!$('productionDate').value)$('productionDate').value=new Date().toISOString().slice(0,10);
-$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;if($('dispatchAddItem'))$('dispatchAddItem').onclick=addDispatchItem;if($('dbmSaveBtn'))$('dbmSaveBtn').onclick=saveDispatchBomRow;if($('dbmClearBtn'))$('dbmClearBtn').onclick=()=>{if($('dbmProduct'))$('dbmProduct').value='';if($('dbmComponent'))$('dbmComponent').value='';if($('dbmQty'))$('dbmQty').value='1';if($('dbmMsg'))$('dbmMsg').textContent='';};renderDispatchBomMaster();renderDispatchCart();$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>printOnlyReport('purchaseReportPanel',generatePurchaseReport);
+$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;if($('dispatchAddItem'))$('dispatchAddItem').onclick=addDispatchItem;if($('dbmSaveBtn'))$('dbmSaveBtn').onclick=saveDispatchBomRow;if($('dbmAddComponentBtn'))$('dbmAddComponentBtn').onclick=()=>addDispatchBomEntryRow();if($('dbmClearBtn'))$('dbmClearBtn').onclick=clearDispatchBomForm;renderDispatchBomMaster();renderDispatchCart();$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>printOnlyReport('purchaseReportPanel',generatePurchaseReport);
 if($('openProductionReport'))$('openProductionReport').onclick=()=>{document.querySelector('[data-page="reports"]').click();};
 if($('printProductionReport'))$('printProductionReport').onclick=()=>printOnlyReport('productionReportPanel',generateProductionReport);
 if($('printJWReport'))$('printJWReport').onclick=()=>printOnlyReport('jobWorkMonthlyReportPanel',generateJWReport);if($('printDispatchReportMain'))$('printDispatchReportMain').onclick=()=>printOnlyReport('dispatchReportPanel',generateDispatchMainReport);$('addVendorBtn').onclick=addVendor;$('jwReceiveQty').addEventListener('input',updateJWConsumption);$('jwReceiveVendor').addEventListener('input',updateAutoJobRate);$('jwComponent').addEventListener('input',updateAutoJobRate);
