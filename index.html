@@ -592,7 +592,7 @@ tr.low-stock-row td * {
 #dispatch .dispatch-form-row{display:grid;gap:10px;align-items:start;width:100%;}
 #dispatch .dispatch-form-row.row-2{grid-template-columns:repeat(2,minmax(220px,1fr));}
 #dispatch .dispatch-form-row.row-1{grid-template-columns:minmax(260px,1fr);}
-#dispatch .dispatch-form-row.row-3{grid-template-columns:minmax(260px,2fr) minmax(160px,1fr);}
+#dispatch .dispatch-form-row.row-3{grid-template-columns:repeat(3,minmax(0,1fr));}
 #dispatch .dispatch-field{display:flex;flex-direction:column;gap:6px;min-width:0;}
 #dispatch .dispatch-field>label{display:block;font-weight:600;font-size:13px;color:var(--text,#222);line-height:1.35;}
 #dispatch .dispatch-field input{width:100%;min-width:0;box-sizing:border-box;}
@@ -601,26 +601,22 @@ tr.low-stock-row td * {
 </style>
 <section id="dispatch" class="page"><div class="panel"><h2>🚚 Dispatch</h2>
 <div class="dispatch-single-row-wrap">
-<div class="dispatch-form-row row-2">
+<div class="dispatch-form-row row-3">
 <div class="dispatch-field"><label for="dispatchBillNo">Bill No.</label><input id="dispatchBillNo" type="text" placeholder="Auto generated" readonly></div>
 <div class="dispatch-field"><label for="dispatchDate">Date</label><input id="dispatchDate" type="date" title="Date"></div>
-</div>
-<div class="dispatch-form-row row-1">
 <div class="dispatch-field"><label for="dispatchCustomer">Customer Name</label><div style="position:relative"><div style="position:relative"><input id="dispatchCustomer" placeholder="Type Customer Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearDispatchCustomer" aria-label="Clear Customer" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button></div><div id="dispatchCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:200px;overflow:auto"></div></div></div>
 </div>
 <div class="dispatch-form-row row-3">
 <div class="dispatch-field"><label for="dispatchCode">Finished Product</label><div class="autowrap"><div style="position:relative"><input id="dispatchCode" placeholder="Type Finish Product Name" style="padding-right:36px"><button type="button" id="clearDispatchItem" aria-label="Clear Finished Good" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button></div><div class="suggestbox" id="productSuggestDispatch"></div></div></div>
 <div class="dispatch-field"><label for="dispatchQty">Quantity</label><input id="dispatchQty" type="number" step="0.001" placeholder="Enter Quantity"></div>
-</div>
-<div class="dispatch-form-row row-2">
 <div class="dispatch-field"><label for="dispatchRate">Rate (₹)</label><input id="dispatchRate" type="number" step="0.01" placeholder="Enter Rate"></div>
-<div class="dispatch-field"><label for="dispatchAmount">Taxable Amount (₹)</label><input id="dispatchAmount" type="number" step="0.01" placeholder="Auto calculated" readonly></div>
 </div>
-<div class="dispatch-form-row row-2">
+<div class="dispatch-form-row row-3">
+<div class="dispatch-field"><label for="dispatchAmount">Taxable Amount (₹)</label><input id="dispatchAmount" type="number" step="0.01" placeholder="Auto calculated" readonly></div>
 <div class="dispatch-field"><label for="dispatchTaxRate">GST (%)</label><input id="dispatchTaxRate" type="number" step="0.01" value="18" placeholder="Enter GST %"></div>
 <div class="dispatch-field"><label for="dispatchTaxAmount">Tax Amount (₹)</label><input id="dispatchTaxAmount" type="number" step="0.01" placeholder="Auto calculated" readonly></div>
 </div>
-<div class="dispatch-form-row row-2">
+<div class="dispatch-form-row row-3">
 <div class="dispatch-field"><label for="dispatchGrandTotal">Grand Total (₹)</label><input id="dispatchGrandTotal" type="number" step="0.01" placeholder="Auto calculated" readonly></div>
 <div class="dispatch-field"><label for="dispatchRemark">Remark</label><input id="dispatchRemark" placeholder="Enter Remark"></div>
 </div>
