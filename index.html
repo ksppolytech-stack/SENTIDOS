@@ -1456,18 +1456,20 @@ function getSystemDateISO(){const d=new Date();return d.getFullYear()+'-'+String
 
 let dispatchCart=[];
 let dispatchBomPreviewSelections={};
+let dispatchBomPreviewQtyOverrides={};
 function renderDispatchBomPreAdd(){
  const panel=$('dispatchBomPreAddPanel'),checks=$('dispatchBomPreAddChecks'),help=$('dispatchBomPreAddHelp');
  const input=$('dispatchCode'); if(!panel||!checks||!input)return;
  const code=input.dataset.selectedCode||((items.find(i=>String(i.name||'').trim().toLowerCase()===String(input.value||'').trim().toLowerCase()&&i.cat==='Finished Goods')||{}).code||'');
- if(!code){panel.style.display='none';checks.innerHTML='';dispatchBomPreviewSelections={};return;}
+ if(!code){panel.style.display='none';checks.innerHTML='';dispatchBomPreviewSelections={};dispatchBomPreviewQtyOverrides={};return;}
  const rows=(dispatchBoms||[]).filter(b=>String(b.product)===String(code));
  panel.style.display='block';
- if(!rows.length){checks.innerHTML='<span style="color:#b45309">આ Product માટે Dispatch BOM નથી. Master → Dispatch BOM Master માં BOM બનાવો.</span>';help.textContent='Product પસંદ થયું છે, પરંતુ BOM ઉપલબ્ધ નથી.';dispatchBomPreviewSelections={};return;}
+ if(!rows.length){checks.innerHTML='<span style="color:#b45309">આ Product માટે Dispatch BOM નથી. Master → Dispatch BOM Master માં BOM બનાવો.</span>';help.textContent='Product પસંદ થયું છે, પરંતુ BOM ઉપલબ્ધ નથી.';dispatchBomPreviewSelections={};dispatchBomPreviewQtyOverrides={};return;}
  const q=Number($('dispatchQty')?.value||0);
  help.textContent='Checkbox ચાલુ હોય તો Dispatch Save સમયે stock deduct થશે. Loose = Qty × Shower PCS; Cartoon = Qty × ceil(Shower PCS ÷ PCS per Cartoon).';
- checks.innerHTML=rows.map((b,idx)=>{const ci=items.find(it=>String(it.code)===String(b.component));if(!ci)return '';const key=String(b.component);const checked=dispatchBomPreviewSelections[key]!==false;const need=b.type==='Box'?Math.ceil(q/Math.max(1,Number(b.packSize||250)))*Number(b.qty||1):Number(b.qty||0)*q;const label=b.type==='Box'?`Cartoon / Packing — ${Number(b.qty||1)} per Cartoon (${Number(b.packSize||250)} Shower PCS)`:`Loose Component — ${Number(b.qty||0)} per Shower PCS`;return `<label style="display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid ${b.type==='Box'?'#c08457':'#d8dee8'};border-radius:6px;background:${b.type==='Box'?'#fff7ed':'#fff'}"><input type="checkbox" data-dc-preadd-component="${key}" ${checked?'checked':''}><span><b>${ci.name}</b> — ${label}<br><small>Deduct: ${need.toFixed(3)} ${ci.unit||b.unit||'PCS'}</small></span></label>`;}).join('');
- checks.querySelectorAll('[data-dc-preadd-component]').forEach(c=>c.onchange=()=>{dispatchBomPreviewSelections[c.dataset.dcPreaddComponent]=c.checked;renderDispatchBomPreAdd();});
+ checks.innerHTML=rows.map((b,idx)=>{const ci=items.find(it=>String(it.code)===String(b.component));if(!ci)return '';const key=String(b.component);const checked=dispatchBomPreviewSelections[key]!==false;const calculated=b.type==='Box'?Math.ceil(q/Math.max(1,Number(b.packSize||250)))*Number(b.qty||1):Number(b.qty||0)*q;const need=Object.prototype.hasOwnProperty.call(dispatchBomPreviewQtyOverrides,key)?Number(dispatchBomPreviewQtyOverrides[key]):calculated;const label=b.type==='Box'?`Cartoon / Packing — ${Number(b.qty||1)} per Cartoon (${Number(b.packSize||250)} Shower PCS)`:`Loose Component — ${Number(b.qty||0)} per Shower PCS`;return `<div style="display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid ${b.type==='Box'?'#c08457':'#d8dee8'};border-radius:6px;background:${b.type==='Box'?'#fff7ed':'#fff'}"><label style="display:inline-flex;align-items:center;gap:6px"><input type="checkbox" data-dc-preadd-component="${key}" ${checked?'checked':''}><span><b>${ci.name}</b><br><small>${label}</small></span></label><span style="font-size:12px">Deduct Qty</span><input type="number" min="0" step="0.001" data-dc-preadd-qty="${key}" value="${Number.isFinite(need)?need:0}" style="width:95px;padding:5px" title="Dispatch માટે આ Component ની stock deduction quantity edit કરો"><span style="font-size:12px">${ci.unit||b.unit||'PCS'}</span></div>`;}).join('');
+ checks.querySelectorAll('[data-dc-preadd-component]').forEach(c=>c.onchange=()=>{dispatchBomPreviewSelections[c.dataset.dcPreaddComponent]=c.checked;});
+ checks.querySelectorAll('[data-dc-preadd-qty]').forEach(inp=>inp.oninput=()=>{const v=inp.value;if(v===''||Number(v)>=0)dispatchBomPreviewQtyOverrides[inp.dataset.dcPreaddQty]=v===''?'':Number(v);});
 }
 
 let dispatchBomEntryCounter=0;
@@ -1516,7 +1518,7 @@ function renderDispatchCart(){
  body.innerHTML=dispatchCart.map((x,n)=>{
   const a=x.qty*x.rate,t=a*x.taxRate/100,g=a+t;taxable+=a;tax+=t;grand+=g;
   const bomRows=(dispatchBoms||[]).filter(b=>String(b.product)===String(x.code));
-  const opts=bomRows.map((b,bi)=>{const ci=items.find(it=>String(it.code)===String(b.component));if(!ci)return '';const checked=!(x.dispatchBomSelections&&x.dispatchBomSelections[b.component]===false);const need=b.type==='Box'?Math.ceil(Number(x.qty||0)/Math.max(1,Number(b.packSize||250)))*Number(b.qty||1):Number(b.qty||0)*Number(x.qty||0);const label=b.type==='Box'?`Cartoon / Packing — ${Number(b.qty||1)} per Cartoon (${Number(b.packSize||250)} Shower PCS)`:`Loose Component — ${Number(b.qty||0)} per Shower PCS`;return `<label style="display:inline-flex;align-items:center;gap:6px;margin:4px 8px 4px 0;padding:6px 9px;border:1px solid ${b.type==='Box'?'#c08457':'#d8dee8'};border-radius:6px;background:${b.type==='Box'?'#fff7ed':'#f8fafc'}"><input type="checkbox" data-dc-bom="${n}" data-component="${b.component}" ${checked?'checked':''}> <span><b>${ci.name}</b> — ${label}<br><small>Deduct: ${need.toFixed(3)} ${ci.unit||b.unit||'PCS'}</small></span></label>`;}).join('');
+  const opts=bomRows.map((b,bi)=>{const ci=items.find(it=>String(it.code)===String(b.component));if(!ci)return '';const checked=!(x.dispatchBomSelections&&x.dispatchBomSelections[b.component]===false);const calculatedNeed=b.type==='Box'?Math.ceil(Number(x.qty||0)/Math.max(1,Number(b.packSize||250)))*Number(b.qty||1):Number(b.qty||0)*Number(x.qty||0);const need=Object.prototype.hasOwnProperty.call(x.dispatchBomQtyOverrides||{},String(b.component))?Number(x.dispatchBomQtyOverrides[b.component]):calculatedNeed;const label=b.type==='Box'?`Cartoon / Packing — ${Number(b.qty||1)} per Cartoon (${Number(b.packSize||250)} Shower PCS)`:`Loose Component — ${Number(b.qty||0)} per Shower PCS`;return `<label style="display:inline-flex;align-items:center;gap:6px;margin:4px 8px 4px 0;padding:6px 9px;border:1px solid ${b.type==='Box'?'#c08457':'#d8dee8'};border-radius:6px;background:${b.type==='Box'?'#fff7ed':'#f8fafc'}"><input type="checkbox" data-dc-bom="${n}" data-component="${b.component}" ${checked?'checked':''}> <span><b>${ci.name}</b> — ${label}<br><small>Deduct: ${need.toFixed(3)} ${ci.unit||b.unit||'PCS'}</small></span></label>`;}).join('');
   return `<tr><td>${x.name}${bomRows.length?`<div style="margin-top:8px;padding:8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff"><b>Dispatch BOM Components (checkbox tick = deduct stock)</b><div style="font-size:12px;color:#475569;margin-top:3px">Loose = Qty × Shower PCS; Cartoon/Packing = Qty × ceil(Shower PCS ÷ PCS per Cartoon).</div><div style="display:flex;flex-wrap:wrap;margin-top:4px">${opts}</div></div>`:`<div style="margin-top:5px;color:#b45309;font-size:12px">Dispatch BOM set નથી — Master માં BOM બનાવો.</div>`}</td><td>${x.qty.toFixed(3)}</td><td>${x.unit}</td><td>₹${x.rate.toFixed(2)}</td><td>₹${a.toFixed(2)}</td><td>₹${t.toFixed(2)}</td><td>₹${g.toFixed(2)}</td><td><button type="button" data-dc-del="${n}">🗑</button></td></tr>`;
  }).join('')||'<tr><td colspan="8">No items added</td></tr>';
  $('dispatchCartTotal').textContent=taxable.toFixed(2);$('dispatchCartTaxTotal').textContent=tax.toFixed(2);$('dispatchCartGrandTotal').textContent=grand.toFixed(2);
@@ -1530,8 +1532,8 @@ function addDispatchItem(){
  const q=Number($('dispatchQty').value)||0,r=Number($('dispatchRate').value)||0,taxRate=Number($('dispatchTaxRate').value)||0;
  if(!i||q<=0)return alert('Finished Good અને valid Quantity નાખો.');
  if(q>Number(i.stock||0))return alert('Insufficient stock. Available: '+Number(i.stock||0).toFixed(3)+' '+(i.unit||''));
- dispatchCart.push({code:i.code,name:i.name,unit:i.unit,qty:q,rate:r,taxRate,remark:$('dispatchRemark').value.trim(),dispatchBomSelections:{...dispatchBomPreviewSelections}});
- $('dispatchCode').value='';$('dispatchCode').dataset.selectedCode='';$('dispatchQty').value='';$('dispatchRate').value='';$('dispatchTaxRate').value='18';$('dispatchTaxAmount').value='';$('dispatchAmount').value='';$('dispatchGrandTotal').value='';$('dispatchRemark').value='';dispatchBomPreviewSelections={};renderDispatchBomPreAdd();
+ dispatchCart.push({code:i.code,name:i.name,unit:i.unit,qty:q,rate:r,taxRate,remark:$('dispatchRemark').value.trim(),dispatchBomSelections:{...dispatchBomPreviewSelections},dispatchBomQtyOverrides:{...dispatchBomPreviewQtyOverrides}});
+ $('dispatchCode').value='';$('dispatchCode').dataset.selectedCode='';$('dispatchQty').value='';$('dispatchRate').value='';$('dispatchTaxRate').value='18';$('dispatchTaxAmount').value='';$('dispatchAmount').value='';$('dispatchGrandTotal').value='';$('dispatchRemark').value='';dispatchBomPreviewSelections={};dispatchBomPreviewQtyOverrides={};renderDispatchBomPreAdd();
  renderDispatchCart();
 }
 
@@ -1552,7 +1554,7 @@ function dispatch(){
    for(const b of rows){
      const checked=!(x.dispatchBomSelections&&x.dispatchBomSelections[b.component]===false);
      if(!checked)continue;
-     const need=b.type==='Box'?Math.ceil(Number(x.qty||0)/Math.max(1,Number(b.packSize||250)))*Number(b.qty||1):Number(b.qty||0)*Number(x.qty||0);
+     const calculatedNeed=b.type==='Box'?Math.ceil(Number(x.qty||0)/Math.max(1,Number(b.packSize||250)))*Number(b.qty||1):Number(b.qty||0)*Number(x.qty||0);const need=Object.prototype.hasOwnProperty.call(x.dispatchBomQtyOverrides||{},String(b.component))?Number(x.dispatchBomQtyOverrides[b.component]):calculatedNeed;
      stockNeed[b.component]=(stockNeed[b.component]||0)+need;
    }
  }
@@ -1572,7 +1574,7 @@ function dispatch(){
    rows.forEach(b=>{
      const checked=!(x.dispatchBomSelections&&x.dispatchBomSelections[b.component]===false);if(!checked)return;
      const ci=items.find(it=>String(it.code)===String(b.component));if(!ci)return;
-     const cq=b.type==='Box'?Math.ceil(q/Math.max(1,Number(b.packSize||250)))*Number(b.qty||1):Number(b.qty||0)*q;
+     const calculatedCq=b.type==='Box'?Math.ceil(q/Math.max(1,Number(b.packSize||250)))*Number(b.qty||1):Number(b.qty||0)*q;const cq=Object.prototype.hasOwnProperty.call(x.dispatchBomQtyOverrides||{},String(b.component))?Number(x.dispatchBomQtyOverrides[b.component]):calculatedCq;
      ci.stock-=cq;
      addTxn('DISPATCH_COMPONENT','',ci.code,-cq,ci.unit||b.unit||'PCS');
      const ct=transactions[transactions.length-1];ct.date=dispatchDate;ct.billNo=billNo;ct.customer=customer;ct.itemName=ci.name;ct.remark='Dispatch BOM for '+i.name+'; '+(b.type==='Box'?'Cartoon/Packing':'Loose Component per Shower PCS')+'; Product Qty '+q;
@@ -1706,7 +1708,7 @@ function setupAutocomplete(input, box, filterFn){
         input.value=i.name;
         input.dataset.selectedCode=i.code;
         box.style.display="none";
-        if(input.id==="dispatchCode"){loadDispatchRateFromMaster();dispatchBomPreviewSelections={};renderDispatchBomPreAdd();}
+        if(input.id==="dispatchCode"){loadDispatchRateFromMaster();dispatchBomPreviewSelections={};dispatchBomPreviewQtyOverrides={};renderDispatchBomPreAdd();}
       };
       box.appendChild(row);
     });
@@ -1715,7 +1717,7 @@ function setupAutocomplete(input, box, filterFn){
 
   input.addEventListener("input",function(){
     input.dataset.selectedCode="";
-    if(input.id==="dispatchCode"){dispatchBomPreviewSelections={};renderDispatchBomPreAdd();}
+    if(input.id==="dispatchCode"){dispatchBomPreviewSelections={};dispatchBomPreviewQtyOverrides={};renderDispatchBomPreAdd();}
     showSuggestions();
   });
   input.addEventListener("focus",showSuggestions);
@@ -3875,7 +3877,7 @@ function printOnlyReport(panelId, generateFn){
 }
 renderPurchaseCart();
 if($('productionDate')&&!$('productionDate').value)$('productionDate').value=new Date().toISOString().slice(0,10);
-$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;if($('dispatchAddItem'))$('dispatchAddItem').onclick=addDispatchItem;if($('dispatchQty'))$('dispatchQty').addEventListener('input',renderDispatchBomPreAdd);if($('clearDispatchItem'))$('clearDispatchItem').onclick=()=>{ $('dispatchCode').value='';$('dispatchCode').dataset.selectedCode='';dispatchBomPreviewSelections={};renderDispatchBomPreAdd();};renderDispatchBomPreAdd();if($('dbmSaveBtn'))$('dbmSaveBtn').onclick=saveDispatchBomRow;if($('dbmAddComponentBtn'))$('dbmAddComponentBtn').onclick=()=>addDispatchBomEntryRow();if($('dbmClearBtn'))$('dbmClearBtn').onclick=clearDispatchBomForm;renderDispatchBomMaster();renderDispatchCart();$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>printOnlyReport('purchaseReportPanel',generatePurchaseReport);
+$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;if($('dispatchAddItem'))$('dispatchAddItem').onclick=addDispatchItem;if($('dispatchQty'))$('dispatchQty').addEventListener('input',renderDispatchBomPreAdd);if($('clearDispatchItem'))$('clearDispatchItem').onclick=()=>{ $('dispatchCode').value='';$('dispatchCode').dataset.selectedCode='';dispatchBomPreviewSelections={};dispatchBomPreviewQtyOverrides={};renderDispatchBomPreAdd();};renderDispatchBomPreAdd();if($('dbmSaveBtn'))$('dbmSaveBtn').onclick=saveDispatchBomRow;if($('dbmAddComponentBtn'))$('dbmAddComponentBtn').onclick=()=>addDispatchBomEntryRow();if($('dbmClearBtn'))$('dbmClearBtn').onclick=clearDispatchBomForm;renderDispatchBomMaster();renderDispatchCart();$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>printOnlyReport('purchaseReportPanel',generatePurchaseReport);
 if($('openProductionReport'))$('openProductionReport').onclick=()=>{document.querySelector('[data-page="reports"]').click();};
 if($('printProductionReport'))$('printProductionReport').onclick=()=>printOnlyReport('productionReportPanel',generateProductionReport);
 if($('printJWReport'))$('printJWReport').onclick=()=>printOnlyReport('jobWorkMonthlyReportPanel',generateJWReport);if($('printDispatchReportMain'))$('printDispatchReportMain').onclick=()=>printOnlyReport('dispatchReportPanel',generateDispatchMainReport);$('addVendorBtn').onclick=addVendor;$('jwReceiveQty').addEventListener('input',updateJWConsumption);$('jwReceiveVendor').addEventListener('input',updateAutoJobRate);$('jwComponent').addEventListener('input',updateAutoJobRate);
