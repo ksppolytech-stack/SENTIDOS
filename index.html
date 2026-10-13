@@ -587,19 +587,25 @@ tr.low-stock-row td * {
 <div style="overflow:auto"><table id="rawSaleTable"><thead><tr><th>Date</th><th>Invoice No.</th><th>Customer</th><th>Raw Material</th><th>Qty</th><th>Rate</th><th>Taxable</th><th>GST</th><th>Grand Total</th><th>Action</th></tr></thead><tbody></tbody><tfoot><tr id="rawSaleTableTotal" style="font-weight:700;border-top:2px solid #333;background:#f5f5f5"><td colspan="4" style="text-align:right">Total</td><td id="rawSaleListTotalQty">0.000</td><td>—</td><td id="rawSaleListTotalTaxable">₹0.00</td><td id="rawSaleListTotalGst">₹0.00</td><td id="rawSaleListTotalGrand">₹0.00</td><td></td></tr></tfoot></table></div>
 </div></section>
 
+<style id="dispatchFieldLabelsStyle">
+#dispatch .grid .dispatch-field{display:flex;flex-direction:column;gap:6px;min-width:0;}
+#dispatch .dispatch-field>label{display:block;font-weight:600;font-size:13px;color:var(--text,#222);line-height:1.35;}
+#dispatch .dispatch-field input{width:100%;min-width:0;box-sizing:border-box;}
+#dispatch .dispatch-field .autowrap{min-width:0;}
+</style>
 <section id="dispatch" class="page"><div class="panel"><h2>🚚 Dispatch</h2>
 <div class="grid">
-<input id="dispatchDate" type="date" title="Dispatch Date">
-<div style="position:relative"><div style="position:relative"><input id="dispatchCustomer" placeholder="Type Customer Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearDispatchCustomer" aria-label="Clear Customer" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button></div><div id="dispatchCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:200px;overflow:auto"></div></div>
-<div class="autowrap"><div style="position:relative"><input id="dispatchCode" placeholder="Type Finish Product Name" style="padding-right:36px"><button type="button" id="clearDispatchItem" aria-label="Clear Finished Good" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button></div><div class="suggestbox" id="productSuggestDispatch"></div></div>
-<input id="dispatchQty" type="number" step="0.001" placeholder="Quantity">
-<input id="dispatchRate" type="number" step="0.01" placeholder="Rate ₹0.00">
-<input id="dispatchTaxRate" type="number" step="0.01" value="18" placeholder="GST %">
-<input id="dispatchTaxAmount" type="number" step="0.01" placeholder="Tax Amount" readonly>
-<input id="dispatchBillNo" type="text" placeholder="Bill No." readonly>
-<input id="dispatchAmount" type="number" step="0.01" placeholder="Taxable Amount" readonly>
-<input id="dispatchGrandTotal" type="number" step="0.01" placeholder="Grand Total" readonly>
-<input id="dispatchRemark" placeholder="Remark (Optional)">
+<div class="dispatch-field"><label for="dispatchDate">Dispatch Date</label><input id="dispatchDate" type="date" title="Dispatch Date"></div>
+<div class="dispatch-field"><label for="dispatchCustomer">Customer Name</label><div style="position:relative"><div style="position:relative"><input id="dispatchCustomer" placeholder="Type Customer Name" autocomplete="off" style="padding-right:36px"><button type="button" id="clearDispatchCustomer" aria-label="Clear Customer" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button></div><div id="dispatchCustomerSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:9999;background:#fff;border:1px solid #999;display:none;max-height:200px;overflow:auto"></div></div></div>
+<div class="dispatch-field"><label for="dispatchCode">Finished Product</label><div class="autowrap"><div style="position:relative"><input id="dispatchCode" placeholder="Type Finish Product Name" style="padding-right:36px"><button type="button" id="clearDispatchItem" aria-label="Clear Finished Good" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;cursor:pointer;padding:2px 7px">×</button></div><div class="suggestbox" id="productSuggestDispatch"></div></div></div>
+<div class="dispatch-field"><label for="dispatchQty">Quantity</label><input id="dispatchQty" type="number" step="0.001" placeholder="Enter Quantity"></div>
+<div class="dispatch-field"><label for="dispatchRate">Rate (₹)</label><input id="dispatchRate" type="number" step="0.01" placeholder="Enter Rate"></div>
+<div class="dispatch-field"><label for="dispatchTaxRate">GST (%)</label><input id="dispatchTaxRate" type="number" step="0.01" value="18" placeholder="Enter GST %"></div>
+<div class="dispatch-field"><label for="dispatchTaxAmount">Tax Amount (₹)</label><input id="dispatchTaxAmount" type="number" step="0.01" placeholder="Auto calculated" readonly></div>
+<div class="dispatch-field"><label for="dispatchBillNo">Bill No.</label><input id="dispatchBillNo" type="text" placeholder="Auto generated" readonly></div>
+<div class="dispatch-field"><label for="dispatchAmount">Taxable Amount (₹)</label><input id="dispatchAmount" type="number" step="0.01" placeholder="Auto calculated" readonly></div>
+<div class="dispatch-field"><label for="dispatchGrandTotal">Grand Total (₹)</label><input id="dispatchGrandTotal" type="number" step="0.01" placeholder="Auto calculated" readonly></div>
+<div class="dispatch-field"><label for="dispatchRemark">Remark (Optional)</label><input id="dispatchRemark" placeholder="Enter Remark"></div>
 </div>
 <div id="dispatchBomPreAddPanel" style="display:none;margin:10px 0;padding:12px;border:1px solid #94a3b8;border-radius:8px;background:#f8fafc">
  <b>📦 Dispatch BOM — Add Item કરતા પહેલાં Components પસંદ કરો</b>
