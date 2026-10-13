@@ -600,6 +600,11 @@ tr.low-stock-row td * {
 <input id="dispatchAmount" type="number" step="0.01" placeholder="Taxable Amount" readonly>
 <input id="dispatchGrandTotal" type="number" step="0.01" placeholder="Grand Total" readonly>
 <input id="dispatchRemark" placeholder="Remark (Optional)">
+</div>
+<div id="dispatchBomPreAddPanel" style="display:none;margin:10px 0;padding:12px;border:1px solid #94a3b8;border-radius:8px;background:#f8fafc">
+ <b>📦 Dispatch BOM — Add Item કરતા પહેલાં Components પસંદ કરો</b>
+ <div id="dispatchBomPreAddHelp" style="font-size:12px;color:#475569;margin:4px 0 8px">Product અને Quantity પસંદ કરો; Arm, Dish અને Cartoon ના checkbox અહીં દેખાશે.</div>
+ <div id="dispatchBomPreAddChecks" style="display:flex;flex-wrap:wrap;gap:6px"></div>
 </div><br>
 <button type="button" id="dispatchAddItem">➕ Add Item</button>
 <table id="dispatchCartTable" style="margin-top:12px"><thead><tr><th>Finished Good</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Taxable</th><th>GST</th><th>Grand Total</th><th>Action</th></tr></thead><tbody></tbody></table>
@@ -1450,6 +1455,20 @@ function setupRawSale(){
 function getSystemDateISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
 let dispatchCart=[];
+let dispatchBomPreviewSelections={};
+function renderDispatchBomPreAdd(){
+ const panel=$('dispatchBomPreAddPanel'),checks=$('dispatchBomPreAddChecks'),help=$('dispatchBomPreAddHelp');
+ const input=$('dispatchCode'); if(!panel||!checks||!input)return;
+ const code=input.dataset.selectedCode||((items.find(i=>String(i.name||'').trim().toLowerCase()===String(input.value||'').trim().toLowerCase()&&i.cat==='Finished Goods')||{}).code||'');
+ if(!code){panel.style.display='none';checks.innerHTML='';dispatchBomPreviewSelections={};return;}
+ const rows=(dispatchBoms||[]).filter(b=>String(b.product)===String(code));
+ panel.style.display='block';
+ if(!rows.length){checks.innerHTML='<span style="color:#b45309">આ Product માટે Dispatch BOM નથી. Master → Dispatch BOM Master માં BOM બનાવો.</span>';help.textContent='Product પસંદ થયું છે, પરંતુ BOM ઉપલબ્ધ નથી.';dispatchBomPreviewSelections={};return;}
+ const q=Number($('dispatchQty')?.value||0);
+ help.textContent='Checkbox ચાલુ હોય તો Dispatch Save સમયે stock deduct થશે. Loose = Qty × Shower PCS; Cartoon = Qty × ceil(Shower PCS ÷ PCS per Cartoon).';
+ checks.innerHTML=rows.map((b,idx)=>{const ci=items.find(it=>String(it.code)===String(b.component));if(!ci)return '';const key=String(b.component);const checked=dispatchBomPreviewSelections[key]!==false;const need=b.type==='Box'?Math.ceil(q/Math.max(1,Number(b.packSize||250)))*Number(b.qty||1):Number(b.qty||0)*q;const label=b.type==='Box'?`Cartoon / Packing — ${Number(b.qty||1)} per Cartoon (${Number(b.packSize||250)} Shower PCS)`:`Loose Component — ${Number(b.qty||0)} per Shower PCS`;return `<label style="display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid ${b.type==='Box'?'#c08457':'#d8dee8'};border-radius:6px;background:${b.type==='Box'?'#fff7ed':'#fff'}"><input type="checkbox" data-dc-preadd-component="${key}" ${checked?'checked':''}><span><b>${ci.name}</b> — ${label}<br><small>Deduct: ${need.toFixed(3)} ${ci.unit||b.unit||'PCS'}</small></span></label>`;}).join('');
+ checks.querySelectorAll('[data-dc-preadd-component]').forEach(c=>c.onchange=()=>{dispatchBomPreviewSelections[c.dataset.dcPreaddComponent]=c.checked;renderDispatchBomPreAdd();});
+}
 
 let dispatchBomEntryCounter=0;
 function addDispatchBomEntryRow(value={}){
@@ -1511,8 +1530,8 @@ function addDispatchItem(){
  const q=Number($('dispatchQty').value)||0,r=Number($('dispatchRate').value)||0,taxRate=Number($('dispatchTaxRate').value)||0;
  if(!i||q<=0)return alert('Finished Good અને valid Quantity નાખો.');
  if(q>Number(i.stock||0))return alert('Insufficient stock. Available: '+Number(i.stock||0).toFixed(3)+' '+(i.unit||''));
- dispatchCart.push({code:i.code,name:i.name,unit:i.unit,qty:q,rate:r,taxRate,remark:$('dispatchRemark').value.trim()});
- $('dispatchCode').value='';$('dispatchCode').dataset.selectedCode='';$('dispatchQty').value='';$('dispatchRate').value='';$('dispatchTaxRate').value='18';$('dispatchTaxAmount').value='';$('dispatchAmount').value='';$('dispatchGrandTotal').value='';$('dispatchRemark').value='';
+ dispatchCart.push({code:i.code,name:i.name,unit:i.unit,qty:q,rate:r,taxRate,remark:$('dispatchRemark').value.trim(),dispatchBomSelections:{...dispatchBomPreviewSelections}});
+ $('dispatchCode').value='';$('dispatchCode').dataset.selectedCode='';$('dispatchQty').value='';$('dispatchRate').value='';$('dispatchTaxRate').value='18';$('dispatchTaxAmount').value='';$('dispatchAmount').value='';$('dispatchGrandTotal').value='';$('dispatchRemark').value='';dispatchBomPreviewSelections={};renderDispatchBomPreAdd();
  renderDispatchCart();
 }
 
@@ -1687,7 +1706,7 @@ function setupAutocomplete(input, box, filterFn){
         input.value=i.name;
         input.dataset.selectedCode=i.code;
         box.style.display="none";
-        if(input.id==="dispatchCode") loadDispatchRateFromMaster();
+        if(input.id==="dispatchCode"){loadDispatchRateFromMaster();dispatchBomPreviewSelections={};renderDispatchBomPreAdd();}
       };
       box.appendChild(row);
     });
@@ -1696,6 +1715,7 @@ function setupAutocomplete(input, box, filterFn){
 
   input.addEventListener("input",function(){
     input.dataset.selectedCode="";
+    if(input.id==="dispatchCode"){dispatchBomPreviewSelections={};renderDispatchBomPreAdd();}
     showSuggestions();
   });
   input.addEventListener("focus",showSuggestions);
@@ -3855,7 +3875,7 @@ function printOnlyReport(panelId, generateFn){
 }
 renderPurchaseCart();
 if($('productionDate')&&!$('productionDate').value)$('productionDate').value=new Date().toISOString().slice(0,10);
-$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;if($('dispatchAddItem'))$('dispatchAddItem').onclick=addDispatchItem;if($('dbmSaveBtn'))$('dbmSaveBtn').onclick=saveDispatchBomRow;if($('dbmAddComponentBtn'))$('dbmAddComponentBtn').onclick=()=>addDispatchBomEntryRow();if($('dbmClearBtn'))$('dbmClearBtn').onclick=clearDispatchBomForm;renderDispatchBomMaster();renderDispatchCart();$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>printOnlyReport('purchaseReportPanel',generatePurchaseReport);
+$('productionBtn').onclick=production;$('dispatchBtn').onclick=dispatch;if($('dispatchAddItem'))$('dispatchAddItem').onclick=addDispatchItem;if($('dispatchQty'))$('dispatchQty').addEventListener('input',renderDispatchBomPreAdd);if($('clearDispatchItem'))$('clearDispatchItem').onclick=()=>{ $('dispatchCode').value='';$('dispatchCode').dataset.selectedCode='';dispatchBomPreviewSelections={};renderDispatchBomPreAdd();};renderDispatchBomPreAdd();if($('dbmSaveBtn'))$('dbmSaveBtn').onclick=saveDispatchBomRow;if($('dbmAddComponentBtn'))$('dbmAddComponentBtn').onclick=()=>addDispatchBomEntryRow();if($('dbmClearBtn'))$('dbmClearBtn').onclick=clearDispatchBomForm;renderDispatchBomMaster();renderDispatchCart();$('jwIssueBtn').onclick=issueToVendor;$('jwReceiveBtn').onclick=receiveFromVendor;if($('generateJWReport'))$('generateJWReport').onclick=generateJWReport;productionReportItemAutocomplete();if($('generateProductionReport'))$('generateProductionReport').onclick=generateProductionReport;purchaseReportSupplierAutocomplete();if($('generatePurchaseReport'))$('generatePurchaseReport').onclick=generatePurchaseReport;if($('printPurchaseReport'))$('printPurchaseReport').onclick=()=>printOnlyReport('purchaseReportPanel',generatePurchaseReport);
 if($('openProductionReport'))$('openProductionReport').onclick=()=>{document.querySelector('[data-page="reports"]').click();};
 if($('printProductionReport'))$('printProductionReport').onclick=()=>printOnlyReport('productionReportPanel',generateProductionReport);
 if($('printJWReport'))$('printJWReport').onclick=()=>printOnlyReport('jobWorkMonthlyReportPanel',generateJWReport);if($('printDispatchReportMain'))$('printDispatchReportMain').onclick=()=>printOnlyReport('dispatchReportPanel',generateDispatchMainReport);$('addVendorBtn').onclick=addVendor;$('jwReceiveQty').addEventListener('input',updateJWConsumption);$('jwReceiveVendor').addEventListener('input',updateAutoJobRate);$('jwComponent').addEventListener('input',updateAutoJobRate);
