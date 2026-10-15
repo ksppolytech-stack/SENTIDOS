@@ -391,6 +391,11 @@ tr.low-stock-row td * {
 <table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Unit</th><th>Weight g</th><th>Stock</th><th>Minimum</th></tr></thead>
 <tbody id="dashboardDetailsTable"></tbody></table>
 </div>
+<div class="panel" id="dashboardVendorRawHistoryV369" style="margin-top:16px">
+  <h3>📋 Vendor Raw Material — Transaction History</h3>
+  <p class="small">Raw Material Issue to Vendor ની છેલ્લી 10 એન્ટ્રી.</p>
+  <div id="dashboardVendorRawHistoryTableV369">No transactions yet.</div>
+</div>
 </section>
 
 
@@ -8104,3 +8109,35 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
 })();
 </script>
 </body></html>
+
+
+<!-- V369: Dashboard shows latest 10 Vendor Raw Material Issue transactions. -->
+<script id="v369DashboardVendorRawHistory">
+(function(){
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function read(key){try{var a=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(a)?a:[];}catch(e){return [];}}
+  function dateText(v){
+    var s=String(v==null?'':v).trim();
+    var m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return m[3].padStart(2,'0')+'-'+m[2].padStart(2,'0')+'-'+m[1];
+    var d=new Date(s);return s&&!isNaN(d.getTime())?String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear():s;
+  }
+  function render(){
+    var box=document.getElementById('dashboardVendorRawHistoryTableV369');if(!box)return;
+    var tx=read('adr_tx_v2'),rms=read('adr_rawmaterials_v2');
+    var rows=tx.filter(function(t){var type=String(t.type||t.transactionType||'').toUpperCase();return ['JOB WORK ISSUE','JOBWORK ISSUE','JW ISSUE','RAW MATERIAL ISSUE TO VENDOR'].indexOf(type)>=0;});
+    rows=rows.map(function(t){
+      var rawCode=String(t.item||t.rawCode||t.materialCode||'').replace(/^RM:/i,'');
+      var raw=rms.find(function(r){return String(r.code)===rawCode;});
+      return {date:t.date||t.issueDate||t.jwIssueDate||t.createdAt||'',vendor:t.vendor||t.vendorName||t.party||'',material:t.itemName||t.material||t.rawMaterial||(raw&&(raw.name||raw.code))||rawCode,qty:Math.abs(Number(t.issueQty!=null?t.issueQty:t.qty)||0),unit:t.unit||(raw&&raw.unit)||'KG',ref:t.ref||t.billNo||t.invoiceNo||t.reference||''};
+    }).reverse().slice(0,10);
+    if(!rows.length){box.innerHTML='<div style="padding:10px">No Vendor Raw Material transactions yet.</div>';return;}
+    var h='<div style="overflow:auto"><table><thead><tr><th>Date</th><th>Vendor</th><th>Raw Material</th><th>Qty</th><th>Reference / Challan</th></tr></thead><tbody>';
+    rows.forEach(function(r){h+='<tr><td>'+esc(dateText(r.date))+'</td><td>'+esc(r.vendor)+'</td><td>'+esc(r.material)+'</td><td>'+esc(r.qty)+' '+esc(r.unit)+'</td><td>'+esc(r.ref)+'</td></tr>';});
+    h+='</tbody></table></div>';box.innerHTML=h;
+  }
+  function init(){render();var btn=document.getElementById('jwIssueBtn');if(btn)btn.addEventListener('click',function(){setTimeout(render,150);});window.addEventListener('storage',render);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(render,t);});
+  window.renderDashboardVendorRawHistoryV369=render;
+})();
+</script>
