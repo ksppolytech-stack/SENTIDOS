@@ -8133,6 +8133,53 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
   observer.observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+<!-- V372: The shared Stock search searches stock items on Stock view and transaction rows on Transaction view. -->
+<script id="v372StockTransactionDynamicSearch">
+(function(){
+  function el(id){return document.getElementById(id);}
+  function transactionViewActive(){
+    var p=el('v266StockTransactionPanel');
+    return !!(p && p.style.display!=='none');
+  }
+  function filterTransactions(){
+    var input=el('v260StockSearch'), body=el('transactionTable');
+    if(!input||!body||!transactionViewActive())return;
+    var q=String(input.value||'').trim().toLowerCase();
+    Array.prototype.forEach.call(body.querySelectorAll('tr'),function(row){
+      row.style.display=!q||String(row.textContent||'').toLowerCase().includes(q)?'':'none';
+    });
+  }
+  function setSearchMode(){
+    var input=el('v260StockSearch');
+    if(!input)return;
+    var tx=transactionViewActive();
+    input.placeholder=tx?'Search Transaction / Date / Type / Ref / Item...':'Search Item / Code...';
+    input.setAttribute('aria-label',tx?'Search Transaction / Date / Type / Ref / Item':'Search Item / Code');
+    if(tx)filterTransactions();
+    else if(typeof window.renderStockTableV260==='function')window.renderStockTableV260();
+  }
+  // Capture input before the legacy stock-only handler; filtering transaction rows is independent.
+  document.addEventListener('input',function(e){
+    if(e.target && e.target.id==='v260StockSearch' && transactionViewActive())filterTransactions();
+  },true);
+  document.addEventListener('click',function(e){
+    var t=e.target && e.target.closest ? e.target.closest('#v266StockTransactionBtn,#v266StockBtn,#v260StockClear') : null;
+    if(!t)return;
+    setTimeout(function(){
+      if(t.id==='v260StockClear' && transactionViewActive())filterTransactions();
+      else setSearchMode();
+    },0);
+  },true);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setSearchMode);
+  else setSearchMode();
+  // Also restore the correct placeholder/filter after the legacy renderer rebuilds transaction rows.
+  document.addEventListener('click',function(e){
+    if(e.target && e.target.closest && e.target.closest('#v266StockTransactionBtn'))setTimeout(filterTransactions,30);
+  });
+})();
+</script>
+
 </body></html>
 
 
