@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V340 - Dispatch BOM</title>
+<title>Sentidos ERP V363 - Production OK and Rejection</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -540,8 +540,8 @@ tr.low-stock-row td * {
 </div>
 </section>
 <section id="production" class="page"><div class="panel"><h2>Production</h2><p>Finish Productનું નામ type કરો. નીચે <b>BOM Masterમાં બનાવેલા Product names</b>માંથી suggestion આવશે.</p>
-<div class="grid"><input id="productionDate" type="date" title="Production Date"><div class="autowrap"><div class="autowrap" style="position:relative"><input id="productionCode" placeholder="Type Finish Product Name"><div id="productionProductSuggestions" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><label style="display:flex;flex-direction:column;gap:5px;font-weight:600">OK Qty (Finished Goods)<input id="productionQty" type="number" min="0" step="0.001" placeholder="OK Quantity"></label><label style="display:flex;flex-direction:column;gap:5px;font-weight:600">Rejection Qty<input id="productionRejectionQty" type="number" min="0" step="0.001" value="0" placeholder="Rejection Quantity"></label></div>
-<p>OK Qty અને Rejection Qty અલગ નાખો. BOM component stock બંનેના કુલ (OK + Rejection) મુજબ deduct થશે; Finished Goods stockમાં ફક્ત OK Qty ઉમેરાશે.</p><button class="primary" id="productionBtn">Save Production</button> <button id="openProductionReport">📄 Production Report</button><div class="msg" id="productionMsg"></div></div></section>
+<div class="grid"><input id="productionDate" type="date" title="Production Date"><div class="autowrap"><div class="autowrap" style="position:relative"><input id="productionCode" placeholder="Type Finish Product Name"><div id="productionProductSuggestions" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><label style="display:flex;flex-direction:column;gap:5px;font-weight:600">OK Qty<input id="productionQty" type="number" min="0" step="0.001" placeholder="OK Quantity"></label><label style="display:flex;flex-direction:column;gap:5px;font-weight:600">Rejection Qty<input id="productionRejectionQty" type="number" min="0" step="0.001" value="0" placeholder="Rejection Quantity"></label></div>
+<p>OK Qty Finished Goods stockમાં ઉમેરાશે. BOM Components નો stock OK Qty + Rejection Qty ના કુલ મુજબ deduct થશે.</p><button class="primary" id="productionBtn">Save Production</button> <button id="openProductionReport">📄 Production Report</button><div class="msg" id="productionMsg"></div></div></section>
 
 
 <section id="fgRateMaster" class="page">
@@ -1276,36 +1276,29 @@ function production(){
  const p=items.find(x=>x.code===input.dataset.selectedCode)||items.find(x=>x.code===productionInput)||items.find(x=>x.name.toLowerCase()===productionInput.toLowerCase());
  const okQty=Number($('productionQty').value)||0;
  const rejectionQty=Number($('productionRejectionQty')?.value)||0;
- const totalProducedQty=okQty+rejectionQty;
+ const totalQty=okQty+rejectionQty;
  const productionDate=$('productionDate')?.value||new Date().toISOString().slice(0,10);
- if(!p||totalProducedQty<=0)return alert('Finish Product પસંદ કરો અને OK Qty અથવા Rejection Qty નાખો.');
- if(okQty<0||rejectionQty<0)return alert('Qty negative ન હોઈ શકે.');
- if(!Number.isFinite(okQty)||!Number.isFinite(rejectionQty))return alert('યોગ્ય Qty નાખો.');
-
+ if(!p||okQty<0||rejectionQty<0||totalQty<=0)return alert('Finish Product પસંદ કરો અને OK Qty અથવા Rejection Qty નાખો.');
+ if(okQty<=0)return alert('Finished Goods stockમાં ઉમેરવા માટે OK Qty 0 કરતાં વધારે હોવી જોઈએ.');
+ if(rejectionQty<0)return alert('Rejection Qty negative ન હોઈ શકે.');
  const rows=boms.filter(b=>b.product===p.code);
  if(!rows.length)return alert('આ Finish Product માટે BOM બનાવેલ નથી.');
-
  function requiredStock(b,item){
-   let n=Number(b.qty)*totalProducedQty;
+   let n=Number(b.qty)*totalQty;
    const bu=(b.unit||item.unit||'PCS').toUpperCase();
    const iu=(item.unit||'PCS').toUpperCase();
    if(bu==='G' && iu==='KG') n=n/1000;
    else if(bu==='KG' && iu==='G') n=n*1000;
-   else if(bu!==iu && !(bu==='PCS'&&iu==='PCS')){
-     return null;
-   }
+   else if(bu!==iu && !(bu==='PCS'&&iu==='PCS')) return null;
    return n;
  }
-
  const needs=rows.map(b=>({b,i:items.find(x=>x.code===b.component)}));
  if(needs.some(x=>!x.i))return alert('BOM માંનું કોઈ item Item Masterમાં મળ્યું નથી.');
-
  for(const x of needs){
    const need=requiredStock(x.b,x.i);
    if(need===null)return alert('Unit mismatch: '+x.i.name+' (Stock Unit: '+x.i.unit+', BOM Unit: '+x.b.unit+'). BOM unit અને Item Master unit match કરો.');
    if(Number(x.i.stock)<need)return alert('Insufficient stock: '+x.i.name+' — Required '+need+' '+x.i.unit+', Available '+x.i.stock+' '+x.i.unit);
  }
-
  const ref='PROD-'+Date.now();
  needs.forEach(x=>{
    const n=requiredStock(x.b,x.i);
@@ -1313,25 +1306,20 @@ function production(){
    addTxn('PRODUCTION',ref,x.i.code,-n,x.i.unit);
    transactions[transactions.length-1].date=productionDate;
  });
- // Only good/OK quantity enters Finished Goods stock. Rejected quantity never enters FG stock.
- if(okQty>0){
-   p.stock+=okQty;
-   addTxn('PRODUCTION',ref,p.code,okQty,p.unit);
-   transactions[transactions.length-1].date=productionDate;
- }
- // Keep rejection as a separate audit record without changing Finished Goods stock.
+ // Only accepted OK quantity enters Finished Goods stock.
+ p.stock+=okQty;
+ addTxn('PRODUCTION',ref,p.code,okQty,p.unit);
+ transactions[transactions.length-1].date=productionDate;
+ // Record rejection separately for traceability; do not add it to Finished Goods stock.
  if(rejectionQty>0){
-   addTxn('PRODUCTION REJECTION',ref,p.code,0,p.unit);
+   addTxn('PRODUCTION REJECTION',ref,p.code,rejectionQty,p.unit);
    transactions[transactions.length-1].date=productionDate;
-   transactions[transactions.length-1].rejectionQty=rejectionQty;
-   transactions[transactions.length-1].okQty=okQty;
-   transactions[transactions.length-1].totalProducedQty=totalProducedQty;
  }
  input.value='';input.dataset.selectedCode='';$('productionQty').value='';
  if($('productionRejectionQty'))$('productionRejectionQty').value='0';
  if($('productionDate'))$('productionDate').value=productionDate;
  save();
- msg('productionMsg','Production saved. OK Qty added to Finished Goods: '+okQty+' PCS; Rejection Qty recorded separately: '+rejectionQty+' PCS; BOM materials deducted for total '+totalProducedQty+' PCS. Ref: '+ref);
+ msg('productionMsg','Production saved. BOM materials deducted for total '+totalQty+' PCS (OK '+okQty+' + Rejection '+rejectionQty+'); Finished Goods stock added '+okQty+' PCS only. Ref: '+ref);
 }
 function getNextDispatchBillNo(){
  const nums=(transactions||[])
@@ -5007,4 +4995,3032 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const ty=String(t.type||'').toUpperCase();
       if(!['PURCHASE','RAW MATERIAL COMPANY INWARD','RAW MATERIAL PURCHASE','JOB WORK RECEIVE'].includes(ty))return;
       if(t.taxRate!=null || t.tax!=null || t.grandTotal!=null)return;
-      const q=Math.abs(Number(t.qty)
+      const q=Math.abs(Number(t.qty)||0);
+      const rate=Number(t.purchaseRate??t.inwardRate??t.jobRate??t.rate??0);
+      const amount=Number(t.amount??q*rate)||0;
+      t.taxRate=18;t.tax=amount*0.18;t.grandTotal=amount+t.tax;changed=true;
+    });
+    if(changed)localStorage.setItem('adr_tx_v2',JSON.stringify(a));
+  }
+  function init(){
+    backfill();
+    ['rmPurchaseTaxRate','purchaseTaxRate','jwTaxRate'].forEach(id=>{
+      const e=document.getElementById(id);if(e&&e.value==='')e.value='18';
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init,700));
+  else setTimeout(init,700);
+})();
+</script>
+
+<script>
+/* V165: Historical Accounting GST backfill - default 18% */
+(function(){
+  function backfillHistoricalGST(){
+    let tx=[];
+    try{tx=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]')}catch(e){}
+    if(!Array.isArray(tx))return;
+    let changed=false;
+    tx.forEach(t=>{
+      const type=String(t.type||'').toUpperCase();
+      const taxable=['DISPATCH','RAW MATERIAL SALE','PURCHASE','RAW MATERIAL PURCHASE','RAW MATERIAL COMPANY INWARD','JOB WORK RECEIVE'];
+      if(!taxable.includes(type))return;
+      if(t.taxRate!=null || t.tax!=null || t.grandTotal!=null)return;
+
+      const qty=Math.abs(Number(t.qty)||0);
+      let rate=0;
+      if(type==='DISPATCH') rate=Number(t.dispatchRate??t.rate??0);
+      else if(type==='RAW MATERIAL SALE') rate=Number(t.saleRate??t.rate??0);
+      else if(type==='PURCHASE') rate=Number(t.purchaseRate??t.rate??0);
+      else if(type==='RAW MATERIAL PURCHASE' || type==='RAW MATERIAL COMPANY INWARD')
+        rate=Number(t.inwardRate??t.purchaseRate??t.rate??0);
+      else if(type==='JOB WORK RECEIVE') rate=Number(t.jobRate??t.rate??0);
+
+      const amount=Number(t.amount ?? (qty*rate)) || 0;
+      const gst=amount*18/100;
+      t.taxRate=18;
+      t.tax=gst;
+      t.grandTotal=amount+gst;
+      changed=true;
+    });
+    if(changed){
+      localStorage.setItem('adr_tx_v2',JSON.stringify(tx));
+      setTimeout(()=>{
+        try{
+          if(typeof render==='function')render();
+          if(typeof renderMergedPartyLedger==='function')renderMergedPartyLedger();
+        }catch(e){}
+      },150);
+    }
+  }
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(backfillHistoricalGST,900));
+  else setTimeout(backfillHistoricalGST,900);
+})();
+</script>
+
+<script>
+/* V166: Every generated report gets an X to hide its result without hiding
+   the report/filter module. Generate again to show the report. */
+(function(){
+  const configs=[
+    {panel:'dispatchReportPanel', table:'dispatchReportTable', msg:'dispatchReportMsg'},
+    {panel:'purchaseReportPanel', table:'purchaseReportTable', msg:'purchaseReportMsg'},
+    {panel:'productionReportPanel', table:'productionReportTable', msg:'productionReportMsg', extra:'productionReportTotal'},
+    {panel:'jobWorkMonthlyReportPanel', table:'jwReportTable', msg:'jwReportHeader', extra:'jwReportQty'},
+    {panel:'purchaseInlineReportPanel', table:'purchaseInlineReportTable', msg:'purchaseInlineReportMsg', extra:'purchaseInlineQty'}
+  ];
+
+  function addClose(c){
+    const panel=document.getElementById(c.panel);
+    const table=document.getElementById(c.table);
+    if(!panel||!table)return;
+
+    let btn=panel.querySelector('.v166ReportClose');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.type='button';
+      btn.className='v166ReportClose';
+      btn.textContent='×';
+      btn.title='Hide Report';
+      btn.setAttribute('aria-label','Hide Report');
+      btn.style.cssText='display:none;float:right;margin:6px 0 8px 8px;border:0;background:transparent;font-size:26px;font-weight:bold;line-height:1;cursor:pointer;';
+      const controls=panel.querySelector('.grid');
+      if(controls) controls.parentNode.insertBefore(btn,controls.nextSibling);
+      else panel.insertBefore(btn,panel.firstChild.nextSibling);
+
+      btn.onclick=()=>{
+        btn.style.display='none';
+        const m=document.getElementById(c.msg); if(m)m.style.display='none';
+        const t=document.getElementById(c.table);
+        if(t){
+          const wrap=t.parentElement;
+          if(wrap && wrap!==panel && wrap.children.length<=1) wrap.style.display='none';
+          else t.style.display='none';
+        }
+        if(c.extra){
+          const e=document.getElementById(c.extra);
+          if(e){
+            const parent=e.closest('div');
+            if(parent)parent.style.display='none';
+            else e.style.display='none';
+          }
+        }
+      };
+    }
+
+    // Keep a reference to the actual table wrapper so it can be shown again.
+    if(!table.dataset.v166){
+      table.dataset.v166='1';
+      const observer=new MutationObserver(()=>{
+        btn.style.display='inline-block';
+        const m=document.getElementById(c.msg); if(m)m.style.display='';
+        const wrap=table.parentElement;
+        if(wrap && wrap!==panel)wrap.style.display='';
+        table.style.display='';
+        if(c.extra){
+          const e=document.getElementById(c.extra);
+          if(e){
+            const parent=e.closest('div');
+            if(parent)parent.style.display='';
+            e.style.display='';
+          }
+        }
+      });
+      const tb=table.querySelector('tbody')||table;
+      observer.observe(tb,{childList:true,subtree:true,characterData:true});
+    }
+  }
+
+  function init(){configs.forEach(addClose);}
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>{
+      setTimeout(init,500);setTimeout(init,1500);setTimeout(init,3000);
+    });
+  }else{
+    setTimeout(init,500);setTimeout(init,1500);setTimeout(init,3000);
+  }
+
+  new MutationObserver(()=>init()).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<style id="v167-report-close-style">
+.v167-report-result{position:relative;margin-top:8px}
+.v167-report-close{
+  position:absolute;right:4px;top:2px;z-index:20;
+  border:0;background:#fff;border-radius:50%;
+  width:30px;height:30px;padding:0;
+  font-size:24px;line-height:28px;font-weight:700;
+  cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25);
+}
+.v167-report-result.v167-hidden{display:none!important}
+</style>
+<style id="v250-gst-close-removed">
+/* V250: GST Report close X removed. */
+#v168GSTReport table th:last-child,
+#v168GSTReport table td:last-child{
+  white-space:nowrap!important;
+  min-width:125px!important;
+}
+</style>
+<script>
+/* V167: Reliable X-hide for generated reports.
+   Works from the actual report tables in #reports/reportArea, including
+   Job Work Monthly Report whose table has no id. */
+(function(){
+  function isReportTable(t){
+    if(!t || t.closest('.v167-report-result')) return false;
+    const page=t.closest('#reports,.reportArea');
+    if(!page)return false;
+    // Exclude input/autocomplete/helper tables if any.
+    return !!t.querySelector('tbody');
+  }
+
+  function hasGeneratedData(t){
+    const body=t.querySelector('tbody');
+    if(!body)return false;
+    const text=String(body.textContent||'').replace(/\s+/g,' ').trim();
+    if(!text)return false;
+    return !/^(Generate report|No .*entries|No data|No records|No transactions|No items added)$/i.test(text);
+  }
+
+  function setupTable(t){
+    if(!isReportTable(t))return;
+    let wrap=t.parentElement;
+    if(!wrap || !wrap.classList.contains('v167-report-result')){
+      wrap=document.createElement('div');
+      wrap.className='v167-report-result';
+      t.parentNode.insertBefore(wrap,t);
+      wrap.appendChild(t);
+    }
+
+    let btn=wrap.querySelector('.v167-report-close');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.type='button';
+      btn.className='v167-report-close';
+      btn.textContent='×';
+      btn.title='Hide Report';
+      btn.setAttribute('aria-label','Hide Report');
+      wrap.insertBefore(btn,wrap.firstChild);
+      btn.addEventListener('click',function(){
+        wrap.classList.add('v167-hidden');
+      });
+    }
+
+    const update=()=>{
+      if(wrap.classList.contains('v167-hidden'))return;
+      btn.style.display=hasGeneratedData(t)?'block':'none';
+    };
+    update();
+
+    if(!t.dataset.v167Observer){
+      t.dataset.v167Observer='1';
+      const ob=new MutationObserver(()=>{
+        // A new generated result should automatically reappear.
+        if(hasGeneratedData(t)){
+          wrap.classList.remove('v167-hidden');
+          btn.style.display='block';
+        }else{
+          btn.style.display='none';
+        }
+      });
+      const body=t.querySelector('tbody');
+      if(body)ob.observe(body,{childList:true,subtree:true,characterData:true});
+    }
+  }
+
+  function scan(){
+    document.querySelectorAll('#reports table, .reportArea table').forEach(setupTable);
+  }
+
+  function init(){
+    scan();
+    setTimeout(scan,300);
+    setTimeout(scan,1000);
+    setTimeout(scan,2000);
+    setTimeout(scan,4000);
+  }
+
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',init);
+  else init();
+
+  new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<style id="v168-gst-style">
+#v168GSTReport{margin-top:18px}
+#v168GSTReport table{width:100%;border-collapse:collapse;min-width:1050px}
+#v168GSTReport th,#v168GSTReport td{border:1px solid #ddd;padding:7px;text-align:right}
+#v168GSTReport th:first-child,#v168GSTReport td:first-child{text-align:left}
+#v168GSTReport .v168-gst-net{font-weight:700}
+</style>
+<script>
+/* V168: Month-wise GST Report - Sales / Purchase / Net GST */
+(function(){
+  const $=id=>document.getElementById(id);
+  const n=v=>Number(v)||0;
+  const money=v=>'₹'+n(v).toFixed(2);
+  const read=k=>{try{const a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}};
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  function getRows(){
+    const tx=read('adr_tx_v2'), rows=[];
+    tx.forEach(t=>{
+      const type=String(t.type||'').toUpperCase();
+      const taxable=['DISPATCH','RAW MATERIAL SALE','PURCHASE','RAW MATERIAL PURCHASE','RAW MATERIAL COMPANY INWARD','JOB WORK RECEIVE'];
+      if(!taxable.includes(type))return;
+      const date=String(t.date||'').slice(0,10);
+      if(!date)return;
+
+      let amount=n(t.amount), gst=n(t.tax), total=n(t.grandTotal);
+      const qty=Math.abs(n(t.qty));
+      let rate=0;
+      if(type==='DISPATCH')rate=n(t.dispatchRate??t.rate);
+      else if(type==='RAW MATERIAL SALE')rate=n(t.saleRate??t.rate);
+      else if(type==='PURCHASE')rate=n(t.purchaseRate??t.rate);
+      else if(type==='RAW MATERIAL PURCHASE'||type==='RAW MATERIAL COMPANY INWARD')rate=n(t.purchaseRate??t.inwardRate??t.rate);
+      else if(type==='JOB WORK RECEIVE')rate=n(t.jobRate??t.rate);
+      if(amount===0 && qty*rate)amount=qty*rate;
+      if(gst===0 && (t.taxRate!=null || amount))gst=amount*n(t.taxRate??18)/100;
+      if(total===0)total=amount+gst;
+
+      const isSale=type==='DISPATCH'||type==='RAW MATERIAL SALE';
+      const isPurchase=!isSale;
+      rows.push({date,type,amount,gst,total,isSale,isPurchase});
+    });
+    return rows;
+  }
+
+  function months(rows){
+    const m=new Map();
+    rows.forEach(r=>{
+      const d=new Date(r.date+'T00:00:00');
+      if(isNaN(d))return;
+      const key=r.date.slice(0,7);
+      if(!m.has(key))m.set(key,{key,sales:0,salesGST:0,salesTotal:0,purchase:0,purchaseGST:0,purchaseTotal:0});
+      const x=m.get(key);
+      if(r.isSale){x.sales+=r.amount;x.salesGST+=r.gst;x.salesTotal+=r.total}
+      else{x.purchase+=r.amount;x.purchaseGST+=r.gst;x.purchaseTotal+=r.total}
+    });
+    return [...m.values()].sort((a,b)=>a.key.localeCompare(b.key));
+  }
+
+  function label(key){
+    const [y,m]=key.split('-');
+    return new Date(Number(y),Number(m)-1,1).toLocaleString('en-IN',{month:'long',year:'numeric'});
+  }
+
+  function render(){
+    const host=$('reports');
+    if(!host)return;
+    let panel=$('v168GSTReport');
+    if(!panel){
+      panel=document.createElement('section');
+      panel.id='v168GSTReport';
+      panel.className='panel';
+      host.appendChild(panel);
+    }
+
+    panel.innerHTML=`
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <h3 style="margin:0">🧾 GST Report</h3>
+      </div>
+      <div class="grid" style="margin-top:10px">
+        <div>
+          <label>Month</label>
+          <select id="v243GSTMonth">
+            <option value="ALL">All Month</option>
+            <option value="01">January</option><option value="02">February</option>
+            <option value="03">March</option><option value="04">April</option>
+            <option value="05">May</option><option value="06">June</option>
+            <option value="07">July</option><option value="08">August</option>
+            <option value="09">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <div style="align-self:end">
+          <button type="button" id="v168GSTGenerate">Generate GST Report</button>
+        </div>
+      </div>
+      <div id="v245InvalidDateBox" style="display:none;margin-top:14px;padding:12px;border:1px solid #f0c36d;background:#fff8e6;border-radius:8px">
+        <div style="font-weight:700;color:#9a6500">⚠️ Invalid / Missing Date Entries</div>
+        <div class="small" style="margin:4px 0 8px">જે transaction ની date ખોટી છે તે અહીં દેખાશે. અહીંથી સીધી સાચી Date નાખીને Save કરી શકો છો.</div>
+        <div style="overflow:auto">
+          <table>
+            <thead><tr><th>Date</th><th>Type</th><th>Party</th><th>Item</th><th>Reference</th><th>Enter Date</th><th>Action</th></tr></thead>
+            <tbody id="v245InvalidDateBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="v243GSTSummaryTitle" style="margin-top:12px;font-weight:700">Month Wise Summary</div>
+      <div style="overflow:auto;margin-top:8px">
+        <table>
+          <thead><tr>
+            <th>Month</th><th>Purchase Taxable</th><th>Sale Taxable</th>
+            <th>Sale GST</th><th>Purchase GST</th><th>Payable GST</th><th>GST Balance</th>
+          </tr></thead>
+          <tbody id="v243GSTMonthBody"></tbody>
+          <tfoot id="v243GSTMonthFoot"></tfoot>
+        </table>
+      </div>
+      <div id="v243GSTCustomerSection" style="display:none;margin-top:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <h4 id="v243GSTCustomerTitle" style="margin:0">Customer Wise Summary</h4>
+          <button type="button" id="v243GSTBack" style="border:0;border-radius:6px;padding:7px 12px;cursor:pointer">← Back to Month Wise</button>
+        </div>
+        <div style="overflow:auto;margin-top:8px">
+          <table>
+            <thead><tr>
+              <th>Customer</th><th>Purchase Taxable</th><th>Sale Taxable</th>
+              <th>Sale GST</th><th>Purchase GST</th>
+            </tr></thead>
+            <tbody id="v243GSTCustomerBody"></tbody>
+            <tfoot id="v243GSTCustomerFoot"></tfoot>
+          </table>
+        </div>
+      </div>`;
+
+    const monthNames={
+      ALL:'All Month',01:'January',02:'February',03:'March',04:'April',
+      05:'May',06:'June',07:'July',08:'August',09:'September',
+      10:'October',11:'November',12:'December'
+    };
+
+    function getTx(){
+      return read('adr_tx_v2').filter(t=>{
+        const type=String(t.type||'').toUpperCase();
+        const d=String(t.date||'').slice(0,10);
+        return ['DISPATCH','RAW MATERIAL SALE','PURCHASE','RAW MATERIAL PURCHASE',
+          'RAW MATERIAL COMPANY INWARD','JOB WORK RECEIVE'].includes(type)
+          && /^\d{4}-\d{2}-\d{2}$/.test(d)
+          && !isNaN(new Date(d+'T00:00:00').getTime());
+      });
+    }
+
+    function values(t){
+      const type=String(t.type||'').toUpperCase();
+      const isSale=type==='DISPATCH'||type==='RAW MATERIAL SALE';
+      const qty=Math.abs(Number(t.qty)||0);
+      let rate=Number(t.rate)||0;
+      if(type==='DISPATCH')rate=Number(t.dispatchRate??t.rate)||0;
+      else if(type==='RAW MATERIAL SALE')rate=Number(t.saleRate??t.rate)||0;
+      else if(type==='PURCHASE')rate=Number(t.purchaseRate??t.rate)||0;
+      else if(type==='RAW MATERIAL PURCHASE'||type==='RAW MATERIAL COMPANY INWARD')
+        rate=Number(t.purchaseRate??t.inwardRate??t.rate)||0;
+      else if(type==='JOB WORK RECEIVE')rate=Number(t.jobRate??t.rate)||0;
+      let amount=Number(t.amount);
+      if(!Number.isFinite(amount)||amount===0)amount=qty*rate;
+      let gst=Number(t.tax);
+      if(!Number.isFinite(gst)||gst===0){
+        const tr=Number(t.taxRate);
+        if(Number.isFinite(tr))gst=amount*tr/100;
+      }
+      let total=Number(t.grandTotal??t.billTotal??t.total);
+      if(!Number.isFinite(total)||total===0)total=amount+gst;
+      return {isSale,amount,gst,total};
+    }
+
+    function aggregate(list, partyWise){
+      const map=new Map();
+      list.forEach(t=>{
+        const v=values(t);
+        const key=partyWise
+          ? String(t.customer||t.supplier||t.vendor||t.party||t.customerName||t.supplierName||t.vendorName||'').trim()||'Cash / Other'
+          : String(t.date||'').slice(0,7);
+        if(!map.has(key))map.set(key,{key,purchase:0,sale:0,saleGST:0,purchaseTotal:0,purchaseGST:0});
+        const x=map.get(key);
+        if(v.isSale){x.sale+=v.amount;x.saleGST+=v.gst;}
+        else{x.purchase+=v.amount;x.purchaseTotal+=v.total;x.purchaseGST+=v.gst;}
+      });
+      return [...map.values()];
+    }
+
+    function isValidISODate(v){
+      return /^\d{4}-\d{2}-\d{2}$/.test(String(v||'')) &&
+        !isNaN(new Date(String(v)+'T00:00:00').getTime());
+    }
+
+    function renderInvalidDateEntries(){
+      const body=$('v245InvalidDateBody');
+      if(!body)return;
+      const all=read('adr_tx_v2');
+      const bad=all.map((t,index)=>({t,index})).filter(x=>!isValidISODate(String(x.t.date||'').slice(0,10)));
+
+      const box=$('v245InvalidDateBox');
+      if(!bad.length){
+        if(box)box.style.display='none';
+        body.innerHTML='';
+        return;
+      }
+      if(box)box.style.display='block';
+
+      body.innerHTML=bad.map(x=>{
+        const t=x.t;
+        const party=String(t.customer||t.supplier||t.vendor||t.party||t.customerName||t.supplierName||t.vendorName||'').trim();
+        const item=String(t.itemName||t.item||t.material||'');
+        const ref=String(t.ref||t.billNo||t.invoiceNo||'');
+        const oldDate=String(t.date||'').trim()||'Missing';
+        return `<tr>
+          <td style="color:#c62828;font-weight:700">${esc(oldDate)}</td>
+          <td>${esc(t.type||'')}</td>
+          <td>${esc(party)}</td>
+          <td>${esc(item)}</td>
+          <td>${esc(ref)}</td>
+          <td><input type="date" id="v245date_${x.index}"></td>
+          <td><button type="button" data-v245-save-date="${x.index}" class="primary">💾 Save Date</button></td>
+        </tr>`;
+      }).join('');
+
+      body.querySelectorAll('[data-v245-save-date]').forEach(btn=>{
+        btn.onclick=()=>{
+          const index=Number(btn.getAttribute('data-v245-save-date'));
+          const input=$('v245date_'+index);
+          const value=input?.value||'';
+          if(!isValidISODate(value)){
+            alert('કૃપા કરીને સાચી Date select કરો.');
+            return;
+          }
+          const tx=read('adr_tx_v2');
+          if(!tx[index])return;
+          tx[index].date=value;
+          localStorage.setItem('adr_tx_v2',JSON.stringify(tx));
+          renderInvalidDateEntries();
+          fillMonthWise();
+          alert('Date save થઈ ગઈ.');
+        };
+      });
+    }
+
+    function fillMonthWise(){
+      const selected=$('v243GSTMonth').value;
+      const tx=getTx().filter(t=>selected==='ALL'||String(t.date||'').slice(5,7)===selected);
+      const rows=aggregate(tx,false).sort((a,b)=>a.key.localeCompare(b.key));
+
+      let runningBalance=0;
+      $('v243GSTMonthBody').innerHTML=rows.map(x=>{
+        const [y,m]=x.key.split('-');
+        const label=(y && m && Number(y)>1900 && Number(m)>=1 && Number(m)<=12)
+          ? new Date(Number(y),Number(m)-1,1).toLocaleString('en-IN',{month:'long',year:'numeric'})
+          : 'Unknown Month';
+        const payable=x.purchaseGST-x.saleGST;
+        runningBalance+=payable;
+        const pCls=payable>=0?'v252Positive':'v252Negative';
+        const bCls=runningBalance>=0?'v253Positive':'v253Negative';
+        return `<tr data-gst-month="${m}" style="cursor:pointer">
+          <td style="text-align:left;font-weight:700">${esc(label)}</td>
+          <td>${money(x.purchase)}</td><td>${money(x.sale)}</td>
+          <td>${money(x.saleGST)}</td><td>${money(x.purchaseGST)}</td>
+          <td class="v252PayableGST ${pCls}">${money(payable)}</td>
+          <td class="v253GSTBalance ${bCls}">${money(runningBalance)}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="7">No GST entries found.</td></tr>';
+
+      const totals=rows.reduce((a,x)=>({
+        purchase:a.purchase+x.purchase,sale:a.sale+x.sale,saleGST:a.saleGST+x.saleGST,
+        purchaseTotal:a.purchaseTotal+x.purchaseTotal,purchaseGST:a.purchaseGST+x.purchaseGST
+      }),{purchase:0,sale:0,saleGST:0,purchaseTotal:0,purchaseGST:0});
+      const totalPayable=totals.purchaseGST-totals.saleGST;
+      const totalBalance=totalPayable;
+      const totalPayableCls=totalPayable>=0?'v252Positive':'v252Negative';
+      const totalBalanceCls=totalBalance>=0?'v253Positive':'v253Negative';
+      $('v243GSTMonthFoot').innerHTML=`<tr>
+        <th>Total</th><th>${money(totals.purchase)}</th><th>${money(totals.sale)}</th>
+        <th>${money(totals.saleGST)}</th><th>${money(totals.purchaseGST)}</th>
+        <th class="v252PayableGST ${totalPayableCls}">${money(totalPayable)}</th>
+        <th class="v253GSTBalance ${totalBalanceCls}">${money(totalBalance)}</th>
+      </tr>`;
+
+      $('v243GSTCustomerSection').style.display='none';
+      $('v243GSTSummaryTitle').textContent='Month Wise Summary';
+      v252ColorPayableGST();
+      document.querySelectorAll('#v243GSTMonthBody tr[data-gst-month]').forEach(tr=>{
+        tr.onclick=()=>showCustomerWise(tr.getAttribute('data-gst-month'));
+      });
+    }
+
+
+    function v252ColorPayableGST(){
+      document.querySelectorAll('.v252PayableGST').forEach(td=>{
+        const raw=String(td.textContent||'').replace(/[^0-9.\-]/g,'');
+        const n=Number(raw);
+        td.classList.remove('v252Positive','v252Negative');
+        if(n>0) td.classList.add('v252Positive');
+        else if(n<0) td.classList.add('v252Negative');
+      });
+    }
+
+    function showCustomerWise(month){
+      const tx=getTx().filter(t=>String(t.date||'').slice(5,7)===month);
+      const rows=aggregate(tx,true).sort((a,b)=>a.key.localeCompare(b.key,undefined,{numeric:true,sensitivity:'base'}));
+      const label=monthNames[month]||month;
+      $('v243GSTCustomerTitle').textContent=label+' — Customer Wise Summary';
+
+      $('v243GSTCustomerBody').innerHTML=rows.map(x=>`
+        <tr>
+          <td style="text-align:left;font-weight:600">${esc(x.key)}</td>
+          <td>${money(x.purchase)}</td><td>${money(x.sale)}</td>
+          <td>${money(x.saleGST)}</td><td>${money(x.purchaseGST)}</td><td class="v252PayableGST">${money(x.purchaseGST-x.saleGST)}</td>
+        </tr>`).join('') || '<tr><td colspan="6">No GST entries found.</td></tr>';
+
+      const totals=rows.reduce((a,x)=>({
+        purchase:a.purchase+x.purchase,sale:a.sale+x.sale,saleGST:a.saleGST+x.saleGST,
+        purchaseTotal:a.purchaseTotal+x.purchaseTotal,purchaseGST:a.purchaseGST+x.purchaseGST
+      }),{purchase:0,sale:0,saleGST:0,purchaseTotal:0,purchaseGST:0});
+      $('v243GSTCustomerFoot').innerHTML=`<tr>
+        <th>Total</th><th>${money(totals.purchase)}</th><th>${money(totals.sale)}</th>
+        <th>${money(totals.saleGST)}</th><th>${money(totals.purchaseGST)}</th><th class="v252PayableGST">${money(totals.purchaseGST-totals.saleGST)}</th>
+      </tr>`;
+
+      $('v243GSTSummaryTitle').textContent=label+' — Customer Wise Summary';
+      $('v243GSTCustomerSection').style.display='block';
+      v252ColorPayableGST();
+      document.getElementById('v243GSTCustomerSection').scrollIntoView({behavior:'smooth',block:'start'});
+    }
+
+    $('v243GSTMonth').onchange=fillMonthWise;
+    $('v168GSTGenerate').onclick=fillMonthWise;
+    $('v243GSTBack').onclick=fillMonthWise;
+    const gstCloseBtn=$('v168GSTClose');
+    if(gstCloseBtn) gstCloseBtn.onclick=()=>panel.style.display='none';
+    renderInvalidDateEntries();
+    fillMonthWise();
+  }
+
+  function addButton(){
+    // Add a separate GST Report button to the Reports module controls.
+    const reports=$('reports'); if(!reports)return;
+    let btn=$('v168OpenGST');
+    if(btn)return;
+    btn=document.createElement('button');
+    btn.id='v168OpenGST'; btn.type='button'; btn.textContent='🧾 GST Report';
+    btn.style.cssText='margin:6px;padding:8px 12px;cursor:pointer';
+    btn.onclick=()=>{render();const p=$('v168GSTReport');if(p)p.style.display='block';};
+    const firstPanel=reports.querySelector('.panel');
+    if(firstPanel)firstPanel.insertBefore(btn,firstPanel.firstChild);
+    else reports.insertBefore(btn,reports.firstChild);
+  }
+
+  function init(){
+    addButton();
+    // GST report remains separate and hidden until its button is clicked.
+    const p=$('v168GSTReport');if(p)p.style.display='none';
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init,900));
+  else setTimeout(init,900);
+  new MutationObserver(()=>{addButton()}).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<script>
+/* V169: GST Report Print + Excel/CSV download */
+(function(){
+  const $=id=>document.getElementById(id);
+
+  function addActions(){
+    const panel=$('v168GSTReport');
+    if(!panel)return;
+    let bar=$('v169GSTActions');
+    if(!bar){
+      bar=document.createElement('div');
+      bar.id='v169GSTActions';
+      bar.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin:10px 0';
+      const summary=$('v168GSTSummary');
+      if(summary)summary.parentNode.insertBefore(bar,summary);
+      else panel.insertBefore(bar,panel.firstChild.nextSibling);
+      bar.innerHTML=`
+        <button type="button" id="v169GSTPrint">🖨️ Print</button>
+        <button type="button" id="v169GSTExcel">📥 Download Excel</button>
+      `;
+      $('v169GSTPrint').onclick=printGST;
+      $('v169GSTExcel').onclick=downloadExcel;
+    }
+  }
+
+  function printGST(){
+    const panel=$('v168GSTReport');
+    if(!panel)return;
+    const clone=panel.cloneNode(true);
+    const actions=clone.querySelector('#v169GSTActions');
+    if(actions)actions.remove();
+    const close=clone.querySelector('#v168GSTClose');
+    if(close)close.remove();
+    const style=`<style>
+      @page{size:landscape;margin:10mm}
+      body{font-family:Arial,sans-serif;font-size:11px}
+      table{width:100%;border-collapse:collapse}
+      th,td{border:1px solid #777;padding:5px;text-align:right}
+      th:first-child,td:first-child{text-align:left}
+      h3{margin:0 0 10px}
+    </style>`;
+    const w=window.open('','_blank','width=1200,height=800');
+    if(!w)return;
+    w.document.write('<!doctype html><html><head><title>GST Report</title>'+style+'
+<style id="v177-raw-submenu-fields">
+@media (min-width:900px){
+  #rawmaterials .panel > .grid,
+  #rawmaterials #showRawMaterialMasterBtn,
+  #rawmaterials #rawMaterialMasterAddBox,
+  #rawmaterials #rmPurchasePanel,
+  #rawmaterials #rawMaterialInwardPanel{
+    display:none!important;
+  }
+  #rawmaterials.v177-show-name .panel > .grid,
+  #rawmaterials.v177-show-name #rawMaterialMasterAddBox{
+    display:block!important;
+  }
+  #rawmaterials.v177-show-inward #rawMaterialInwardPanel{
+    display:block!important;
+  }
+}
+</style>
+
+
+
+<style id="v183-clean-close">
+.v183-head-row{display:flex;align-items:center;justify-content:space-between;width:100%;box-sizing:border-box;gap:10px}
+.v183-x{
+  margin-left:auto!important;flex:0 0 auto!important;width:34px!important;height:34px!important;
+  border:1px solid #999!important;border-radius:5px!important;background:#fff!important;
+  color:#222!important;font-size:20px!important;line-height:30px!important;
+  padding:0!important;cursor:pointer!important;text-align:center!important;
+}
+.v183-x:hover{background:#eee!important;color:#c00!important}
+</style>
+<style id="v186-x-position">
+#rawmaterials .v183-head-row{
+  position:relative!important;
+  display:block!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+  min-height:36px!important;
+  padding-right:50px!important;
+}
+#rawmaterials .v183-head-row > h2,
+#rawmaterials .v183-head-row > h3{margin:0!important}
+#rawmaterials .v183-head-row > .v183-x{
+  position:absolute!important;
+  right:0!important;
+  top:0!important;
+  left:auto!important;
+  margin:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:34px!important;
+  height:34px!important;
+  box-sizing:border-box!important;
+  border:1px solid #999!important;
+  border-radius:5px!important;
+  background:#fff!important;
+  color:#222!important;
+  font-size:20px!important;
+  font-weight:bold!important;
+  line-height:1!important;
+  padding:0!important;
+  cursor:pointer!important;
+  z-index:20!important;
+}
+#rawmaterials .v183-head-row > .v183-x:hover{background:#eee!important;color:#c00!important}
+</style>
+
+<style id="v259_side_button_style">
+/* V259: stronger side navigation and polished buttons */
+.sidebar .nav-item, .sidebar .menu-item, .sidebar button, .side-menu button, .sidebar a {font-weight:800 !important; font-size:15px !important;}
+.sidebar .nav-item, .sidebar .menu-item, .side-menu button {border-radius:10px !important; transition:all .18s ease !important;}
+.sidebar .nav-item:hover, .sidebar .menu-item:hover, .side-menu button:hover {transform:translateX(2px); box-shadow:0 4px 12px rgba(0,0,0,.10);}
+button:not(.no-style) {border-radius:9px !important; font-weight:750 !important; transition:all .18s ease !important; box-shadow:0 2px 6px rgba(0,0,0,.10);}
+button:not(.no-style):hover {transform:translateY(-1px); box-shadow:0 5px 12px rgba(0,0,0,.15);}
+button:not(.no-style):active {transform:translateY(0); box-shadow:0 2px 5px rgba(0,0,0,.10);}
+</style>
+
+<style id="v268-stock-hide-weight">
+/* V268: Hide Item Weight only in Stock display */
+#v266StockItemsPanel table th:nth-child(5),
+#v266StockItemsPanel table td:nth-child(5){display:none !important;}
+</style>
+</head><body>'+clone.innerHTML+'<style id="v328LaserSuggestFix">#lmFromItemSuggest,#lmConvertItemSuggest,#lmVendorSuggest{display:none;position:absolute!important;left:0!important;right:0!important;top:100%!important;z-index:2147483647!important;background:#fff!important;border:1px solid #999!important;box-shadow:0 4px 14px rgba(0,0,0,.2)!important;max-height:260px!important;overflow:auto!important;width:100%!important}#lmFromItemSuggest div,#lmConvertItemSuggest div,#lmVendorSuggest div{display:block!important;padding:10px 12px!important;background:#fff!important;color:#111!important;border-bottom:1px solid #ddd!important;cursor:pointer!important}</style>
+<script id="v328LaserSuggestFix">(function(){
+function readItems(){try{var a=JSON.parse(localStorage.getItem('adr_items_v2')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function readVendors(){try{var a=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function bind(id,boxId,getList,display,select){var input=document.getElementById(id),box=document.getElementById(boxId);if(!input||!box)return;if(input.dataset.v328Bound==='1')return;input.dataset.v328Bound='1';
+function show(){var q=String(input.value||'').trim().toLowerCase();box.innerHTML='';if(!q){box.style.display='none';return}var list=getList().filter(function(x){return String(display(x)||'').toLowerCase().indexOf(q)>=0}).slice(0,20);list.forEach(function(x){var d=document.createElement('div');d.textContent=display(x);d.onmousedown=function(e){e.preventDefault();select(x);box.style.display='none'};d.onclick=function(){select(x);box.style.display='none'};box.appendChild(d)});box.style.display=list.length?'block':'none'}
+input.addEventListener('input',show);input.addEventListener('focus',show);input.addEventListener('keyup',show);
+}
+function init(){
+bind('lmFromItem','lmFromItemSuggest',readItems,function(i){return String(i.name||'')+' — '+String(i.code||'')},function(i){var x=document.getElementById('lmFromItem');x.value=i.name||'';x.dataset.selectedCode=i.code||'';var n=document.getElementById('lmNewItemName'),l=document.getElementById('lmLogoName');if(n&&l&&l.value.trim())n.value=l.value.trim()+' '+(i.name||'')});
+bind('lmConvertItem','lmConvertItemSuggest',readItems,function(i){return String(i.name||'')+' — '+String(i.code||'')},function(i){var x=document.getElementById('lmConvertItem');x.value=i.name||'';x.dataset.selectedCode=i.code||''});
+bind('lmVendor','lmVendorSuggest',readVendors,function(v){return String(v.name||v.vendor||v.vendorName||'')},function(v){var x=document.getElementById('lmVendor');x.value=v.name||v.vendor||v.vendorName||''});
+}
+setTimeout(init,100);setTimeout(init,500);setTimeout(init,1500);setTimeout(init,3000);
+})();<\/script>
+
+</body></html>');
+    w.document.close();
+    w.focus();
+    setTimeout(()=>{w.print();w.close()},400);
+  }
+
+  function csvCell(v){
+    const s=String(v??'');
+    return '"'+s.replace(/"/g,'""')+'"';
+  }
+
+  function downloadExcel(){
+    const table=$('v168GSTReport')?.querySelector('table');
+    if(!table){alert('પહેલા GST Report Generate કરો.');return;}
+    const rows=[...table.querySelectorAll('tr')].map(tr=>
+      [...tr.children].map(td=>csvCell(td.innerText.trim())).join(',')
+    );
+    const csv='\uFEFF'+rows.join('\r\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='GST_Report_Month_Wise.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+
+  function init(){
+    addActions();
+  }
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',()=>{setTimeout(init,1000);setTimeout(init,2500)});
+  else{setTimeout(init,1000);setTimeout(init,2500)}
+
+  new MutationObserver(addActions).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<style id="v170-vertical-module-menu">
+/* V170: Desktop module navigation -> left vertical sidebar */
+@media (min-width: 900px){
+  body{
+    padding-left:220px!important;
+  }
+  #sidebar,#menu,#nav,.sidebar,.menu,.module-menu,.nav-menu{
+    position:fixed!important;
+    left:0!important;
+    top:0!important;
+    bottom:0!important;
+    width:205px!important;
+    max-width:205px!important;
+    height:100vh!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    z-index:9999!important;
+    padding:14px 8px!important;
+  }
+  /* Common horizontal module/menu containers */
+  .module-tabs,.tabs,.top-tabs,.nav-tabs,.module-nav{
+    flex-direction:column!important;
+    align-items:stretch!important;
+    justify-content:flex-start!important;
+    width:100%!important;
+  }
+  .module-tabs>* ,.tabs>* ,.top-tabs>* ,.nav-tabs>* ,.module-nav>*{
+    width:100%!important;
+    box-sizing:border-box!important;
+    margin:2px 0!important;
+  }
+}
+/* If the ERP uses a direct module button row, stack it vertically. */
+@media (min-width: 900px){
+  body > header nav,
+  body > nav{
+    position:fixed!important;
+    left:0!important;
+    top:0!important;
+    bottom:0!important;
+    width:205px!important;
+    overflow-y:auto!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    padding:14px 8px!important;
+    z-index:9998!important;
+  }
+  body > header nav + *{
+    /* content keeps its normal layout; body padding creates sidebar space */
+  }
+}
+</style>
+
+<style id="v171-sidebar">
+/* V171: Real left sidebar; selected module opens in the main area to its right. */
+@media (min-width:900px){
+  body{padding-left:0!important;overflow-x:hidden}
+  header{margin-left:0!important}
+  main{
+    margin:0 0 0 225px!important;
+    max-width:none!important;
+    width:calc(100% - 225px)!important;
+    box-sizing:border-box!important;
+    padding:14px!important;
+  }
+  .tabs{
+    position:fixed!important;
+    left:0!important;
+    top:54px!important;
+    bottom:0!important;
+    width:210px!important;
+    max-width:210px!important;
+    height:auto!important;
+    box-sizing:border-box!important;
+    display:flex!important;
+    flex-direction:column!important;
+    flex-wrap:nowrap!important;
+    gap:4px!important;
+    margin:0!important;
+    padding:10px 8px!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    background:#e9eef3!important;
+    border-right:1px solid #cbd3db!important;
+    z-index:10000!important;
+  }
+  .tabs button{
+    width:100%!important;
+    min-height:42px!important;
+    flex:0 0 auto!important;
+    box-sizing:border-box!important;
+    text-align:left!important;
+    white-space:normal!important;
+    margin:0!important;
+    border-radius:7px!important;
+  }
+  .tabs button.active{
+    background:#17324d!important;
+    color:#fff!important;
+  }
+  .page{
+    width:100%!important;
+    box-sizing:border-box!important;
+  }
+}
+
+/* Hide V170's generic sidebar rules if present and keep print layout unchanged. */
+@media print{
+  body{padding-left:0!important}
+  main{margin:0!important;width:auto!important}
+  .tabs{display:none!important}
+}
+</style>
+
+<script>
+/* V171: module navigation */
+(function(){
+  function bindModules(){
+    document.querySelectorAll('.tabs button').forEach(btn=>{
+      if(btn.dataset.v171Bound==='1')return;
+      btn.dataset.v171Bound='1';
+      btn.addEventListener('click',function(){
+        const page=this.dataset.page;
+        if(!page)return;
+        try{sessionStorage.setItem('sentidosLastPage',page)}catch(e){}
+        // Existing ERP handler activates the requested .page.
+        // This keeps the clicked module's content immediately beside the sidebar.
+        setTimeout(()=>{
+          const target=document.getElementById(page);
+          if(target)target.scrollIntoView({behavior:'smooth',block:'start'});
+        },20);
+      });
+    });
+  }
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(bindModules,200));
+  else setTimeout(bindModules,200);
+  new MutationObserver(bindModules).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<style id="v172-item-submenu">
+@media (min-width:900px){
+  #v172ItemSubmenu{
+    display:none;
+    flex-direction:column;
+    gap:3px;
+    margin:0 0 5px 8px;
+    padding:4px 0 4px 10px;
+    border-left:2px solid #b8c4cf;
+  }
+  #v172ItemSubmenu button{
+    width:100%;
+    border:0;
+    background:transparent;
+    text-align:left;
+    padding:8px 9px;
+    cursor:pointer;
+    border-radius:5px;
+    font-size:14px;
+  }
+  #v172ItemSubmenu button:hover{background:#dce5ed}
+}
+</style>
+<style id="v174-raw-submenu">
+@media (min-width:900px){
+  #v174RawSubmenu{
+    display:none;
+    flex-direction:column;
+    gap:3px;
+    margin:0 0 5px 8px;
+    padding:4px 0 4px 10px;
+    border-left:2px solid #b8c4cf;
+  }
+  #v174RawSubmenu button{
+    width:100%;
+    border:0;
+    background:transparent;
+    text-align:left;
+    padding:8px 9px;
+    cursor:pointer;
+    border-radius:5px;
+    font-size:14px;
+  }
+  #v174RawSubmenu button:hover{background:#dce5ed}
+}
+</style>
+
+<script>
+/* V172: Item Master sidebar submenu; Add Item opens the Item form. */
+(function(){
+  const $=id=>document.getElementById(id);
+
+  let itemMenuOpen=false;
+
+  function setup(){
+    const tabs=document.querySelector('.tabs');
+    const itemBtn=document.querySelector('.tabs button[data-page="items"]');
+    if(!tabs||!itemBtn)return;
+
+    let menu=$('v172ItemSubmenu');
+    if(!menu){
+      menu=document.createElement('div');
+      menu.id='v172ItemSubmenu';
+      menu.innerHTML='<button type="button" id="v172AddItem">➕ Add Item</button>';
+      itemBtn.insertAdjacentElement('afterend',menu);
+      $('v172AddItem').onclick=function(e){
+        e.stopPropagation();
+        showForm(true);
+      };
+    }
+
+    // The form area consists of the first .grid and the Add Item button.
+    function showForm(show){
+      const sec=$('items');
+      if(!sec)return;
+      const panel=sec.querySelector('.panel');
+      if(!panel)return;
+      const grid=panel.querySelector('.grid');
+      const add=$('addItemBtn');
+      if(grid)grid.style.display=show?'grid':'none';
+      if(add)add.style.display=show?'inline-block':'none';
+      if(show){
+        const code=$('itemCode'); if(code)code.focus();
+      }
+    }
+
+    function sync(){
+      const active=$('items')?.classList.contains('active');
+      menu.style.display=(active && itemMenuOpen)?'flex':'none';
+      if(!active){
+        itemMenuOpen=false;
+        showForm(false);
+      }
+    }
+
+    if(!itemBtn.dataset.v172){
+      itemBtn.dataset.v172='1';
+      itemBtn.addEventListener('click',()=>{
+        setTimeout(()=>{
+          itemMenuOpen=!itemMenuOpen;
+          sync();
+        },50);
+      });
+    }
+    setup._sync=sync;
+    sync();
+  }
+
+  function init(){
+    setup();
+    setTimeout(()=>setup(),300);
+    setTimeout(()=>setup(),1000);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+  else init();
+
+  new MutationObserver(()=>{
+    setup();
+  }).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+<script>
+/* V174: Raw Material Master submenu toggles open/closed like Item Master. */
+(function(){
+  let rawMenuOpen=false;
+
+  function rawSetup(){
+    const tabs=document.querySelector('.tabs');
+    const rawBtn=document.querySelector('.tabs button[data-page="rawmaterials"]');
+    if(!tabs||!rawBtn)return;
+
+    let menu=document.getElementById('v174RawSubmenu');
+    if(!menu){
+      menu=document.createElement('div');
+      menu.id='v174RawSubmenu';
+      menu.innerHTML='<button type="button" id="v174AddRaw">🧱 Raw Material Name</button><button type="button" id="v174AddRawStock">📥 Material Inward</button>';
+      rawBtn.insertAdjacentElement('afterend',menu);
+
+      const addRaw=document.getElementById('v174AddRaw');
+      if(addRaw){
+        addRaw.onclick=function(e){
+          e.stopPropagation();
+          const box=document.getElementById('rawMaterialMasterAddBox');
+          const btn=document.getElementById('showRawMaterialMasterBtn');
+          if(box)box.style.display='block';
+          if(btn)btn.style.display='none';
+          const code=document.getElementById('rmCode');
+          if(code){
+            code.focus();
+            code.scrollIntoView({behavior:'smooth',block:'center'});
+          }
+        };
+      }
+
+      const addStock=document.getElementById('v174AddRawStock');
+      if(addStock){
+        addStock.onclick=function(e){
+          e.stopPropagation();
+          const date=document.getElementById('rmPurchaseDate');
+          if(date)date.scrollIntoView({behavior:'smooth',block:'center'});
+          const material=document.getElementById('rmPurchase');
+          if(material)setTimeout(()=>material.focus(),250);
+        };
+      }
+    }
+
+    const active=document.getElementById('rawmaterials')?.classList.contains('active');
+    menu.style.display=(active&&rawMenuOpen)?'flex':'none';
+    if(!active)rawMenuOpen=false;
+
+    if(!rawBtn.dataset.v174){
+      rawBtn.dataset.v174='1';
+      rawBtn.addEventListener('click',function(){
+        setTimeout(function(){
+          rawMenuOpen=!rawMenuOpen;
+          const isActive=document.getElementById('rawmaterials')?.classList.contains('active');
+          menu.style.display=(isActive&&rawMenuOpen)?'flex':'none';
+        },60);
+      });
+    }
+  }
+
+  function start(){
+    rawSetup();
+    setTimeout(rawSetup,300);
+    setTimeout(rawSetup,1000);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);
+  else start();
+
+  new MutationObserver(rawSetup).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+<script>
+/* V175: Raw Material submenu renamed to Raw Material Name; fields open only from submenu click. */
+</script>
+<script>
+/* V173: Item Master submenu toggles open/closed on repeated Item Master clicks. */
+</script>
+<script>
+/* V177: Raw Material Master right-side fields are shown only on submenu click. */
+</script>
+<script>
+/* V183: Clean single right-side X; removed all extra X controls. */
+</script>
+<script>
+/* V176: Add Stock submenu label changed to Material Inward. */
+</script>
+
+<script>
+/* V177: Raw Material Master fields open only after its submenu selection. */
+(function(){
+  let mode='none';
+
+  function apply(){
+    const sec=document.getElementById('rawmaterials');
+    const active=sec && sec.classList.contains('active');
+    if(!sec)return;
+    sec.classList.toggle('v177-show-name',active && mode==='name');
+    sec.classList.toggle('v177-show-inward',active && mode==='inward');
+
+    const menu=document.getElementById('v174RawSubmenu');
+    if(menu) menu.style.display=active ? 'flex' : 'none';
+
+    if(!active)mode='none';
+  }
+
+  function bind(){
+    const sec=document.getElementById('rawmaterials');
+    const nameBtn=document.getElementById('v174AddRaw');
+    const inwardBtn=document.getElementById('v174AddRawStock');
+    if(!sec || !nameBtn || !inwardBtn)return;
+
+    if(!nameBtn.dataset.v177){
+      nameBtn.dataset.v177='1';
+      nameBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        mode='name';
+        apply();
+      });
+    }
+    if(!inwardBtn.dataset.v177){
+      inwardBtn.dataset.v177='1';
+      inwardBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        mode='inward';
+        apply();
+        const el=document.getElementById('rmPurchaseDate') || document.getElementById('rmPurchase');
+        if(el)setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'center'}),80);
+      });
+    }
+    apply();
+  }
+
+  function start(){
+    bind();
+    setTimeout(bind,300);
+    setTimeout(bind,1000);
+    setTimeout(bind,2000);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);
+  else start();
+
+  new MutationObserver(bind).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+
+
+<script>
+/* V183: Clean single X controls on the right side of Raw Material sections. */
+(function(){
+  function makeRow(titleEl, cls, closeFn){
+    if(!titleEl || titleEl.dataset.v183Wrapped==='1')return;
+    titleEl.dataset.v183Wrapped='1';
+    const row=document.createElement('div');
+    row.className='v183-head-row';
+    titleEl.parentNode.insertBefore(row,titleEl);
+    row.appendChild(titleEl);
+    const x=document.createElement('button');
+    x.type='button'; x.className='v183-x '+cls; x.textContent='×'; x.title='Close';
+    x.addEventListener('click',function(e){
+      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+      closeFn(); return false;
+    });
+    row.appendChild(x);
+  }
+
+  function setup(){
+    const sec=document.getElementById('rawmaterials');
+    if(!sec)return;
+
+    const h2=sec.querySelector('.panel > h2');
+    const nameBox=document.getElementById('rawMaterialMasterAddBox');
+    makeRow(h2,'v183-name-x',function(){
+      if(nameBox)nameBox.style.display='none';
+      sec.classList.remove('v177-show-name');
+    });
+
+    const inwardH3=Array.from(sec.querySelectorAll('h3')).find(h=>/Company Raw Material Inward \/ Stock Add/i.test(h.textContent||''));
+    const inwardGrid=document.getElementById('rmPurchaseDate')?.closest('.grid');
+    const inwardBtn=document.getElementById('rmPurchaseBtn');
+    const inwardMsg=document.getElementById('rmPurchaseMsg');
+
+    makeRow(inwardH3,'v183-inward-x',function(){
+      sec.classList.remove('v177-show-inward','v178-show-inward');
+      if(inwardGrid)inwardGrid.style.display='none';
+      if(inwardBtn)inwardBtn.style.display='none';
+      if(inwardMsg)inwardMsg.style.display='none';
+    });
+
+    // Ensure submenu click opens only the selected section.
+    const nameBtn=document.getElementById('v174AddRaw');
+    if(nameBtn && !nameBtn.dataset.v183){
+      nameBtn.dataset.v183='1';
+      nameBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        sec.classList.remove('v177-show-inward','v178-show-inward');
+        sec.classList.add('v177-show-name');
+        if(nameBox)nameBox.style.display='block';
+      });
+    }
+    const inBtn=document.getElementById('v174AddRawStock');
+    if(inBtn && !inBtn.dataset.v183){
+      inBtn.dataset.v183='1';
+      inBtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        sec.classList.remove('v177-show-name');
+        sec.classList.add('v177-show-inward');
+        if(inwardGrid)inwardGrid.style.display='grid';
+        if(inwardBtn)inwardBtn.style.display='inline-block';
+        if(inwardMsg)inwardMsg.style.display='';
+      });
+    }
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
+  else setup();
+  [250,700,1500,2500].forEach(t=>setTimeout(setup,t));
+})();
+</script>
+<script>
+/* V189: Item Master Add Item click toggles the Item form open/closed. */
+</script>
+<script>
+/* V188: Material Inward click toggles its fields open/closed. */
+</script>
+<script>
+/* V187: Raw Material Name click toggles its fields open/closed. */
+</script>
+<script>
+/* V186: V183 base — existing single X buttons moved to far right. */
+</script>
+
+<script>
+/* V187: Raw Material Name submenu toggles its fields open/closed. */
+(function(){
+  function setup(){
+    const sec=document.getElementById('rawmaterials');
+    const btn=document.getElementById('v174AddRaw');
+    const box=document.getElementById('rawMaterialMasterAddBox');
+    if(!sec||!btn||!box)return;
+
+    if(!btn.dataset.v187){
+      btn.dataset.v187='1';
+      btn.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const isOpen=sec.classList.contains('v187-name-open') ||
+                     getComputedStyle(box).display!=='none';
+        if(isOpen){
+          box.style.display='none';
+          sec.classList.remove('v177-show-name','v187-name-open');
+        }else{
+          box.style.display='block';
+          sec.classList.remove('v177-show-inward','v178-show-inward');
+          sec.classList.add('v177-show-name','v187-name-open');
+          const code=document.getElementById('rmCode');
+          if(code)setTimeout(()=>code.focus(),50);
+        }
+      },true);
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
+  else setup();
+  [300,800,1500].forEach(t=>setTimeout(setup,t));
+})();
+</script>
+
+<script>
+/* V188: Material Inward submenu toggles its fields open/closed like Raw Material Name. */
+(function(){
+  function setup(){
+    const sec=document.getElementById('rawmaterials');
+    const btn=document.getElementById('v174AddRawStock');
+    const date=document.getElementById('rmPurchaseDate');
+    const grid=date ? date.closest('.grid') : null;
+    const addBtn=document.getElementById('rmPurchaseBtn');
+    const msg=document.getElementById('rmPurchaseMsg');
+    if(!sec||!btn||!grid)return;
+
+    if(!btn.dataset.v188){
+      btn.dataset.v188='1';
+      btn.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        const isOpen=sec.classList.contains('v188-inward-open') ||
+          (getComputedStyle(grid).display!=='none');
+
+        if(isOpen){
+          grid.style.display='none';
+          if(addBtn)addBtn.style.display='none';
+          if(msg)msg.style.display='none';
+          sec.classList.remove('v177-show-inward','v178-show-inward','v188-inward-open');
+        }else{
+          grid.style.display='grid';
+          if(addBtn)addBtn.style.display='inline-block';
+          if(msg)msg.style.display='';
+          sec.classList.remove('v177-show-name','v187-name-open');
+          sec.classList.add('v177-show-inward','v188-inward-open');
+          setTimeout(()=>date.focus(),50);
+        }
+      },true);
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
+  else setup();
+  [300,800,1500].forEach(t=>setTimeout(setup,t));
+})();
+</script>
+
+<script>
+/* V189: Item Master Add Item submenu toggles its form open/closed. */
+(function(){
+  function setup(){
+    const sec=document.getElementById('items');
+    const btn=document.getElementById('v172AddItem');
+    if(!sec||!btn)return;
+
+    if(!btn.dataset.v189){
+      btn.dataset.v189='1';
+      btn.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        const panel=sec.querySelector('.panel');
+        const grid=panel ? panel.querySelector('.grid') : null;
+        const addBtn=document.getElementById('addItemBtn');
+        if(!grid)return;
+
+        const isOpen=sec.classList.contains('v189-item-open') ||
+          getComputedStyle(grid).display!=='none';
+
+        if(isOpen){
+          grid.style.display='none';
+          if(addBtn)addBtn.style.display='none';
+          sec.classList.remove('v189-item-open');
+        }else{
+          grid.style.display='grid';
+          if(addBtn)addBtn.style.display='inline-block';
+          sec.classList.add('v189-item-open');
+          const code=document.getElementById('itemCode');
+          if(code)setTimeout(()=>code.focus(),50);
+        }
+      },true);
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);
+  else setup();
+  [300,800,1500].forEach(t=>setTimeout(setup,t));
+})();
+</script>
+
+<script>/* V204: Party ledger shows Amount/GST/Bill totals and signed Pending Due balance for every entry. */</script>
+
+<script>
+/* V205: Based on V204. Running Pending Balance uses DB for debit and CR for credit. */
+</script>
+<script>/* V206: Based on V205. Bill Summary running Pending Balance DB/CR. */</script>
+
+<script>/* V207: Explicit Debit Total and Credit Total labels. Based on V206. */</script>
+
+
+
+<script>
+/* V216 — Fix Accounting + submenu + field toggle. Based on V215. */
+(function(){
+  function initV216(){
+    const acc=document.querySelector('.v212AccountingSideBtn');
+    const menu=document.getElementById('accountingSubMenuV211');
+    const receive=document.getElementById('openReceivePaymentBtn');
+    const pay=document.getElementById('openPaySupplierBtn');
+    const rs=document.getElementById('receivePaymentSection');
+    const ps=document.getElementById('paySupplierSection');
+    if(!acc||!menu||!receive||!pay||!rs||!ps)return;
+
+    acc.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen=menu.style.display==='block';
+      menu.style.display=isOpen?'none':'block';
+      acc.setAttribute('aria-expanded',isOpen?'false':'true');
+      if(isOpen){ rs.style.display='none'; ps.style.display='none'; }
+      const target=document.getElementById('accounting');
+      if(target){
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+        target.classList.add('active');
+        document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+        acc.classList.add('active');
+      }
+    };
+
+    receive.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const opening=rs.style.display!=='block';
+      rs.style.display=opening?'block':'none';
+      ps.style.display='none';
+      if(opening && typeof setPaymentDateToday==='function') setPaymentDateToday();
+    };
+
+    pay.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const opening=ps.style.display!=='block';
+      ps.style.display=opening?'block':'none';
+      rs.style.display='none';
+      if(opening && typeof setDateTodayV87==='function') setDateTodayV87('accPaySupplierDate');
+    };
+  }
+
+  function boot(){
+    initV216();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
+  else boot();
+  [300,800,1500].forEach(t=>setTimeout(initV216,t));
+})();
+</script>
+
+
+
+<script>
+/* V219: Final Accounting submenu fix.
+   Uses explicit class/attribute state and prevents older handlers from
+   immediately hiding the submenu/forms. */
+(function(){
+  function initV219(){
+    const acc=document.querySelector('.v212AccountingSideBtn');
+    const menu=document.getElementById('accountingSubMenuV211');
+    const receive=document.getElementById('openReceivePaymentBtn');
+    const pay=document.getElementById('openPaySupplierBtn');
+    const rs=document.getElementById('receivePaymentSection');
+    const ps=document.getElementById('paySupplierSection');
+    if(!acc||!menu||!receive||!pay||!rs||!ps)return;
+
+    // Initial state: submenu and both forms closed.
+    menu.hidden=true;
+    rs.hidden=true;
+    ps.hidden=true;
+    acc.setAttribute('aria-expanded','false');
+
+    acc.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const opening=menu.hidden===true;
+      menu.hidden=!opening;
+      menu.style.display=opening?'block':'none';
+      acc.setAttribute('aria-expanded',opening?'true':'false');
+
+      const page=document.getElementById('accounting');
+      if(page){
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+        page.classList.add('active');
+      }
+    },true);
+
+    receive.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      // Keep Accounting submenu visible.
+      menu.hidden=false;
+      menu.style.display='block';
+      acc.setAttribute('aria-expanded','true');
+
+      const opening=rs.hidden===true;
+      rs.hidden=!opening;
+      rs.style.display=opening?'block':'none';
+      ps.hidden=true;
+      ps.style.display='none';
+
+      if(opening && typeof setPaymentDateToday==='function')setPaymentDateToday();
+    },true);
+
+    pay.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      // Keep Accounting submenu visible.
+      menu.hidden=false;
+      menu.style.display='block';
+      acc.setAttribute('aria-expanded','true');
+
+      const opening=ps.hidden===true;
+      ps.hidden=!opening;
+      ps.style.display=opening?'block':'none';
+      rs.hidden=true;
+      rs.style.display='none';
+
+      if(opening && typeof setDateTodayV87==='function')setDateTodayV87('accPaySupplierDate');
+    },true);
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV219);
+  else initV219();
+})();
+</script>
+
+<script>
+/* V220: Master menu. Clicking Master toggles all Master submenus. */
+(function(){
+ function initV220Master(){
+  const btn=document.getElementById('v220MasterBtn'),menu=document.getElementById('v220MasterSubMenu');
+  if(!btn||!menu||btn.dataset.v220Ready==='1')return;
+  btn.dataset.v220Ready='1'; menu.hidden=true; btn.setAttribute('aria-expanded','false');
+  btn.addEventListener('click',function(e){
+   e.preventDefault(); e.stopImmediatePropagation();
+   const opening=menu.hidden===true; menu.hidden=!opening;
+   btn.setAttribute('aria-expanded',opening?'true':'false'); btn.classList.toggle('active',opening);
+  },true);
+  menu.querySelectorAll('button[data-page]').forEach(child=>child.addEventListener('click',function(){
+   menu.hidden=false; btn.setAttribute('aria-expanded','true'); btn.classList.add('active');
+  },true));
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV220Master);else initV220Master();
+})();
+</script>
+
+<!-- V222: Vendor Master moved from Job Work page into Master submenu as a separate page. -->
+
+<!-- V223: Fixed Vendor Master list rendering below the Vendor Master form. Based on V222. -->
+
+<script>
+/* V225: Job Work submenu. Job Work toggles two entry sections. */
+(function(){
+ function initV225JobWork(){
+  const btn=document.getElementById('v225JobWorkBtn'),menu=document.getElementById('jobWorkSubMenuV225');
+  const issueBtn=document.getElementById('openJWIssueBtnV225'),receiveBtn=document.getElementById('openJWReceiveBtnV225');
+  const issue=document.getElementById('jwIssueSectionV225'),receive=document.getElementById('jwReceiveSectionV225');
+  if(!btn||!menu||!issueBtn||!receiveBtn||!issue||!receive||btn.dataset.v225Ready==='1')return;
+  btn.dataset.v225Ready='1';
+  menu.hidden=true; issue.hidden=true; receive.hidden=true;
+  btn.setAttribute('aria-expanded','false');
+  function showPage(){
+   const page=document.getElementById('jobwork');
+   if(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));page.classList.add('active');}
+  }
+  btn.addEventListener('click',function(e){
+   e.preventDefault(); e.stopImmediatePropagation();
+   const opening=menu.hidden===true;
+   menu.hidden=!opening; menu.style.display=opening?'block':'none';
+   btn.setAttribute('aria-expanded',opening?'true':'false');
+   if(!opening){issue.hidden=true;receive.hidden=true;}
+   showPage();
+  },true);
+  issueBtn.addEventListener('click',function(e){
+   e.preventDefault(); e.stopImmediatePropagation();
+   menu.hidden=false; menu.style.display='block'; btn.setAttribute('aria-expanded','true');
+   const opening=issue.hidden===true; issue.hidden=!opening; issue.style.display=opening?'block':'none';
+   receive.hidden=true; receive.style.display='none'; showPage();
+  },true);
+  receiveBtn.addEventListener('click',function(e){
+   e.preventDefault(); e.stopImmediatePropagation();
+   menu.hidden=false; menu.style.display='block'; btn.setAttribute('aria-expanded','true');
+   const opening=receive.hidden===true; receive.hidden=!opening; receive.style.display=opening?'block':'none';
+   issue.hidden=true; issue.style.display='none'; showPage();
+  },true);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV225JobWork);else initV225JobWork();
+})();
+</script>
+
+<!-- V226: Job Work submenu labels updated: removed 1./2. numbering and kept suitable icons. Based on V225. -->
+<script>
+/* V226: Raw Material Issue Date added. */
+(function(){
+ function setIssueDate(){
+  const e=document.getElementById('jwIssueDate');
+  if(!e || e.value)return;
+  const d=new Date();
+  e.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setIssueDate);
+ else setIssueDate();
+})();
+</script>
+
+<script>
+/* V227: Job Work side last transaction history for Raw Material Issue to Vendor. */
+(function(){
+  function esc(v){
+    return String(v ?? '').replace(/[&<>"']/g,function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);
+    });
+  }
+
+  function renderJWLastIssueHistoryV227(){
+    const box=document.getElementById('jwLastIssueHistoryTableV227');
+    if(!box)return;
+
+    let tx=[];
+    try{ tx=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]'); }catch(e){ tx=[]; }
+
+    const rows=tx.filter(t=>{
+      const type=String(t.type||t.transactionType||'').toUpperCase();
+      return type==='JOB WORK ISSUE' ||
+             type==='JOBWORK ISSUE' ||
+             type==='JW ISSUE' ||
+             type==='RAW MATERIAL ISSUE TO VENDOR';
+    });
+
+    if(!rows.length){
+      box.innerHTML='<div style="padding:10px">No Raw Material Issue transactions yet.</div>';
+      return;
+    }
+
+    const recent=rows.slice().reverse().slice(0,10);
+    let h='<div style="overflow:auto"><table><thead><tr>'+
+      '<th>Date</th><th>Vendor</th><th>Raw Material</th><th>Qty</th><th>Reference</th>'+
+      '</tr></thead><tbody>';
+
+    recent.forEach(t=>{
+      h+='<tr>'+
+        '<td>'+esc(t.date||t.issueDate||'')+'</td>'+
+        '<td>'+esc(t.vendor||t.vendorName||t.party||'')+'</td>'+
+        '<td>'+esc(t.itemName||t.material||t.rawMaterial||t.item||'')+'</td>'+
+        '<td>'+esc(t.issueQty ?? t.qty ?? '')+'</td>'+
+        '<td>'+esc(t.ref||t.billNo||t.invoiceNo||t.reference||'')+'</td>'+
+      '</tr>';
+    });
+
+    h+='</tbody></table></div>';
+    box.innerHTML=h;
+  }
+
+  function initV227(){
+    renderJWLastIssueHistoryV227();
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',initV227);
+  }else{
+    initV227();
+  }
+
+  // Refresh the visible history after a transaction is saved.
+  setInterval(renderJWLastIssueHistoryV227,1000);
+})();
+</script>
+
+<!-- V227: Job Work module now shows Raw Material Issue to Vendor last transaction history. Based on V226. -->
+
+<style id="v228VendorRawBalanceStyle">
+/* V228: Vendor Raw Material Balance red + bold + larger font. */
+#jwTable td:nth-child(3), #jwTable td:nth-child(4) {
+  color: red !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+}
+</style>
+
+<script id="v231ReportMenuScript">
+/* V231: Report is the main menu; all report modules are submenus. */
+(function(){
+  function initV231(){
+    const btn=document.getElementById('v231ReportBtn');
+    const menu=document.getElementById('v231ReportSubMenu');
+    if(!btn||!menu||btn.dataset.ready==='1')return;
+    btn.dataset.ready='1';
+
+    const panels={
+      dispatch:document.getElementById('dispatchReportPanel'),
+      purchase:document.getElementById('purchaseReportPanel'),
+      production:document.getElementById('productionReportPanel'),
+      jobwork:document.getElementById('jobWorkMonthlyReportPanel')
+    };
+
+    function openReportsPage(){
+      const page=document.getElementById('reports');
+      if(page){
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+        page.classList.add('active');
+      }
+      document.querySelectorAll('.tabs>button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function hideReportPanels(){
+      Object.values(panels).forEach(p=>{if(p)p.style.display='none';});
+      const gst=document.getElementById('v168GSTReport');
+      if(gst)gst.style.display='none';
+      const gstOpen=document.getElementById('v168OpenGST');
+      if(gstOpen)gstOpen.style.display='none';
+    }
+
+    function show(which){
+      openReportsPage();
+      menu.hidden=false; menu.style.display='flex';
+      btn.setAttribute('aria-expanded','true');
+      hideReportPanels();
+      const dash=document.getElementById('v235ReportDashboard');
+      if(dash)dash.style.display='block';
+      const p=panels[which];
+      if(p)p.style.display='block';
+      if(which==='jobwork' && typeof renderJobWorkMonthlyReport==='function')renderJobWorkMonthlyReport();
+    }
+
+    btn.addEventListener('click',function(e){
+      e.preventDefault(); e.stopImmediatePropagation();
+      const opening=menu.hidden===true;
+      menu.hidden=!opening; menu.style.display=opening?'flex':'none';
+      btn.setAttribute('aria-expanded',opening?'true':'false');
+      btn.classList.toggle('active',opening);
+      if(opening){
+        openReportsPage();
+        hideReportPanels();
+        const dash=document.getElementById('v235ReportDashboard');
+        if(dash)dash.style.display='block';
+      }
+    },true);
+
+    document.getElementById('v231DispatchReportBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();show('dispatch');},true);
+    document.getElementById('v231PurchaseReportBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();show('purchase');},true);
+    document.getElementById('v231ProductionReportBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();show('production');},true);
+    document.getElementById('v231JWReportBtn')?.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();show('jobwork');},true);
+    document.getElementById('v231GSTReportBtn')?.addEventListener('click',e=>{
+      e.preventDefault(); e.stopImmediatePropagation(); openReportsPage();
+      menu.hidden=false; menu.style.display='flex'; btn.setAttribute('aria-expanded','true');
+      hideReportPanels();
+      const dash=document.getElementById('v235ReportDashboard');
+      if(dash)dash.style.display='none';
+      if(typeof window.renderV168GSTReport==='function')window.renderV168GSTReport();
+      else document.getElementById('v168OpenGST')?.click();
+      const gst=document.getElementById('v168GSTReport');
+      if(gst)gst.style.display='block';
+    },true);
+
+    document.querySelectorAll('[data-v235-report]').forEach(b=>b.addEventListener('click',function(e){
+      e.preventDefault(); e.stopImmediatePropagation();
+      const which=this.getAttribute('data-v235-report');
+      if(which==='gst'){
+        openReportsPage();
+        menu.hidden=false; menu.style.display='flex';
+        btn.setAttribute('aria-expanded','true');
+        hideReportPanels();
+        const dash=document.getElementById('v235ReportDashboard');
+        if(dash)dash.style.display='block';
+        if(typeof window.renderV168GSTReport==='function')window.renderV168GSTReport();
+        else document.getElementById('v168OpenGST')?.click();
+        const gst=document.getElementById('v168GSTReport');
+        if(gst)gst.style.display='block';
+      }
+      else if(which==='dispatch'){document.getElementById('v231DispatchReportBtn')?.click();}
+      else if(which==='purchase'){document.getElementById('v231PurchaseReportBtn')?.click();}
+      else if(which==='production'){document.getElementById('v231ProductionReportBtn')?.click();}
+      else if(which==='jobwork'){document.getElementById('v231JWReportBtn')?.click();}
+    },true));
+
+    menu.hidden=true; menu.style.display='none';
+    const dash=document.getElementById('v235ReportDashboard'); if(dash)dash.style.display='block';
+    btn.setAttribute('aria-expanded','false');
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initV231);
+  else initV231();
+})();
+</script>
+
+
+
+<script id="v255BackupSideMenuScript">
+(function(){
+  function init(){
+    const btn=document.getElementById('v255BackupBtn');
+    const sub=document.getElementById('v255BackupSubMenu');
+    if(!btn||!sub)return;
+    btn.onclick=function(){
+      const open=sub.hasAttribute('hidden');
+      sub.toggleAttribute('hidden',!open);
+      btn.setAttribute('aria-expanded',String(open));
+      btn.classList.toggle('active',open);
+    };
+    const dl=document.getElementById('v255DownloadBackupBtn');
+    if(dl)dl.onclick=function(){ if(typeof window.downloadSentidosBackup==='function') window.downloadSentidosBackup(); };
+    const gd=document.getElementById('v255DriveBackupBtn');
+    if(gd)gd.onclick=function(){ if(typeof window.saveSentidosToDrive==='function') window.saveSentidosToDrive(); };
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+
+(function initV266StockMenu(){
+ const stockBtn=document.getElementById('v266StockBtn');
+ const sub=document.getElementById('v266StockSubMenu');
+ const txBtn=document.getElementById('v266StockTransactionBtn');
+ const itemsPanel=document.getElementById('v266StockItemsPanel');
+ const txPanel=document.getElementById('v266StockTransactionPanel');
+ if(!stockBtn||!sub||!txBtn||!itemsPanel||!txPanel)return;
+ function showItems(){
+   itemsPanel.style.display='block';
+   txPanel.style.display='none';
+   txBtn.classList.remove('active');
+ }
+ function showTx(){
+   itemsPanel.style.display='none';
+   txPanel.style.display='block';
+   txBtn.classList.add('active');
+ }
+ stockBtn.addEventListener('click',function(){
+   sub.hidden=false;
+   stockBtn.setAttribute('aria-expanded','true');
+   showItems();
+   setTimeout(function(){
+     const search=document.getElementById('v260StockSearch');
+     if(search){search.focus(); search.select();}
+   },50);
+ });
+ txBtn.addEventListener('click',function(e){
+   e.preventDefault();e.stopPropagation();
+   sub.hidden=false;
+   stockBtn.setAttribute('aria-expanded','true');
+   const page=document.getElementById('stock');
+   if(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));page.classList.add('active');}
+   document.querySelectorAll('.tabs button[data-page]').forEach(b=>b.classList.remove('active'));
+   stockBtn.classList.add('active');
+   showTx();
+ });
+ showItems();
+})();
+
+// V286: Hide Dashboard's opened Total Items/details list whenever any other menu/action is selected.
+document.addEventListener('click',function(e){
+ const el=e.target.closest('button, [data-page]');
+ if(!el) return;
+ const page=el.getAttribute('data-page');
+ const isDashboard=page==='dashboard';
+ const isDashboardCard=!!el.closest('#dashboard .dashCard');
+ if(isDashboardCard || isDashboard) return;
+ const isNavigation=!!page || !!el.closest('.tabs') || /^(v231ReportBtn|v255BackupBtn|v266StockBtn|v266StockTransactionBtn|v225JobWorkBtn|v220MasterBtn|v212AccountingSideBtn|openReceivePaymentBtn|openPaySupplierBtn)$/.test(el.id||'');
+ if(isNavigation) hideDashboardDetailsOnNavigation();
+},true);
+</script>
+
+
+<script id="v293DashboardController">
+(function(){
+  function clear(){
+    const b=document.getElementById('dashboardDetails');
+    if(b){b.style.display='none';b.removeAttribute('data-dashboard-filter');}
+    const t=document.getElementById('dashboardDetailsTable'); if(t)t.innerHTML='';
+    ['v152SalesBox','v153PurchaseBox'].forEach(id=>{const x=document.getElementById(id);if(x)x.remove();});
+  }
+  function openType(type){
+    if(type==='sales'){ if(typeof openSales==='function') openSales(); return; }
+    if(type==='purchase'){ if(typeof openPurchase==='function') openPurchase(); return; }
+    if(typeof showDashboardFilter==='function'){
+      showDashboardFilter(type);
+      const b=document.getElementById('dashboardDetails'); if(b)b.dataset.dashboardFilter=type;
+    }
+  }
+  function isOpen(type){
+    if(type==='sales'){const x=document.getElementById('v152SalesBox');return !!x;}
+    if(type==='purchase'){const x=document.getElementById('v153PurchaseBox');return !!x;}
+    const b=document.getElementById('dashboardDetails');
+    return !!b && b.style.display!=='none' && b.dataset.dashboardFilter===type;
+  }
+  function handler(e){
+    const card=e.target && e.target.closest ? e.target.closest('#dashboard .dashCard') : null;
+    if(!card)return;
+    const type=card.getAttribute('data-filter')||'';
+    const same=isOpen(type);
+    clear();
+    if(!same)openType(type);
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  // One handler only. It is deliberately installed at document bubble phase.
+  document.addEventListener('click',handler,false);
+  function style(){document.querySelectorAll('#dashboard .dashCard').forEach(c=>{c.style.cursor='pointer';c.style.pointerEvents='auto';});}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',style);else style();
+  setTimeout(style,500);setTimeout(style,1500);
+})();
+</script>
+<script id="v294DashboardMenuFix">
+(function(){
+  function goDashboard(e){
+    const btn=e.target.closest && e.target.closest('button[data-page="dashboard"]');
+    if(!btn) return;
+    const page=document.getElementById('dashboard');
+    if(!page) return;
+    e.preventDefault();
+    e.stopPropagation();
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+    page.classList.add('active');
+    document.querySelectorAll('.tabs button[data-page]').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    try{sessionStorage.setItem('sentidosLastPage','dashboard');}catch(err){}
+    if(typeof hideDashboardDetailsOnNavigation==='function') hideDashboardDetailsOnNavigation();
+    if(typeof render==='function') render();
+  }
+  document.addEventListener('click',goDashboard,true);
+})();
+</script>
+
+<script id="v295DashboardFinalFix">
+(function(){
+  function dashboard(){
+    const page=document.getElementById('dashboard');
+    if(!page) return;
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    page.classList.add('active');
+    document.querySelectorAll('.tabs button[data-page]').forEach(b=>b.classList.remove('active'));
+    const btn=document.querySelector('.tabs button[data-page="dashboard"]');
+    if(btn) btn.classList.add('active');
+    if(typeof hideDashboardDetailsOnNavigation==='function') hideDashboardDetailsOnNavigation();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  function bind(){
+    const btn=document.querySelector('.tabs button[data-page="dashboard"]');
+    if(btn){ btn.type='button'; btn.onclick=function(e){e.preventDefault(); dashboard();}; }
+    // V152/V153 functions are inside IIFEs, so expose them when available.
+    if(typeof openSales==='function') window.openSales=openSales;
+    if(typeof openPurchase==='function') window.openPurchase=openPurchase;
+    document.querySelectorAll('#dashboard .dashCard').forEach(card=>{
+      card.style.pointerEvents='auto';
+      card.style.cursor='pointer';
+      card.onclick=function(e){
+        e.preventDefault(); e.stopPropagation();
+        const type=card.getAttribute('data-filter');
+        if(type==='sales' && typeof window.openSales==='function'){ window.openSales(); return; }
+        if(type==='purchase' && typeof window.openPurchase==='function'){ window.openPurchase(); return; }
+        if(typeof showDashboardFilter==='function') showDashboardFilter(type);
+      };
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind);
+  else bind();
+  setTimeout(bind,300); setTimeout(bind,1000);
+})();
+</script>
+
+<!-- V298: Dashboard card fix placed in the REAL document footer (not inside print/template HTML). -->
+<script id="v298DashboardCardFinalFix">
+(function(){
+  function showCard(type){
+    try{
+      if(type==='sales' && typeof openSales==='function'){ openSales(); return; }
+      if(type==='purchase' && typeof openPurchase==='function'){ openPurchase(); return; }
+      if(typeof showDashboardFilter==='function'){ showDashboardFilter(type); return; }
+    }catch(err){ console.error('Dashboard card:',err); }
+  }
+  function bind(){
+    document.querySelectorAll('#dashboard .dashCard').forEach(function(card){
+      card.style.pointerEvents='auto';
+      card.style.cursor='pointer';
+      card.setAttribute('role','button');
+      card.onclick=function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        showCard(card.getAttribute('data-filter')||'');
+      };
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind);
+  else bind();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
+})();
+</script>
+
+<!-- V299: Final direct Dashboard card click binding. -->
+<script id="v299DashboardDirectClickFix">
+(function(){
+  function bind(){
+    document.querySelectorAll('#dashboard .dashCard').forEach(function(card){
+      var type=card.getAttribute('data-filter')||'';
+      card.style.pointerEvents='auto';
+      card.style.cursor='pointer';
+      card.onclick=function(e){
+        if(e){e.preventDefault(); e.stopPropagation();}
+        if(type==='sales' && typeof window.openSales==='function'){ window.openSales(); return false; }
+        if(type==='purchase' && typeof window.openPurchase==='function'){ window.openPurchase(); return false; }
+        if(typeof window.showDashboardFilter==='function'){ window.showDashboardFilter(type); return false; }
+        return false;
+      };
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind);
+  else bind();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
+})();
+</script>
+<!-- V301: Dashboard card toggle - second click hides opened details. -->
+<script id="v301DashboardCardToggleFix">
+(function(){
+  function hideDetails(){
+    var b=document.getElementById('dashboardDetails');
+    if(b){b.style.display='none';b.removeAttribute('data-dashboard-filter');}
+    var t=document.getElementById('dashboardDetailsTable'); if(t)t.innerHTML='';
+    ['v152SalesBox','v153PurchaseBox'].forEach(function(id){var x=document.getElementById(id);if(x)x.remove();});
+  }
+  function isOpen(type){
+    if(type==='sales') return !!document.getElementById('v152SalesBox');
+    if(type==='purchase') return !!document.getElementById('v153PurchaseBox');
+    var b=document.getElementById('dashboardDetails');
+    return !!b && b.style.display!=='none' && b.dataset.dashboardFilter===type;
+  }
+  function bind(){
+    document.querySelectorAll('#dashboard .dashCard').forEach(function(card){
+      var type=card.getAttribute('data-filter')||'';
+      card.onclick=function(e){
+        if(e){e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();}
+        if(isOpen(type)){ hideDetails(); return false; }
+        hideDetails();
+        if(type==='sales' && typeof window.openSales==='function'){window.openSales();return false;}
+        if(type==='purchase' && typeof window.openPurchase==='function'){window.openPurchase();return false;}
+        if(typeof window.showDashboardFilter==='function'){
+          window.showDashboardFilter(type);
+          var b=document.getElementById('dashboardDetails');
+          if(b)b.dataset.dashboardFilter=type;
+        }
+        return false;
+      };
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
+})();
+</script>
+
+\n<!-- V302: RAW MATERIAL STOCK card opens month-wise raw material transaction history. -->\n<script id="v302RawMaterialMonthHistory">\n(function(){\n  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}\n  function monthLabel(k){\n    var p=String(k).split('-');\n    var names=['January','February','March','April','May','June','July','August','September','October','November','December'];\n    return p.length>=2 ? (names[Math.max(0,Number(p[1])-1)]||p[1])+' '+p[0] : k;\n  }\n  function rawHistory(){\n    var rows=Array.isArray(window.transactions)?window.transactions:[];\n    var months={};\n    rows.forEach(function(t){\n      var type=String(t.type||'').toUpperCase();\n      if(['RAW MATERIAL COMPANY INWARD','JOB WORK ISSUE','PRODUCTION','RAW MATERIAL SALE'].indexOf(type)<0)return;\n      var code=String(t.item||'').replace(/^RM:/,'');\n      var raw=(window.rawMaterials||[]).find(function(r){return String(r.code)===code;});\n      if(!raw)return;\n      var d=String(t.date||''); if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(d))return;\n      var k=d.slice(0,7);\n      if(!months[k])months[k]={inward:0,issue:0,production:0,sale:0,rows:[]};\n      var q=Math.abs(Number(t.qty)||0);\n      if(type==='RAW MATERIAL COMPANY INWARD')months[k].inward+=q;\n      else if(type==='JOB WORK ISSUE')months[k].issue+=q;\n      else if(type==='PRODUCTION')months[k].production+=q;\n      else if(type==='RAW MATERIAL SALE')months[k].sale+=q;\n      months[k].rows.push({date:d,type:type,code:code,name:raw.name||code,qty:q,unit:t.unit||raw.unit||'KG',ref:t.ref||t.inwardRef||t.billNo||t.invoiceNo||'',party:t.supplier||t.vendor||t.customer||''});\n    });\n    var keys=Object.keys(months).sort().reverse();\n    var box=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');\n    if(!box||!title||!table)return;\n    var th=table.querySelector('thead');if(th)th.style.display='none';title.textContent='RAW MATERIAL STOCK — Transaction History Month Wise';\n    table.innerHTML='<tr><th>Month</th><th>Inward</th><th>Job Work Issue</th><th>Production Used</th><th>Raw Material Sale</th><th>Total Outward</th></tr>'+\n      (keys.map(function(k){var m=months[k],out=m.issue+m.production+m.sale;return '<tr><td><b>'+esc(monthLabel(k))+'</b></td><td>'+m.inward.toFixed(3)+'</td><td>'+m.issue.toFixed(3)+'</td><td>'+m.production.toFixed(3)+'</td><td>'+m.sale.toFixed(3)+'</td><td>'+out.toFixed(3)+'</td></tr>';}).join('')||'<tr><td colspan="6">No raw material transaction history found</td></tr>');\n    box.style.display='block';\n    box.dataset.dashboardFilter='raw';\n    box.scrollIntoView({behavior:'smooth',block:'start'});\n  }\n  function bind(){\n    document.querySelectorAll('#dashboard .dashCard[data-filter="raw"]').forEach(function(card){\n      card.onclick=function(e){\n        e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();\n        var box=document.getElementById('dashboardDetails');\n        if(box && box.style.display!=='none' && box.dataset.dashboardFilter==='raw'){\n          if(typeof hideDashboardDetailsOnNavigation==='function')hideDashboardDetailsOnNavigation();\n          else box.style.display='none';\n          return false;\n        }\n        if(typeof hideDashboardDetailsOnNavigation==='function')hideDashboardDetailsOnNavigation();\n        rawHistory();\n        return false;\n      };\n    });\n  }\n  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();\n  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});\n})();\n</script>\n<!-- V303: RAW MATERIAL STOCK click shows current stock followed by month-wise transaction history. -->
+<script id="v304RawMaterialStockAndHistory">
+(function(){
+ function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+ function monthKey(v){var s=String(v||'').trim(),m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);return m?m[1]+'-'+String(m[2]).padStart(2,'0'):'';}
+ function monthLabel(k){var n=['January','February','March','April','May','June','July','August','September','October','November','December'],p=k.split('-');return n[Number(p[1])-1]+' '+p[0];}
+ function read(key){try{var a=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(a)?a:[];}catch(e){return[];}}
+ function render(){
+   var box=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!box||!title||!table)return;
+   var rmList=read('adr_rawmaterials_v2'),rows=read('adr_tx_v2'),months={};
+   rows.forEach(function(t){
+     var type=String(t.type||t.transactionType||'').toUpperCase();
+     if(type!=='RAW MATERIAL COMPANY INWARD'&&type!=='JOB WORK ISSUE'&&type!=='PRODUCTION'&&type!=='RAW MATERIAL SALE')return;
+     var code=String(t.item||'').replace(/^RM:/i,'');
+     if(!rmList.some(function(r){return String(r.code)===code;}))return;
+     var k=monthKey(t.date||t.createdAt||t.timestamp);if(!k)return;
+     if(!months[k])months[k]={inward:0,issue:0,production:0,sale:0};
+     var q=Math.abs(Number(t.qty)||0);
+     if(type==='RAW MATERIAL COMPANY INWARD')months[k].inward+=q;
+     else if(type==='JOB WORK ISSUE')months[k].issue+=q;
+     else if(type==='PRODUCTION')months[k].production+=q;
+     else months[k].sale+=q;
+   });
+   var html='<tr><th colspan="7" style="text-align:left;padding-top:16px">Month Wise Transaction History</th></tr><tr><th>Month</th><th>Inward</th><th>Job Work Issue</th><th>Production Used</th><th>Raw Material Sale</th><th>Total Outward</th><th>Net Inward</th></tr>';
+   var keys=Object.keys(months).sort().reverse();
+   if(keys.length){keys.forEach(function(k){var m=months[k],out=m.issue+m.production+m.sale;html+='<tr><td><b>'+monthLabel(k)+'</b></td><td>'+m.inward.toFixed(3)+'</td><td>'+m.issue.toFixed(3)+'</td><td>'+m.production.toFixed(3)+'</td><td>'+m.sale.toFixed(3)+'</td><td>'+out.toFixed(3)+'</td><td>'+ (m.inward-out).toFixed(3)+'</td></tr>';});}else html+='<tr><td colspan="7">No raw material transaction history found</td></tr>';
+   title.textContent='RAW MATERIAL STOCK';table.innerHTML=html;var th=table.querySelector('thead');if(th)th.style.display='none';box.style.display='block';box.dataset.dashboardFilter='raw';box.scrollIntoView({behavior:'smooth',block:'start'});
+ }
+ function hide(){var b=document.getElementById('dashboardDetails');if(b){b.style.display='none';b.removeAttribute('data-dashboard-filter');}}
+ function bind(){document.querySelectorAll('#dashboard .dashCard[data-filter="raw"]').forEach(function(c){c.onclick=function(e){if(e){e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();}var b=document.getElementById('dashboardDetails');if(b&&b.style.display!=='none'&&b.dataset.dashboardFilter==='raw'){hide();return false;}hide();render();return false;};});}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();[300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
+})();
+</script>
+
+<script id="v305RawMonthClickDetails">
+(function(){
+function read(k){try{var a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function openMonth(k){
+ var tx=read('adr_tx_v2'), rms=read('adr_rawmaterials_v2'), rows=[];
+ tx.forEach(function(t){
+  var d=String(t.date||'').slice(0,7); if(d!==k)return;
+  var type=String(t.type||'').toUpperCase();
+  if(['RAW MATERIAL COMPANY INWARD','JOB WORK ISSUE','PRODUCTION','RAW MATERIAL SALE'].indexOf(type)<0)return;
+  var code=String(t.item||'').replace(/^RM:/,'');
+  var r=rms.find(function(x){return String(x.code)===code}); if(!r)return;
+  var q=Math.abs(Number(t.qty)||0);
+  rows.push({date:t.date||'',type:type,code:code,name:r.name||code,qty:q,unit:t.unit||r.unit||'KG',ref:t.ref||t.inwardRef||t.billNo||t.invoiceNo||'',party:t.supplier||t.vendor||t.customer||''});
+ });
+ rows.sort(function(a,b){return String(b.date).localeCompare(String(a.date))});
+ var box=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');
+ if(!box||!title||!table)return;
+ var th=table.querySelector('thead');if(th)th.style.display='none';title.innerHTML='RAW MATERIAL STOCK — '+esc(k)+' <button type="button" id="v305BackMonth" style="float:right">← Month Wise</button>';
+ table.innerHTML='<tr><th>Date</th><th>Type</th><th>Code</th><th>Raw Material</th><th>Party</th><th>Qty</th><th>Unit</th><th>Reference</th></tr>'+
+ (rows.map(function(x){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.code)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.party)+'</td><td>'+x.qty.toFixed(3)+'</td><td>'+esc(x.unit)+'</td><td>'+esc(x.ref)+'</td></tr>'}).join('')||'<tr><td colspan="8">No transactions found for this month</td></tr>');
+ box.style.display='block'; box.dataset.dashboardFilter='raw-month-detail';
+ document.getElementById('v305BackMonth').onclick=function(e){e.stopPropagation();if(typeof window.v305RenderMonths==='function')window.v305RenderMonths()};
+}
+window.v305RenderMonths=function(){
+ var tx=read('adr_tx_v2'),rms=read('adr_rawmaterials_v2'),m={};
+ tx.forEach(function(t){
+  var type=String(t.type||'').toUpperCase(),d=String(t.date||'');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||['RAW MATERIAL COMPANY INWARD','JOB WORK ISSUE','PRODUCTION','RAW MATERIAL SALE'].indexOf(type)<0)return;
+  var code=String(t.item||'').replace(/^RM:/,''); if(!rms.some(function(r){return String(r.code)===code}))return;
+  var k=d.slice(0,7);if(!m[k])m[k]={inward:0,issue:0,production:0,sale:0};
+  var q=Math.abs(Number(t.qty)||0);
+  if(type==='RAW MATERIAL COMPANY INWARD')m[k].inward+=q;
+  else if(type==='JOB WORK ISSUE')m[k].issue+=q;
+  else if(type==='PRODUCTION')m[k].production+=q;
+  else m[k].sale+=q;
+ });
+ var b=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!b||!title||!table)return;
+ title.textContent='RAW MATERIAL STOCK — Transaction History Month Wise';
+ var names=['January','February','March','April','May','June','July','August','September','October','November','December'];
+ var keys=Object.keys(m).sort().reverse();
+ table.innerHTML='<tr><th>Month</th><th>Inward</th><th>Job Work Issue</th><th>Production Used</th><th>Raw Material Sale</th><th>Total Outward</th></tr>'+
+ (keys.map(function(k){var x=m[k],out=x.issue+x.production+x.sale;return '<tr class="v305MonthRow" data-month="'+k+'" style="cursor:pointer"><td><b>'+names[Number(k.slice(5))-1]+' '+k.slice(0,4)+'</b></td><td>'+x.inward.toFixed(3)+'</td><td>'+x.issue.toFixed(3)+'</td><td>'+x.production.toFixed(3)+'</td><td>'+x.sale.toFixed(3)+'</td><td>'+out.toFixed(3)+'</td></tr>'}).join('')||'<tr><td colspan="6">No raw material transaction history found</td></tr>');
+ b.style.display='block';b.dataset.dashboardFilter='raw';
+ document.querySelectorAll('.v305MonthRow').forEach(function(r){r.onclick=function(){openMonth(r.dataset.month)}});
+};
+})();
+</script>
+
+<!-- V307: Hide generic Code/Name/Category/Unit/Weight/Stock/Minimum header for RAW MATERIAL STOCK history. -->
+<script id="v307HideRawGenericHeader">
+(function(){
+  function hideRawHeader(){var t=document.querySelector('#dashboardDetailsTable thead');if(t)t.style.display='none';}
+  function showGenericHeader(){var t=document.querySelector('#dashboardDetailsTable thead');if(t)t.style.display='';}
+  function bind(){
+    document.querySelectorAll('#dashboard .dashCard').forEach(function(c){
+      c.addEventListener('click',function(){
+        var type=c.getAttribute('data-filter');
+        setTimeout(function(){ if(type==='raw') hideRawHeader(); else showGenericHeader(); },20);
+      },true);
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
+})();
+</script>
+
+<script id="v309RawMonthClickFix">
+(function(){
+  function read(k){try{var a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function monthKeyFromLabel(s){
+    var m=String(s||'').trim().match(/^(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})$/i);
+    if(!m)return '';
+    var names=['january','february','march','april','may','june','july','august','september','october','november','december'];
+    var n=names.indexOf(m[1].toLowerCase()); return n<0?'':m[2]+'-'+String(n+1).padStart(2,'0');
+  }
+  function openMonth(k){
+    var tx=read('adr_tx_v2'),rms=read('adr_rawmaterials_v2'),rows=[];
+    tx.forEach(function(t){
+      var d=String(t.date||'').slice(0,10); if(d.slice(0,7)!==k)return;
+      var type=String(t.type||t.transactionType||'').toUpperCase();
+      if(['RAW MATERIAL COMPANY INWARD','JOB WORK ISSUE','PRODUCTION','RAW MATERIAL SALE'].indexOf(type)<0)return;
+      var code=String(t.item||'').replace(/^RM:/i,'');
+      var r=rms.find(function(x){return String(x.code)===code}); if(!r)return;
+      var q=Math.abs(Number(t.qty)||0);
+      rows.push({date:d,type:type,code:code,name:r.name||code,qty:q,unit:t.unit||r.unit||'KG',ref:t.ref||t.inwardRef||t.billNo||t.invoiceNo||'',party:t.supplier||t.vendor||t.customer||''});
+    });
+    rows.sort(function(a,b){return String(b.date).localeCompare(String(a.date))});
+    var box=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');
+    if(!box||!title||!table)return;
+    var names=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    title.innerHTML='RAW MATERIAL STOCK — '+esc(names[Number(k.slice(5))-1]+' '+k.slice(0,4))+' <button type="button" id="v309BackMonth" style="float:right">← Month Wise</button>';
+    table.innerHTML='<tr><th>Date</th><th>Type</th><th>Code</th><th>Raw Material</th><th>Party</th><th>Qty</th><th>Unit</th><th>Reference</th></tr>'+
+      (rows.map(function(x){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.code)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.party)+'</td><td>'+x.qty.toFixed(3)+'</td><td>'+esc(x.unit)+'</td><td>'+esc(x.ref)+'</td></tr>'}).join('')||'<tr><td colspan="8">No transactions found for this month</td></tr>');
+    box.style.display='block';box.dataset.dashboardFilter='raw-month-detail';
+    var back=document.getElementById('v309BackMonth');
+    if(back)back.onclick=function(e){e.preventDefault();e.stopPropagation(); if(typeof window.v305RenderMonths==='function'){window.v305RenderMonths();}else{var c=document.querySelector('#dashboard .dashCard[data-filter="raw"]');if(c)c.click();}};
+  }
+  function bind(){
+    var table=document.getElementById('dashboardDetailsTable'); if(!table||table.dataset.v309Bound==='1')return;
+    table.dataset.v309Bound='1';
+    table.addEventListener('click',function(e){
+      var tr=e.target.closest ? e.target.closest('tr') : null;
+      if(!tr || !table.contains(tr))return;
+      var box=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle');
+      if(!box||!title||box.dataset.dashboardFilter!=='raw')return;
+      if(String(title.textContent||'').indexOf('Transaction History Month Wise')<0 && String(title.textContent||'').indexOf('RAW MATERIAL STOCK')<0)return;
+      var first=tr.querySelector('td'); if(!first)return;
+      var k=monthKeyFromLabel(first.textContent); if(!k)return;
+      e.preventDefault();e.stopPropagation();openMonth(k);
+    },true);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
+})();
+</script>
+
+<!-- V310: Fix raw-material month history for JOB WORK ISSUE transactions whose saved date may be locale-formatted. -->
+<script id="v310JobworkIssueHistoryFix">
+(function(){
+  function read(k){try{var a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function dateKey(v){
+    var s=String(v==null?'':v).trim();
+    var m=s.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/);
+    if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');
+    var dm=s.match(/^(?:[^0-9]*)([0-9]{1,2})[\/\-]([0-9]{1,2})[\/\-]([0-9]{4})/);
+    if(dm)return dm[3]+'-'+String(dm[2]).padStart(2,'0');
+    var d=new Date(s);
+    if(!isNaN(d.getTime()))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    return '';
+  }
+  function fullDate(v){
+    var s=String(v==null?'':v).trim();
+    var m=s.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/);
+    if(m)return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+    var dm=s.match(/^(?:[^0-9]*)([0-9]{1,2})[\/\-]([0-9]{1,2})[\/\-]([0-9]{4})/);
+    if(dm)return dm[3]+'-'+String(dm[2]).padStart(2,'0')+'-'+String(dm[1]).padStart(2,'0');
+    var d=new Date(s);
+    if(!isNaN(d.getTime()))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    return s;
+  }
+  function monthLabel(k){var n=['January','February','March','April','May','June','July','August','September','October','November','December'],p=k.split('-');return n[Number(p[1])-1]+' '+p[0];}
+  function rawRows(){
+    var tx=read('adr_tx_v2'),rms=read('adr_rawmaterials_v2');
+    return tx.map(function(t){
+      var type=String(t.type||t.transactionType||'').toUpperCase();
+      if(['RAW MATERIAL COMPANY INWARD','JOB WORK ISSUE','PRODUCTION','RAW MATERIAL SALE'].indexOf(type)<0)return null;
+      var code=String(t.item||'').replace(/^RM:/i,'');
+      var r=rms.find(function(x){return String(x.code)===code});
+      if(!r)return null;
+      var dk=dateKey(t.date||t.createdAt||t.timestamp);if(!dk)return null;
+      return {date:fullDate(t.date||t.createdAt||t.timestamp),rawDate:t.date||'',month:dk,type:type,code:code,name:r.name||code,qty:Math.abs(Number(t.qty)||0),unit:t.unit||r.unit||'KG',ref:t.ref||t.inwardRef||t.billNo||t.invoiceNo||'',party:t.vendor||t.supplier||t.customer||'',remark:t.remark||''};
+    }).filter(Boolean);
+  }
+  function renderMonths(){
+    var rows=rawRows(),m={};
+    rows.forEach(function(x){if(!m[x.month])m[x.month]={inward:0,issue:0,production:0,sale:0}; if(x.type==='RAW MATERIAL COMPANY INWARD')m[x.month].inward+=x.qty;else if(x.type==='JOB WORK ISSUE')m[x.month].issue+=x.qty;else if(x.type==='PRODUCTION')m[x.month].production+=x.qty;else m[x.month].sale+=x.qty;});
+    var b=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!b||!title||!table)return;
+    title.textContent='RAW MATERIAL STOCK — Transaction History Month Wise';
+    table.innerHTML='<tr><th>Month</th><th>Inward</th><th>Job Work Issue</th><th>Production Used</th><th>Raw Material Sale</th><th>Total Outward</th></tr>'+
+      (Object.keys(m).sort().reverse().map(function(k){var x=m[k],out=x.issue+x.production+x.sale;return '<tr class="v310MonthRow" data-month="'+k+'" style="cursor:pointer"><td><b>'+monthLabel(k)+'</b></td><td>'+x.inward.toFixed(3)+'</td><td>'+x.issue.toFixed(3)+'</td><td>'+x.production.toFixed(3)+'</td><td>'+x.sale.toFixed(3)+'</td><td>'+out.toFixed(3)+'</td></tr>';}).join('')||'<tr><td colspan="6">No raw material transaction history found</td></tr>');
+    b.style.display='block';b.dataset.dashboardFilter='raw';
+  }
+  function openMonth(k){
+    var rows=rawRows().filter(function(x){return x.month===k}).sort(function(a,b){return String(b.date).localeCompare(String(a.date))});
+    var b=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!b||!title||!table)return;
+    title.innerHTML='RAW MATERIAL STOCK — '+esc(monthLabel(k))+' <button type="button" id="v310BackMonth" style="float:right">← Month Wise</button>';
+    table.innerHTML='<tr><th>Date</th><th>Type</th><th>Code</th><th>Raw Material</th><th>Party</th><th>Qty</th><th>Unit</th><th>Reference</th></tr>'+
+      (rows.map(function(x){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.code)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.party)+'</td><td>'+x.qty.toFixed(3)+'</td><td>'+esc(x.unit)+'</td><td>'+esc(x.ref)+'</td></tr>';}).join('')||'<tr><td colspan="8">No transactions found for this month</td></tr>');
+    b.style.display='block';b.dataset.dashboardFilter='raw-month-detail';
+    var back=document.getElementById('v310BackMonth');if(back)back.onclick=function(e){e.preventDefault();e.stopPropagation();renderMonths();};
+  }
+  function bind(){
+    var table=document.getElementById('dashboardDetailsTable');if(table&&table.dataset.v310Bound!=='1'){
+      table.addEventListener('click',function(e){
+        var tr=e.target.closest?e.target.closest('tr'):null;if(!tr)return;
+        var cell=tr.querySelector('td');if(!cell)return;
+        var txt=String(cell.textContent||'').trim(),m=txt.match(/^(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})$/i);if(!m)return;
+        var names=['january','february','march','april','may','june','july','august','september','october','november','december'],k=m[2]+'-'+String(names.indexOf(m[1].toLowerCase())+1).padStart(2,'0');
+        e.preventDefault();e.stopImmediatePropagation();openMonth(k);
+      },true);table.dataset.v310Bound='1';
+    }
+    document.querySelectorAll('#dashboard .dashCard[data-filter="raw"]').forEach(function(c){
+      if(c.dataset.v310Card==='1')return;c.dataset.v310Card='1';
+      c.addEventListener('click',function(e){setTimeout(function(){var b=document.getElementById('dashboardDetails');if(b&&b.style.display!=='none'&&b.dataset.dashboardFilter==='raw'){renderMonths();}},30);},true);
+    });
+  }
+  window.v310RenderRawMonths=renderMonths;
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
+})();
+</script>
+<script id="v312JobworkSeptemberRobustFix">
+(function(){
+  function read(k){try{var a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+  function saveTx(a){try{localStorage.setItem('adr_tx_v2',JSON.stringify(a));}catch(e){}}
+  function pad(n){return String(n).padStart(2,'0');}
+  function isoFromParts(y,m,d){m=Number(m);d=Number(d);y=Number(y);if(!y||m<1||m>12||d<1||d>31)return '';return y+'-'+pad(m)+'-'+pad(d);}
+  function parseDateValue(v, preferLocale){
+    var s=String(v==null?'':v).trim(); if(!s)return '';
+    var m=s.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/); if(m)return isoFromParts(m[1],m[2],m[3]);
+    var d=s.match(/^([0-9]{1,2})[\/]([0-9]{1,2})[\/]([0-9]{4})/);
+    if(d){
+      var a=Number(d[1]),b=Number(d[2]);
+      // Strings containing time/comma are normally browser en-US locale strings: M/D/YYYY.
+      if(a>12 && b<=12)return isoFromParts(d[3],b,a);
+      if(b>12 && a<=12)return isoFromParts(d[3],a,b);
+      return preferLocale ? isoFromParts(d[3],a,b) : isoFromParts(d[3],b,a);
+    }
+    var x=new Date(s); if(!isNaN(x.getTime()))return x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate());
+    return '';
+  }
+  function getDate(t){
+    var preferLocale=String(t.date||'').indexOf(',')>=0 || String(t.date||'').indexOf(' ')>=0;
+    var fields=[t.issueDate,t.jwIssueDate,t.date,t.createdAt,t.timestamp];
+    for(var i=0;i<fields.length;i++){var d=parseDateValue(fields[i],preferLocale);if(d)return d;}
+    // addTxn() uses Date.now()+random for id; use it as a safe fallback for old records.
+    var id=Number(t.id); if(isFinite(id)&&id>1000000000000){var z=new Date(Math.floor(id));if(!isNaN(z.getTime()))return z.getFullYear()+'-'+pad(z.getMonth()+1)+'-'+pad(z.getDate());}
+    return '';
+  }
+  function rawRows(){
+    var tx=read('adr_tx_v2'),rms=read('adr_rawmaterials_v2');
+    return tx.map(function(t){
+      var type=String(t.type||t.transactionType||'').toUpperCase();
+      if(['RAW MATERIAL COMPANY INWARD','JOB WORK ISSUE','PRODUCTION','RAW MATERIAL SALE'].indexOf(type)<0)return null;
+      var code=String(t.item||'').replace(/^RM:/i,'');
+      var r=rms.find(function(x){return String(x.code)===code;}); if(!r)return null;
+      var date=getDate(t); if(!date)return null;
+      return {date:date,month:date.slice(0,7),type:type,code:code,name:r.name||code,qty:Math.abs(Number(t.qty)||0),unit:t.unit||r.unit||'KG',ref:t.ref||'',party:t.vendor||t.supplier||t.customer||''};
+    }).filter(Boolean);
+  }
+  function renderMonths(){
+    var rows=rawRows(),m={};
+    rows.forEach(function(x){if(!m[x.month])m[x.month]={inward:0,issue:0,production:0,sale:0};if(x.type==='RAW MATERIAL COMPANY INWARD')m[x.month].inward+=x.qty;else if(x.type==='JOB WORK ISSUE')m[x.month].issue+=x.qty;else if(x.type==='PRODUCTION')m[x.month].production+=x.qty;else m[x.month].sale+=x.qty;});
+    var b=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!b||!title||!table)return;
+    var names=['January','February','March','April','May','June','July','August','September','October','November','December'],keys=Object.keys(m).sort().reverse();
+    title.textContent='RAW MATERIAL STOCK — Transaction History Month Wise';
+    table.innerHTML='<tr><th>Month</th><th>Inward</th><th>Job Work Issue</th><th>Production Used</th><th>Raw Material Sale</th><th>Total Outward</th></tr>'+(keys.map(function(k){var x=m[k],out=x.issue+x.production+x.sale;return '<tr class="v312MonthRow" data-month="'+k+'" style="cursor:pointer"><td><b>'+names[Number(k.slice(5))-1]+' '+k.slice(0,4)+'</b></td><td>'+x.inward.toFixed(3)+'</td><td>'+x.issue.toFixed(3)+'</td><td>'+x.production.toFixed(3)+'</td><td>'+x.sale.toFixed(3)+'</td><td>'+out.toFixed(3)+'</td></tr>';}).join('')||'<tr><td colspan="6">No raw material transaction history found</td></tr>');
+    b.style.display='block';b.dataset.dashboardFilter='raw';
+    table.querySelectorAll('.v312MonthRow').forEach(function(r){r.onclick=function(e){e.preventDefault();e.stopPropagation();openMonth(r.getAttribute('data-month'));};});
+  }
+  function openMonth(k){
+    var rows=rawRows().filter(function(x){return x.month===k;}).sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
+    var b=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!b||!title||!table)return;
+    title.textContent='RAW MATERIAL STOCK — '+k+' Detail';
+    table.innerHTML='<tr><th>Date</th><th>Type</th><th>Code</th><th>Raw Material</th><th>Party</th><th>Qty</th><th>Unit</th><th>Reference</th></tr>'+(rows.map(function(x){return '<tr><td>'+x.date+'</td><td>'+x.type+'</td><td>'+x.code+'</td><td>'+x.name+'</td><td>'+x.party+'</td><td>'+x.qty.toFixed(3)+'</td><td>'+x.unit+'</td><td>'+x.ref+'</td></tr>';}).join('')||'<tr><td colspan="8">No transactions found for this month</td></tr>');
+    b.style.display='block';b.dataset.dashboardFilter='raw-month-detail';
+    title.insertAdjacentHTML('beforeend',' <button type="button" id="v312BackMonth" style="float:right">← Month Wise</button>');
+    document.getElementById('v312BackMonth').onclick=function(e){e.preventDefault();e.stopPropagation();renderMonths();};
+  }
+  function bind(){var c=document.querySelector('#dashboard .dashCard[data-filter="raw"]');if(c&&!c.dataset.v312Bound){c.dataset.v312Bound='1';c.addEventListener('click',function(){setTimeout(renderMonths,80);},true);}}
+  window.v312RenderRawMonths=renderMonths;
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t);});
+})();
+</script>
+<script id="v313MonthBalanceFix">
+(function(){
+  function renderBalance(){
+    var table=document.getElementById('dashboardDetailsTable');
+    if(!table)return;
+    var rows=table.querySelectorAll('tr.v312MonthRow');
+    if(!rows.length)return;
+    var data=[], names=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    rows.forEach(function(r){
+      var c=r.querySelectorAll('td'); if(c.length<6)return;
+      var k=r.getAttribute('data-month')||'';
+      data.push({k:k,inward:parseFloat(c[1].textContent)||0,outward:parseFloat(c[5].textContent)||0,row:r});
+    });
+    data.sort(function(a,b){return a.k.localeCompare(b.k);});
+    var bal=0;
+    data.forEach(function(x){bal += x.inward-x.outward; x.balance=bal;});
+    var head=table.querySelector('tr');
+    if(head && !head.querySelector('[data-v313-balance]')){
+      var th=document.createElement('th'); th.textContent='Balance'; th.setAttribute('data-v313-balance','1'); head.appendChild(th);
+    }
+    data.forEach(function(x){
+      var td=x.row.querySelector('[data-v313-balance-cell]');
+      if(!td){td=document.createElement('td');td.setAttribute('data-v313-balance-cell','1');x.row.appendChild(td);}
+      td.textContent=x.balance.toFixed(3);
+    });
+  }
+  function hook(){
+    if(window.v312RenderRawMonths && !window.__v313Wrapped){
+      var old=window.v312RenderRawMonths;
+      window.v312RenderRawMonths=function(){old();setTimeout(renderBalance,10);};
+      window.__v313Wrapped=true;
+    }
+    setTimeout(renderBalance,20);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hook);else hook();
+  [300,800,1500,3000,5000].forEach(function(t){setTimeout(hook,t);});
+})();
+</script>
+<script id="v313InlineMonthDetails">
+(function(){
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]});}
+  function pad(n){return String(n).padStart(2,'0');}
+  function dateKey(v){
+    var s=String(v==null?'':v).trim(); if(!s)return '';
+    var m=s.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/); if(m)return m[1]+'-'+pad(m[2])+'-'+pad(m[3]);
+    var d=s.match(/^([0-9]{1,2})[\/]([0-9]{1,2})[\/]([0-9]{4})/);
+    if(d){var a=+d[1],b=+d[2]; if(a>12)return d[3]+'-'+pad(b)+'-'+pad(a); if(b>12)return d[3]+'-'+pad(a)+'-'+pad(b); return d[3]+'-'+pad(a)+'-'+pad(b);}
+    var x=new Date(s); if(!isNaN(x.getTime()))return x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate());
+    return '';
+  }
+  function rowsForMonth(k){
+    var tx=[];try{tx=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]');}catch(e){tx=[];}
+    var rms=[];try{rms=JSON.parse(localStorage.getItem('adr_rawmaterials_v2')||'[]');}catch(e){rms=[];}
+    return tx.map(function(t){
+      var type=String(t.type||t.transactionType||'').toUpperCase();
+      if(['RAW MATERIAL COMPANY INWARD','JOB WORK ISSUE','PRODUCTION','RAW MATERIAL SALE'].indexOf(type)<0)return null;
+      var code=String(t.item||'').replace(/^RM:/i,'');
+      var rm=rms.find(function(r){return String(r.code)===code;}); if(!rm)return null;
+      var d=dateKey(t.issueDate||t.jwIssueDate||t.date||t.createdAt||t.timestamp); if(!d||d.slice(0,7)!==k)return null;
+      return {date:d,type:type,code:code,name:rm.name||code,party:t.vendor||t.supplier||t.customer||'',qty:Math.abs(Number(t.qty)||0),unit:t.unit||rm.unit||'KG',ref:t.ref||t.inwardRef||t.billNo||t.invoiceNo||''};
+    }).filter(Boolean).sort(function(a,b){return b.date.localeCompare(a.date);});
+  }
+  function monthDetail(k,colspan){
+    var rows=rowsForMonth(k),html='<div style="padding:8px 10px;overflow:auto"><table style="width:100%;border-collapse:collapse"><tr><th>Date</th><th>Type</th><th>Code</th><th>Raw Material</th><th>Party</th><th>Qty</th><th>Unit</th><th>Reference</th></tr>';
+    html+=rows.map(function(x){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.code)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.party)+'</td><td>'+x.qty.toFixed(3)+'</td><td>'+esc(x.unit)+'</td><td>'+esc(x.ref)+'</td></tr>';}).join('');
+    if(!rows.length)html+='<tr><td colspan="8">No transactions found for this month</td></tr>';
+    return '<tr class="v313MonthDetail"><td colspan="'+colspan+'">'+html+'</table></div></td></tr>';
+  }
+  function bind(){
+    var table=document.getElementById('dashboardDetailsTable'); if(!table)return;
+    table.querySelectorAll('tr.v312MonthRow').forEach(function(row){
+      row.style.cursor='pointer';
+      if(row.dataset.v313Inline==='1')return;
+      row.dataset.v313Inline='1';
+      row.addEventListener('click',function(e){
+        e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();
+        var old=table.querySelector('tr.v313MonthDetail');
+        if(old && old.previousElementSibling===row){old.remove();return;}
+        if(old)old.remove();
+        var k=row.getAttribute('data-month')||'';
+        row.insertAdjacentHTML('afterend',monthDetail(k,row.children.length));
+      },true);
+    });
+  }
+  function hook(){
+    if(window.v312RenderRawMonths && !window.__v313InlineWrap){
+      var old=window.v312RenderRawMonths;
+      window.v312RenderRawMonths=function(){old();setTimeout(bind,20);};
+      window.__v313InlineWrap=true;
+    }
+    bind();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hook);else hook();
+  [100,400,800,1500,3000,5000].forEach(function(t){setTimeout(hook,t);});
+})();
+</script>
+<script id="v314InlineMonthClickFinal">
+(function(){
+  function details(k,colspan){
+    function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+    function pad(n){return String(n).padStart(2,'0')}
+    function dk(v){var s=String(v||'').trim(),m=s.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/);if(m)return m[1]+'-'+pad(m[2])+'-'+pad(m[3]);var d=s.match(/^([0-9]{1,2})[\/]([0-9]{1,2})[\/]([0-9]{4})/);if(d){var a=+d[1],b=+d[2];if(a>12)return d[3]+'-'+pad(b)+'-'+pad(a);if(b>12)return d[3]+'-'+pad(a)+'-'+pad(b);return d[3]+'-'+pad(a)+'-'+pad(b)}var x=new Date(s);return isNaN(x.getTime())?'':x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate())}
+    var tx=[],rms=[];try{tx=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]')}catch(e){}try{rms=JSON.parse(localStorage.getItem('adr_rawmaterials_v2')||'[]')}catch(e){}
+    var rows=tx.map(function(t){var type=String(t.type||t.transactionType||'').toUpperCase();if(['RAW MATERIAL COMPANY INWARD','JOB WORK ISSUE','PRODUCTION','RAW MATERIAL SALE'].indexOf(type)<0)return null;var code=String(t.item||'').replace(/^RM:/i,'');var rm=rms.find(function(r){return String(r.code)===code});if(!rm)return null;var d=dk(t.issueDate||t.jwIssueDate||t.date||t.createdAt||t.timestamp);if(!d||d.slice(0,7)!==k)return null;return {date:d,type:type,code:code,name:rm.name||code,party:t.vendor||t.supplier||t.customer||'',qty:Math.abs(Number(t.qty)||0),unit:t.unit||rm.unit||'KG',ref:t.ref||t.inwardRef||t.billNo||t.invoiceNo||''}}).filter(Boolean).sort(function(a,b){return b.date.localeCompare(a.date)});
+    var h='<tr class="v314MonthDetail"><td colspan="'+colspan+'"><div style="padding:8px;overflow:auto"><table style="width:100%;border-collapse:collapse"><tr><th>Date</th><th>Type</th><th>Code</th><th>Raw Material</th><th>Party</th><th>Qty</th><th>Unit</th><th>Reference</th></tr>';
+    h+=rows.map(function(x){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.code)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.party)+'</td><td>'+x.qty.toFixed(3)+'</td><td>'+esc(x.unit)+'</td><td>'+esc(x.ref)+'</td></tr>'}).join('');
+    if(!rows.length)h+='<tr><td colspan="8">No transactions found for this month</td></tr>';
+    return h+'</table></div></td></tr>';
+  }
+  function cleanAndBind(){
+    var t=document.getElementById('dashboardDetailsTable');if(!t)return;
+    var clone=t.cloneNode(true);t.parentNode.replaceChild(clone,t);t=clone;
+    t.querySelectorAll('tr.v312MonthRow').forEach(function(r){r.style.cursor='pointer';r.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();var old=t.querySelector('tr.v314MonthDetail');if(old&&old.previousElementSibling===r){old.remove();return}if(old)old.remove();var k=r.getAttribute('data-month')||'';r.insertAdjacentHTML('afterend',details(k,r.children.length));});});
+  }
+  function hook(){
+    var old=window.v312RenderRawMonths;
+    if(old&&!window.__v314Wrapped){window.__v314Wrapped=true;window.v312RenderRawMonths=function(){old();setTimeout(cleanAndBind,30)};}
+    setTimeout(cleanAndBind,50);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hook);else hook();
+  [200,600,1200,2500,5000].forEach(function(t){setTimeout(hook,t)});
+})();
+</script>
+
+<script id="v315ColorfulDashboardCharts">
+(function(){
+function readTx(){try{var a=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function monthKey(v){var s=String(v||'').trim(),m=s.match(/^(\d{4})[-\/](\d{1,2})/);if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);if(m){var a=+m[1],b=+m[2];return m[3]+'-'+String(a>12?b:a).padStart(2,'0')}return ''}
+function monthLabel(k){var p=k.split('-'),names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return names[Number(p[1])-1]+' '+p[0]}
+function amount(t){var n=Number(t.grandTotal);if(Number.isFinite(n)&&n!==0)return Math.abs(n);return Math.abs((Number(t.amount)||0)+(Number(t.tax)||0))}
+function aggregate(type){var m={};readTx().forEach(function(t){if(String(t.type||'').toUpperCase()!==type)return;var k=monthKey(t.date);if(!k)return;m[k]=(m[k]||0)+amount(t)});return m}
+function money(n){return '₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:0})}
+function chartHtml(title,sub,map,cls){var keys=Object.keys(map).sort();if(!keys.length)return '<div class="v315ChartPanel"><h3>'+title+'</h3><div class="v315ChartSub">'+sub+'</div><div class="v315Empty">No data found</div></div>';var max=Math.max.apply(null,keys.map(function(k){return map[k]}))||1;return '<div class="v315ChartPanel '+cls+'"><h3>'+title+'</h3><div class="v315ChartSub">'+sub+'</div><div class="v315Bars">'+keys.map(function(k){var h=Math.max(3,(map[k]/max)*185);return '<div class="v315BarCol"><div class="v315BarValue">'+money(map[k])+'</div><div class="v315Bar" style="height:'+h+'px"></div><div class="v315BarLabel">'+esc(monthLabel(k))+'</div></div>'}).join('')+'</div></div>'}
+function render(){var d=document.getElementById('dashboard');if(!d)return;var old=document.getElementById('v315Charts');var wasHidden=old&&old.style.display==='none';if(old)old.remove();var host=document.createElement('div');host.id='v315Charts';host.className='v315Charts';host.innerHTML=chartHtml('📈 Month Wise Sales','Monthly sales / dispatch grand total',aggregate('DISPATCH'),'v315SalesBars')+chartHtml('🛒 Month Wise Purchase','Monthly purchase grand total',aggregate('PURCHASE'),'v315PurchaseBars');var details=document.getElementById('dashboardDetails');if(details)d.insertBefore(host,details);else d.appendChild(host);if(wasHidden){host.style.display='none';host.dataset.v316Hidden='1';}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(render,500)});else setTimeout(render,500);[1500,3000,5000].forEach(function(t){setTimeout(render,t)});
+window.v315RefreshDashboardCharts=render;
+})();
+</script>
+
+<script id="v316DashboardChartToggle">
+(function(){
+  function charts(){return document.getElementById('v315Charts');}
+  function bind(){
+    var dash=document.getElementById('dashboard'); if(!dash||dash.dataset.v316Bound==='1')return;
+    dash.dataset.v316Bound='1';
+    dash.addEventListener('click',function(e){
+      var card=e.target.closest ? e.target.closest('.dashCard') : null;
+      if(!card)return;
+      var box=charts(); if(!box)return;
+      var hidden=box.style.display==='none';
+      if(hidden){
+        box.style.display='';
+        box.removeAttribute('data-v316-hidden');
+      }else{
+        box.style.display='none';
+        box.setAttribute('data-v316-hidden','1');
+      }
+    },true);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  [300,1000,2000,4000].forEach(function(t){setTimeout(bind,t)});
+})();
+</script>
+
+<style id="v317DashboardSideMenu">
+/* V317: colourful dashboard-style module sidebar */
+@media (min-width:900px){
+  .tabs{
+    background:linear-gradient(180deg,#f8fbff 0%,#eef4fb 48%,#e8f0f8 100%)!important;
+    border-right:1px solid #c7d4e2!important;
+    box-shadow:6px 0 22px rgba(30,70,110,.10)!important;
+    padding:12px 9px!important;
+  }
+  .tabs button{
+    position:relative!important;
+    border:1px solid #d5dfeb!important;
+    background:linear-gradient(135deg,#ffffff 0%,#edf4fb 100%)!important;
+    color:#18324b!important;
+    font-weight:800!important;
+    font-size:14px!important;
+    letter-spacing:.1px!important;
+    border-radius:11px!important;
+    padding:10px 12px!important;
+    box-shadow:0 3px 9px rgba(30,70,110,.08)!important;
+    transition:transform .18s ease,box-shadow .18s ease,background .18s ease!important;
+  }
+  .tabs button:before{
+    content:'';
+    position:absolute;left:0;top:7px;bottom:7px;width:4px;
+    border-radius:0 5px 5px 0;
+    background:#4f8cff;
+  }
+  .tabs button:nth-child(4n+1):before{background:#4f8cff}
+  .tabs button:nth-child(4n+2):before{background:#16b89a}
+  .tabs button:nth-child(4n+3):before{background:#ff9f43}
+  .tabs button:nth-child(4n+4):before{background:#9b59ff}
+  .tabs button:hover{
+    transform:translateX(4px)!important;
+    box-shadow:0 7px 16px rgba(30,70,110,.16)!important;
+    background:linear-gradient(135deg,#ffffff 0%,#e3efff 100%)!important;
+  }
+  .tabs button.active{
+    color:#fff!important;
+    border-color:#315d9b!important;
+    background:linear-gradient(135deg,#173b6b 0%,#2d70b8 100%)!important;
+    box-shadow:0 7px 18px rgba(35,91,150,.28)!important;
+    transform:translateX(3px)!important;
+  }
+  .tabs button.active:before{background:#ffd166!important;width:5px}
+}
+</style>
+
+<script id="v318RawMonthInlineFinal">
+(function(){
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function pad(n){return String(n).padStart(2,'0')}
+  function parseDate(v){
+    var s=String(v==null?'':v).trim(); if(!s)return '';
+    var m=s.match(/^(\d{4})[-\/]([0-9]{1,2})[-\/]([0-9]{1,2})/); if(m)return m[1]+'-'+pad(m[2])+'-'+pad(m[3]);
+    var d=s.match(/^([0-9]{1,2})[\/]([0-9]{1,2})[\/]([0-9]{4})/);
+    if(d){var a=+d[1],b=+d[2]; if(a>12)return d[3]+'-'+pad(b)+'-'+pad(a); if(b>12)return d[3]+'-'+pad(a)+'-'+pad(b); return d[3]+'-'+pad(a)+'-'+pad(b);}
+    var x=new Date(s); return isNaN(x.getTime())?'':x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate());
+  }
+  function read(k){try{var a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+  function detail(k,colspan){
+    var tx=read('adr_tx_v2'),rms=read('adr_rawmaterials_v2'),rows=[];
+    tx.forEach(function(t){
+      var type=String(t.type||t.transactionType||'').toUpperCase();
+      if(['RAW MATERIAL COMPANY INWARD','JOB WORK ISSUE','PRODUCTION','RAW MATERIAL SALE'].indexOf(type)<0)return;
+      var code=String(t.item||'').replace(/^RM:/i,'');
+      var rm=rms.find(function(r){return String(r.code)===code}); if(!rm)return;
+      var d=parseDate(t.issueDate||t.jwIssueDate||t.date||t.createdAt||t.timestamp); if(!d||d.slice(0,7)!==k)return;
+      rows.push({date:d,type:type,code:code,name:rm.name||code,party:t.vendor||t.supplier||t.customer||'',qty:Math.abs(Number(t.qty)||0),unit:t.unit||rm.unit||'KG',ref:t.ref||t.inwardRef||t.billNo||t.invoiceNo||''});
+    });
+    rows.sort(function(a,b){return b.date.localeCompare(a.date)});
+    var h='<div style="padding:8px 10px;overflow:auto"><table style="width:100%;border-collapse:collapse"><tr><th>Date</th><th>Type</th><th>Code</th><th>Raw Material</th><th>Party</th><th>Qty</th><th>Unit</th><th>Reference</th></tr>';
+    h+=rows.map(function(x){return '<tr><td>'+esc(x.date)+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.code)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.party)+'</td><td>'+x.qty.toFixed(3)+'</td><td>'+esc(x.unit)+'</td><td>'+esc(x.ref)+'</td></tr>'}).join('');
+    if(!rows.length)h+='<tr><td colspan="8">No transactions found for this month</td></tr>';
+    return '<tr class="v318MonthDetail"><td colspan="'+colspan+'">'+h+'</table></div></td></tr>';
+  }
+  function bind(){
+    var old=document.getElementById('dashboardDetailsTable'); if(!old)return;
+    if(old.dataset.v318Ready==='1')return;
+    var t=old.cloneNode(true); t.dataset.v318Ready='1'; old.parentNode.replaceChild(t,old);
+    t.addEventListener('click',function(e){
+      var row=e.target.closest ? e.target.closest('tr.v312MonthRow, tr.v310MonthRow') : null;
+      if(!row || !t.contains(row))return;
+      e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+      var k=row.getAttribute('data-month')||''; if(!k)return;
+      var open=t.querySelector('tr.v318MonthDetail');
+      if(open && open.previousElementSibling===row){open.remove();return;}
+      if(open)open.remove();
+      row.insertAdjacentHTML('afterend',detail(k,row.children.length));
+    },true);
+  }
+  function hook(){
+    bind();
+    if(window.v312RenderRawMonths && !window.__v318Wrapped){
+      var old=window.v312RenderRawMonths;
+      window.v312RenderRawMonths=function(){old.apply(this,arguments);setTimeout(bind,60);setTimeout(bind,180);};
+      window.__v318Wrapped=true;
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hook);else hook();
+  [100,300,700,1200,2000,3500,5000].forEach(function(t){setTimeout(hook,t)});
+})();
+</script>
+
+<style id="v320DashboardCardStateFixStyle">
+/* V320: keep dashboard charts hidden while switching between different cards */
+#v315Charts.v320-dashboard-charts-hidden{display:none!important;}
+</style>
+\n<script id="v320DashboardCardStateFix">
+(function(){
+  var selectedType=null;
+  var detailOpen=false;
+  var chartHidden=false;
+  var observer=null;
+
+  function charts(){return document.getElementById('v315Charts');}
+  function setChartsHidden(hidden){
+    chartHidden=!!hidden;
+    var c=charts();
+    if(c){
+      c.classList.toggle('v320-dashboard-charts-hidden',chartHidden);
+      c.setAttribute('data-v320-hidden',chartHidden?'1':'0');
+      if(!chartHidden)c.style.removeProperty('display');
+    }
+  }
+  function clearDetails(){
+    var b=document.getElementById('dashboardDetails');
+    if(b){b.style.display='none';b.removeAttribute('data-dashboard-filter');}
+    var t=document.getElementById('dashboardDetailsTable');
+    if(t)t.innerHTML='';
+    ['v152SalesBox','v153PurchaseBox'].forEach(function(id){
+      var x=document.getElementById(id);
+      if(x)x.remove();
+    });
+  }
+  function isOpen(type){
+    if(type==='sales')return !!document.getElementById('v152SalesBox');
+    if(type==='purchase')return !!document.getElementById('v153PurchaseBox');
+    var b=document.getElementById('dashboardDetails');
+    return !!b && b.style.display!=='none' && b.dataset.dashboardFilter===type;
+  }
+  function openType(type){
+    if(type==='sales' && typeof window.openSales==='function'){window.openSales();return;}
+    if(type==='purchase' && typeof window.openPurchase==='function'){window.openPurchase();return;}
+    if(typeof window.showDashboardFilter==='function'){
+      window.showDashboardFilter(type);
+      var b=document.getElementById('dashboardDetails');
+      if(b)b.dataset.dashboardFilter=type;
+    }
+  }
+  function handleCard(card,e){
+    var type=card.getAttribute('data-filter')||'';
+    var same=(selectedType===type && isOpen(type));
+    if(e){e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();}
+
+    if(same){
+      clearDetails();
+      selectedType=null;
+      detailOpen=false;
+      setChartsHidden(false);
+      return false;
+    }
+
+    // Different card (or first click): close old detail and KEEP charts hidden.
+    clearDetails();
+    selectedType=type;
+    detailOpen=true;
+    setChartsHidden(true);
+    openType(type);
+    // Some card renderers recreate/replace their detail area asynchronously.
+    setTimeout(function(){setChartsHidden(true);},0);
+    setTimeout(function(){setChartsHidden(true);},80);
+    setTimeout(function(){setChartsHidden(true);},250);
+    return false;
+  }
+  function bind(){
+    var dash=document.getElementById('dashboard');
+    if(!dash)return;
+    if(dash.__v320CardStateHandler)dash.removeEventListener('click',dash.__v320CardStateHandler,true);
+    dash.__v320CardStateHandler=function(e){
+      var card=e.target&&e.target.closest?e.target.closest('#dashboard .dashCard'):null;
+      if(!card)return;
+      handleCard(card,e);
+    };
+    dash.addEventListener('click',dash.__v320CardStateHandler,true);
+    document.querySelectorAll('#dashboard .dashCard').forEach(function(card){
+      card.style.pointerEvents='auto';
+      card.style.cursor='pointer';
+    });
+  }
+  function watchCharts(){
+    var dash=document.getElementById('dashboard');
+    if(!dash || typeof MutationObserver==='undefined')return;
+    if(observer)observer.disconnect();
+    observer=new MutationObserver(function(){
+      if(chartHidden){
+        var c=charts();
+        if(c)c.classList.add('v320-dashboard-charts-hidden');
+      }
+    });
+    observer.observe(dash,{childList:true,subtree:true});
+    if(chartHidden)setChartsHidden(true);
+  }
+  function init(){bind();watchCharts();setTimeout(bind,300);setTimeout(bind,1000);setTimeout(bind,2000);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>\n
+<script id="v321RawMonthHistoryRestore">
+(function(){
+  function showRawMonths(){
+    var f=window.v312RenderRawMonths||window.v310RenderRawMonths||window.v305RenderMonths;
+    if(typeof f==='function'){
+      try{f();}catch(e){console.error(e);}
+      setTimeout(function(){
+        if(typeof window.v312RenderRawMonths==='function')try{window.v312RenderRawMonths();}catch(e){}
+      },80);
+      return true;
+    }
+    return false;
+  }
+  function bind(){
+    var c=document.querySelector('#dashboard .dashCard[data-filter="raw"]');
+    if(!c)return;
+    if(c.__v321RawBound)return;
+    c.__v321RawBound=true;
+    c.addEventListener('click',function(e){
+      e.preventDefault();e.stopImmediatePropagation();
+      var b=document.getElementById('dashboardDetails');
+      var already=b&&b.style.display!=='none'&&b.dataset.dashboardFilter==='raw';
+      if(already)return;
+      setTimeout(function(){showRawMonths();},0);
+      setTimeout(function(){showRawMonths();},120);
+      setTimeout(function(){showRawMonths();},300);
+    },true);
+  }
+  function init(){bind();setTimeout(bind,300);setTimeout(bind,1000);setTimeout(bind,2000);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
+<!-- V322: Authoritative Dashboard card controller. Keeps charts hidden when switching cards and restores RAW MATERIAL month-wise history. -->
+<style id="v322DashboardCardFix">
+#v315Charts.v322ChartsHidden{display:none !important;}
+</style>
+<script id="v322DashboardCardFixScript">
+(function(){
+  var selectedType=null, detailOpen=false;
+  function charts(){return document.getElementById('v315Charts');}
+  function setChartsHidden(hidden){
+    var c=charts();
+    if(c){c.classList.toggle('v322ChartsHidden',!!hidden);c.style.setProperty('display',hidden?'none':'','important');}
+  }
+  function clearDetails(){
+    var b=document.getElementById('dashboardDetails');
+    if(b){b.style.display='none';b.removeAttribute('data-dashboard-filter');}
+    var t=document.getElementById('dashboardDetailsTable');if(t)t.innerHTML='';
+    ['v152SalesBox','v153PurchaseBox'].forEach(function(id){var x=document.getElementById(id);if(x)x.remove();});
+  }
+  function isOpen(type){
+    if(type==='sales')return !!document.getElementById('v152SalesBox');
+    if(type==='purchase')return !!document.getElementById('v153PurchaseBox');
+    var b=document.getElementById('dashboardDetails');
+    return !!b&&b.style.display!=='none'&&b.dataset.dashboardFilter===type;
+  }
+  function openType(type){
+    if(type==='raw'){
+      var f=window.v312RenderRawMonths||window.v310RenderRawMonths||window.v305RenderMonths;
+      if(typeof f==='function'){try{f();}catch(e){console.error(e);}}
+      else if(typeof window.showDashboardFilter==='function')window.showDashboardFilter(type);
+      return;
+    }
+    if(type==='sales'&&typeof window.openSales==='function'){window.openSales();return;}
+    if(type==='purchase'&&typeof window.openPurchase==='function'){window.openPurchase();return;}
+    if(typeof window.showDashboardFilter==='function'){
+      window.showDashboardFilter(type);
+      var b=document.getElementById('dashboardDetails');if(b)b.dataset.dashboardFilter=type;
+    }
+  }
+  function handle(card,e){
+    var type=card.getAttribute('data-filter')||'';
+    var same=(selectedType===type&&detailOpen&&isOpen(type));
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+    if(same){
+      clearDetails();selectedType=null;detailOpen=false;setChartsHidden(false);return false;
+    }
+    clearDetails();selectedType=type;detailOpen=true;setChartsHidden(true);
+    openType(type);
+    [0,60,180,400,800].forEach(function(ms){setTimeout(function(){if(detailOpen&&selectedType===type)setChartsHidden(true);},ms);});
+    return false;
+  }
+  function bind(){
+    var doc=document;
+    if(doc.__v322DashboardHandler)doc.removeEventListener('click',doc.__v322DashboardHandler,true);
+    doc.__v322DashboardHandler=function(e){
+      var card=e.target&&e.target.closest?e.target.closest('#dashboard .dashCard'):null;
+      if(!card)return;
+      handle(card,e);
+    };
+    doc.addEventListener('click',doc.__v322DashboardHandler,true);
+  }
+  function init(){bind();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
+<style id="v323TotalItemStockColorStyle">
+#dashboardDetailsTable td.v323-stock-green{color:#168a16!important;font-weight:800!important;background:#effcf0!important;}
+#dashboardDetailsTable td.v323-stock-red{color:#e00000!important;font-weight:800!important;background:#fff0f0!important;}
+</style>
+<script id="v323TotalItemStockColorFix">
+(function(){
+  function apply(type){
+    if(type!=='all')return;
+    var table=document.getElementById('dashboardDetailsTable');
+    if(!table)return;
+    Array.prototype.forEach.call(table.querySelectorAll('tr'),function(tr){
+      var cells=tr.children;
+      if(!cells || cells.length<7)return;
+      var stockCell=cells[5], minCell=cells[6];
+      var stock=parseFloat(String(stockCell.textContent||'').replace(/,/g,''));
+      var min=parseFloat(String(minCell.textContent||'').replace(/,/g,''));
+      stockCell.classList.remove('v323-stock-green','v323-stock-red');
+      if(!isFinite(stock))return;
+      if(isFinite(min) && stock<=min) stockCell.classList.add('v323-stock-red');
+      else stockCell.classList.add('v323-stock-green');
+    });
+  }
+  function install(){
+    if(typeof window.showDashboardFilter!=='function')return;
+    if(window.__v323Wrapped)return;
+    var old=window.showDashboardFilter;
+    window.showDashboardFilter=function(type){
+      var r=old.apply(this,arguments);
+      if(type==='all'){
+        apply(type);
+        setTimeout(function(){apply(type);},30);
+        setTimeout(function(){apply(type);},150);
+      }
+      return r;
+    };
+    window.__v323Wrapped=true;
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
+  [100,400,1000,2000].forEach(function(t){setTimeout(install,t);});
+})();
+</script>
+
+<script id="v324AllReportsExcel">
+/* V324: Add Save to Excel to every Reports module report. Exports the currently displayed report table. */
+(function(){
+  function $(id){return document.getElementById(id)}
+  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+  function cleanText(v){return String(v==null?'':v).replace(/\s+/g,' ').trim()}
+
+  function tableToExcel(panel, table, filename){
+    if(!table){alert('પહેલા Report Generate કરો.');return;}
+    const clone=table.cloneNode(true);
+    clone.querySelectorAll('button,input,select,textarea,[data-no-export]').forEach(el=>el.remove());
+    const rows=[...clone.querySelectorAll('tr')];
+    if(!rows.length){alert('Export કરવા માટે data નથી.');return;}
+    const html='<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>'+
+      '<h3>'+esc(panel?.querySelector('h2,h3')?.innerText||'Report')+'</h3>'+clone.outerHTML+'<style id="v328LaserSuggestFix">#lmFromItemSuggest,#lmConvertItemSuggest,#lmVendorSuggest{display:none;position:absolute!important;left:0!important;right:0!important;top:100%!important;z-index:2147483647!important;background:#fff!important;border:1px solid #999!important;box-shadow:0 4px 14px rgba(0,0,0,.2)!important;max-height:260px!important;overflow:auto!important;width:100%!important}#lmFromItemSuggest div,#lmConvertItemSuggest div,#lmVendorSuggest div{display:block!important;padding:10px 12px!important;background:#fff!important;color:#111!important;border-bottom:1px solid #ddd!important;cursor:pointer!important}</style>
+<script id="v328LaserSuggestFix">(function(){
+function readItems(){try{var a=JSON.parse(localStorage.getItem('adr_items_v2')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function readVendors(){try{var a=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function bind(id,boxId,getList,display,select){var input=document.getElementById(id),box=document.getElementById(boxId);if(!input||!box)return;if(input.dataset.v328Bound==='1')return;input.dataset.v328Bound='1';
+function show(){var q=String(input.value||'').trim().toLowerCase();box.innerHTML='';if(!q){box.style.display='none';return}var list=getList().filter(function(x){return String(display(x)||'').toLowerCase().indexOf(q)>=0}).slice(0,20);list.forEach(function(x){var d=document.createElement('div');d.textContent=display(x);d.onmousedown=function(e){e.preventDefault();select(x);box.style.display='none'};d.onclick=function(){select(x);box.style.display='none'};box.appendChild(d)});box.style.display=list.length?'block':'none'}
+input.addEventListener('input',show);input.addEventListener('focus',show);input.addEventListener('keyup',show);
+}
+function init(){
+bind('lmFromItem','lmFromItemSuggest',readItems,function(i){return String(i.name||'')+' — '+String(i.code||'')},function(i){var x=document.getElementById('lmFromItem');x.value=i.name||'';x.dataset.selectedCode=i.code||'';var n=document.getElementById('lmNewItemName'),l=document.getElementById('lmLogoName');if(n&&l&&l.value.trim())n.value=l.value.trim()+' '+(i.name||'')});
+bind('lmConvertItem','lmConvertItemSuggest',readItems,function(i){return String(i.name||'')+' — '+String(i.code||'')},function(i){var x=document.getElementById('lmConvertItem');x.value=i.name||'';x.dataset.selectedCode=i.code||''});
+bind('lmVendor','lmVendorSuggest',readVendors,function(v){return String(v.name||v.vendor||v.vendorName||'')},function(v){var x=document.getElementById('lmVendor');x.value=v.name||v.vendor||v.vendorName||''});
+}
+setTimeout(init,100);setTimeout(init,500);setTimeout(init,1500);setTimeout(init,3000);
+})();<\/script>
+
+</body></html>';
+    const blob=new Blob(['\ufeff',html],{type:'application/vnd.ms-excel;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=filename.replace(/\.(xlsx|csv)$/i,'')+'.xls';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+  }
+
+  function addExcelButton(panel, tableId, filename, beforeId){
+    if(!panel || panel.querySelector('[data-v324-excel]'))return;
+    const table=tableId?$(tableId):panel.querySelector('table');
+    if(!table)return;
+    const b=document.createElement('button');
+    b.type='button';b.setAttribute('data-v324-excel','1');
+    b.textContent='📊 Save to Excel';
+    b.style.cssText='margin-left:6px;';
+    b.onclick=function(){tableToExcel(panel,table,filename)};
+    const before=beforeId?$(beforeId):null;
+    if(before && before.parentNode) before.parentNode.insertBefore(b,before.nextSibling);
+    else {
+      const grid=panel.querySelector('.grid');
+      if(grid) grid.appendChild(b); else panel.insertBefore(b,panel.firstChild.nextSibling);
+    }
+  }
+
+  function addAll(){
+    // GST already has V169 Excel/CSV export; do not duplicate it.
+    addExcelButton($('dispatchReportPanel'),'dispatchReportMainTable','Dispatch_Report.xls','printDispatchReportMain');
+    addExcelButton($('purchaseReportPanel'),'purchaseReportTable','Purchase_Report.xls','printPurchaseReport');
+    addExcelButton($('productionReportPanel'),'productionReportTable','Production_Report.xls','printProductionReport');
+    addExcelButton($('jobWorkMonthlyReportPanel'),null,'Job_Work_Report.xls','printJWReport');
+    // Inline reports used elsewhere in the ERP are also included when present.
+    addExcelButton(document.getElementById('purchaseReportSection'),'purchaseInlineReportTable','Purchase_Report_Inline.xls','purchaseInlineReportBtn');
+    addExcelButton(document.getElementById('dispatchReportSection'),'dispatchReportTable','Dispatch_Report_Inline.xls','dispatchReportBtn');
+    // GST report: replace/augment the existing CSV-labelled button with an Excel-compatible .xls button.
+    const gst=$('v168GSTReport');
+    if(gst && !gst.querySelector('[data-v324-gst-excel]')){
+      const bar=$('v169GSTActions');
+      if(bar){
+        const old=$('v169GSTExcel');
+        if(old)old.style.display='none';
+        const b=document.createElement('button');b.type='button';b.textContent='📊 Save to Excel';b.setAttribute('data-v324-gst-excel','1');
+        b.onclick=function(){tableToExcel(gst,gst.querySelector('table'),'GST_Report_Month_Wise.xls')};
+        bar.appendChild(b);
+      }
+    }
+  }
+
+  function init(){addAll();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){[500,1200,2500,5000].forEach(t=>setTimeout(addAll,t))});
+  else [500,1200,2500,5000].forEach(t=>setTimeout(addAll,t));
+  new MutationObserver(function(){addAll()}).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<script>
+/* V339: Laser Marking editable date field */
+(function(){const setDate=()=>{const el=document.getElementById('lmDate');if(el&&!el.value)el.value=new Date().toISOString().slice(0,10)};document.addEventListener('DOMContentLoaded',setDate);setTimeout(setDate,500);})();
+/* V330: Laser Marking Conversion */
+(function(){
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function arr(k){try{let a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+const norm=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
+const items=()=>arr('adr_items_v2'),vendors=()=>arr('adr_vendors_v2'),rates=()=>arr('sentidos_laser_marking_rates_v1');
+function find(input,a){let code=String(input?.dataset?.selectedCode||'').trim(),q=norm(input?.value);return a.find(x=>code&&String(x.code)===code)||a.find(x=>norm(x.name)===q)}
+function getRate(v,l){let x=rates().find(r=>norm(r.vendor)===norm(v)&&norm(r.logoName)===norm(l));return x?Number(x.rate)||0:0}
+function calc(){let v=document.getElementById('lmVendor')?.value,l=document.getElementById('lmLogoName')?.value,q=Number(document.getElementById('lmQty')?.value)||0,r=getRate(v,l);let re=document.getElementById('lmRate'),to=document.getElementById('lmTotalAmount');if(re)re.value=r?r.toFixed(3):'';if(to)to.value=(q*r).toFixed(2)}
+function bindSuggest(id,boxId,get,render,select){let i=document.getElementById(id),b=document.getElementById(boxId);if(!i||!b||i.dataset.v329==='1')return;i.dataset.v329='1';function show(){let q=norm(i.value),list=get().filter(x=>!q||norm(render(x)).includes(q)).slice(0,20);b.innerHTML='';list.forEach(x=>{let d=document.createElement('div');d.textContent=render(x);d.style.cssText='padding:10px 12px;background:#fff;color:#111;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();select(x);b.style.display='none'};b.appendChild(d)});b.style.display=list.length?'block':'none'}i.addEventListener('input',()=>{i.dataset.selectedCode='';show()});i.addEventListener('focus',show);i.addEventListener('keyup',show)}
+function bindLogo(){let i=document.getElementById('lmLogoName'),b=document.getElementById('lmLogoSuggest');if(!i||!b||i.dataset.v329==='1')return;i.dataset.v329='1';function show(){let q=norm(i.value),v=norm(document.getElementById('lmVendor')?.value),list=rates().filter(r=>(!v||norm(r.vendor)===v)&&(!q||norm(r.logoName).includes(q))).slice(0,20);b.innerHTML='';list.forEach(r=>{let d=document.createElement('div');d.textContent=String(r.logoName||'')+' — ₹'+(Number(r.rate)||0).toFixed(3);d.style.cssText='padding:10px 12px;background:#fff;color:#111;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();i.value=r.logoName||'';if(!document.getElementById('lmVendor').value.trim())document.getElementById('lmVendor').value=r.vendor||'';b.style.display='none';calc()};b.appendChild(d)});b.style.display=list.length?'block':'none'}i.addEventListener('input',()=>{show();calc()});i.addEventListener('focus',show)}
+function render(){let b=document.querySelector('#lmTable tbody');if(!b)return;let rows=arr('adr_tx_v2').filter(t=>norm(t.type)==='laser marking conversion').reverse();b.innerHTML=rows.map(t=>`<tr><td>${esc(t.date||'')}</td><td>${esc(t.challanNo||t.billNo||t.ref||'')}</td><td>${esc(t.fromItemName||'')}</td><td>${esc(t.newItemName||'')}</td><td>${esc(t.logoName||'')}</td><td>${esc(t.vendor||'')}</td><td>${Number(t.qty||0).toFixed(3)}</td><td>₹${Number(t.markingRate||0).toFixed(3)}</td><td>₹${Number(t.amount||0).toFixed(2)}</td></tr>`).join('')||'<tr><td colspan="9" style="text-align:center">No Laser Marking conversions yet.</td></tr>'}
+function save(){let challanNo=document.getElementById('lmChallanNo')?.value.trim()||'',entryDate=document.getElementById('lmDate')?.value||new Date().toISOString().slice(0,10),fi=document.getElementById('lmFromItem'),ti=document.getElementById('lmConvertItem'),q=Number(document.getElementById('lmQty')?.value)||0,logo=document.getElementById('lmLogoName')?.value.trim()||'',vendor=document.getElementById('lmVendor')?.value.trim()||'',r=getRate(vendor,logo),all=items(),tx=arr('adr_tx_v2'),from=find(fi,all),to=find(ti,all);if(!from)return alert('From Item select કરો.');if(!to)return alert('Convert Item select કરો.');if(String(from.code)===String(to.code))return alert('From Item અને Convert Item અલગ હોવા જોઈએ.');if(q<=0)return alert('Quantity નાખો.');if(q>Number(from.stock||0)+0.000001)return alert('Insufficient stock: '+from.name+' — Available '+Number(from.stock||0)+' '+(from.unit||'PCS'));if(!logo)return alert('Laser Mark Logo Name select કરો.');if(!vendor)return alert('Vendor Name select કરો.');if(r<=0)return alert('આ Vendor + Logo માટે Laser Marking Rate Masterમાં rate નથી.');let amount=q*r;from.stock=Number(from.stock||0)-q;to.stock=Number(to.stock||0)+q;let generatedRef=challanNo||('LM-'+Date.now());tx.push({id:Date.now(),type:'LASER MARKING CONVERSION',ref:generatedRef,challanNo:generatedRef,billNo:generatedRef,date:entryDate,item:to.code,itemName:to.name,fromItem:from.code,fromItemName:from.name,newItem:to.code,newItemName:to.name,logoName:logo,vendor:vendor,qty:q,unit:to.unit||from.unit||'PCS',markingRate:r,amount:amount,stockEffect:'FROM_ITEM_DEDUCT_TO_ITEM_ADD'});localStorage.setItem('adr_items_v2',JSON.stringify(all));localStorage.setItem('adr_tx_v2',JSON.stringify(tx));document.getElementById('lmMsg').textContent='Conversion saved: '+from.name+' − '+q.toFixed(3)+' → '+to.name+' + '+q.toFixed(3)+' | Amount ₹'+amount.toFixed(2);['lmChallanNo','lmDate','lmQty','lmLogoName','lmVendor','lmRate','lmTotalAmount','lmFromItem','lmConvertItem'].forEach(id=>{let e=document.getElementById(id);if(e){e.value='';e.dataset.selectedCode=''}});setTimeout(()=>location.reload(),300)}
+function init(){bindSuggest('lmFromItem','lmFromItemSuggest',items,i=>String(i.name||'')+' — '+String(i.code||''),i=>{let e=document.getElementById('lmFromItem');e.value=i.name||'';e.dataset.selectedCode=i.code||''});bindSuggest('lmConvertItem','lmConvertItemSuggest',items,i=>String(i.name||'')+' — '+String(i.code||''),i=>{let e=document.getElementById('lmConvertItem');e.value=i.name||'';e.dataset.selectedCode=i.code||''});bindSuggest('lmVendor','lmVendorSuggest',vendors,v=>String(v.name||v.vendor||v.vendorName||''),v=>{let e=document.getElementById('lmVendor');e.value=v.name||v.vendor||v.vendorName||'';calc()});bindLogo();['lmQty','lmVendor','lmLogoName'].forEach(id=>document.getElementById(id)?.addEventListener('input',calc));let btn=document.getElementById('lmConvertBtn');if(btn&&!btn.dataset.v329click){btn.dataset.v329click='1';btn.onclick=save}calc();render()}
+[100,400,1000,2000,3500].forEach(t=>setTimeout(init,t));
+document.addEventListener('click',e=>['lmFromItemSuggest','lmConvertItemSuggest','lmLogoSuggest','lmVendorSuggest'].forEach(id=>{let b=document.getElementById(id);if(b&&!b.parentElement.contains(e.target))b.style.display='none'}));
+})();
+</script>
+<style id="v330LaserFix">#lmFromItemSuggest,#lmConvertItemSuggest,#lmLogoSuggest,#lmVendorSuggest{display:none;position:absolute!important;left:0!important;right:0!important;top:100%!important;z-index:2147483647!important;background:#fff!important;color:#111!important;border:1px solid #999!important;box-shadow:0 4px 14px rgba(0,0,0,.2)!important;max-height:260px!important;overflow:auto!important;width:100%!important}#lmFromItemSuggest div,#lmConvertItemSuggest div,#lmLogoSuggest div,#lmVendorSuggest div{display:block!important;padding:10px 12px!important;background:#fff!important;color:#111!important;border-bottom:1px solid #ddd!important;cursor:pointer!important}#lmRate,#lmTotalAmount{background:#f5f5f5!important;font-weight:700!important}</style>
+<script id="v330LaserRateMaster">
+(function(){
+const K='sentidos_laser_marking_rates_v1';
+const $=id=>document.getElementById(id);
+const norm=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
+function rd(){try{let a=JSON.parse(localStorage.getItem(K)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function wr(a){localStorage.setItem(K,JSON.stringify(a))}
+function vendors(){try{let a=JSON.parse(localStorage.getItem('adr_vendors_v2')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function suggestVendor(){let i=$('lmRateVendor'),b=$('lmRateVendorSuggest');if(!i||!b||i.dataset.v329RateReady)return;i.dataset.v329RateReady='1';function show(){let q=norm(i.value),a=vendors().filter(v=>!q||norm(v.name||v.vendor||v.vendorName).includes(q)).slice(0,20);b.innerHTML='';a.forEach(v=>{let n=v.name||v.vendor||v.vendorName||'',d=document.createElement('div');d.textContent=n;d.style.cssText='padding:10px 12px;background:#fff;color:#111;border-bottom:1px solid #ddd;cursor:pointer';d.onmousedown=e=>{e.preventDefault();i.value=n;b.style.display='none'};b.appendChild(d)});b.style.display=a.length?'block':'none'}i.addEventListener('input',show);i.addEventListener('focus',show)}
+function render(){let b=$('lmRateTable');if(!b)return;let a=rd();b.innerHTML=a.length?a.map((x,i)=>`<tr><td>${x.vendor||''}</td><td>${x.logoName||''}</td><td>₹${(Number(x.rate)||0).toFixed(3)}</td><td><button type="button" data-lmr-e="${i}">✏️ Edit</button> <button type="button" data-lmr-d="${i}">🗑 Delete</button></td></tr>`).join(''):'<tr><td colspan="4">No Laser Marking rates saved</td></tr>';b.querySelectorAll('[data-lmr-e]').forEach(btn=>btn.onclick=()=>{let x=rd()[Number(btn.dataset.lmrE)];if(!x)return;$('lmRateVendor').value=x.vendor||'';$('lmRateLogo').value=x.logoName||'';$('lmRateValue').value=x.rate||''});b.querySelectorAll('[data-lmr-d]').forEach(btn=>btn.onclick=()=>{if(confirm('આ Laser Marking Rate delete કરવો છે?')){let a=rd();a.splice(Number(btn.dataset.lmrD),1);wr(a);render()}})}
+function save(){let v=$('lmRateVendor')?.value.trim()||'',l=$('lmRateLogo')?.value.trim()||'',r=Number($('lmRateValue')?.value)||0;if(!v||!l||r<=0)return alert('Vendor, Laser Mark Logo Name અને Rate નાખો.');let a=rd(),x=a.find(x=>norm(x.vendor)===norm(v)&&norm(x.logoName)===norm(l));if(x)x.rate=r;else a.push({id:'LMR-'+Date.now(),vendor:v,logoName:l,rate:r});wr(a);render();$('lmRateVendor').value='';$('lmRateLogo').value='';$('lmRateValue').value='';if($('lmRateMsg'))$('lmRateMsg').textContent='Laser Marking Rate save થયું.';setTimeout(()=>{$('lmRateMsg')&&($('lmRateMsg').textContent='')},2000)}
+function init(){suggestVendor();$('lmSaveRateBtn')?.addEventListener('click',save);render()}
+setTimeout(init,300);setTimeout(init,1200);setTimeout(init,2500);
+document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parentElement;if(b&&p&&!p.contains(e.target))b.style.display='none'});
+})();
+</script>
+
+<script id="v333LaserAccountingLedger">
+(function(){
+ const $=id=>document.getElementById(id);
+ const norm=v=>String(v??'').trim().toLowerCase();
+ function read(){try{const a=JSON.parse(localStorage.getItem('adr_tx_v2')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+ function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+ function render(){const body=$('laserLedgerTableV333')?.querySelector('tbody');if(!body)return;const q=norm($('laserLedgerVendorV333')?.value);const rows=read().filter(t=>norm(t.type)==='laser marking conversion'&&(!q||norm(t.vendor).includes(q))).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));let total=0;body.innerHTML=rows.map(t=>{const amount=Number(t.amount)||((Number(t.qty)||0)*(Number(t.markingRate)||0));total+=amount;return `<tr><td>${esc(t.date||'')}</td><td>${esc(t.vendor||'')}</td><td>${esc(t.logoName||'')}</td><td>${esc(t.fromItemName||t.fromItem||'')}</td><td>${esc(t.newItemName||t.itemName||t.newItem||t.item||'')}</td><td>${(Number(t.qty)||0).toFixed(3)}</td><td>₹${(Number(t.markingRate)||0).toFixed(3)}</td><td>₹${amount.toFixed(2)}</td><td>${esc(t.ref||'')}</td></tr>`}).join('')||'<tr><td colspan="9">No Laser Marking ledger entries found</td></tr>';$('laserLedgerTotalV333').textContent='Total Laser Marking Amount: ₹'+total.toFixed(2)}
+ document.addEventListener('input',e=>{if(e.target&&e.target.id==='laserLedgerVendorV333')render()});document.addEventListener('click',e=>{if(e.target&&e.target.id==='laserLedgerRefreshV333')render()});document.addEventListener('DOMContentLoaded',render);[500,1500,3000].forEach(t=>setTimeout(render,t));
+})();
+</script>
+
+</body></html>
