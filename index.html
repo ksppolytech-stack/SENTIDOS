@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V367 - All Entry Fields Name Beside Box</title>
+<title>Sentidos ERP V368 - Script Display Fixed</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -1394,68 +1394,7 @@ setTimeout(init,100);setTimeout(init,500);setTimeout(init,1500);setTimeout(init,
 })();<\/script>
 
 
-<script id="v367AllEntryFieldsLabelScript">
-(function(){
-  const skipTypes=new Set(['hidden','checkbox','radio','file','button','submit','reset','image']);
-  const labelOverrides={
-    rmUnit:'Unit',rmPurchaseDate:'Inward Date',itemCat:'Category',itemUnit:'Unit',purchaseDate:'Purchase Date',purchaseUnit:'Unit',
-    purchaseInlineFrom:'From Date',purchaseInlineTo:'To Date',dispatchReportFrom:'From Date',dispatchReportTo:'To Date',
-    productionDate:'Production Date',jwIssueDate:'Issue Date',jwReceiveDate:'Receive Date',lmDate:'Date',
-    accPaymentDate:'Payment Date',accPaymentMode:'Payment Mode',accPaySupplierDate:'Payment Date',accPaySupplierMode:'Payment Mode',
-    reportMonth:'Month',reportVendor:'Vendor',v260StockCategory:'Category',loginEmail:'User ID / Email',loginPassword:'Password'
-  };
-  function niceName(el){
-    if(labelOverrides[el.id]) return labelOverrides[el.id];
-    let t=(el.getAttribute('aria-label')||el.getAttribute('title')||el.getAttribute('placeholder')||'').trim();
-    if(t){t=t.replace(/^(type|enter|select|search)\s+/i,'').replace(/\s*\.{2,}\s*$/,'').trim();if(!/^auto generated$/i.test(t)&&!/^auto calculated$/i.test(t))return t;}
-    let id=(el.id||'').replace(/([a-z0-9])([A-Z])/g,'$1 $2').replace(/[_-]+/g,' ').trim();
-    id=id.replace(/^(rm|dbm|jw|lm|acc|pm|fg|raw|prod|purchase|dispatch|item|customer|supplier|vendor|rate|due|merged|report|v\d+)\s+/i,'').trim();
-    return id ? id.charAt(0).toUpperCase()+id.slice(1) : (el.tagName==='SELECT'?'Select Option':'Value');
-  }
-  function eligible(el){
-    if(!el || !/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return false;
-    if(el.tagName==='INPUT' && skipTypes.has((el.type||'text').toLowerCase())) return false;
-    if(el.disabled && el.type==='hidden') return false;
-    if(el.closest('table,.suggestbox,[role="listbox"],.dispatch-field,.production-product-field,.production-ok-field,.production-rejection-field')) return false;
-    if(el.closest('label')) return false;
-    if(el.id && document.querySelector('label[for="'+CSS.escape(el.id)+'"]')) return false;
-    if(el.closest('.v367-entry-field')) return false;
-    return true;
-  }
-  function wrapNode(node, el){
-    if(!node || !node.parentNode || node.classList?.contains('v367-entry-field')) return;
-    const wrap=document.createElement('div');wrap.className='v367-entry-field';
-    const lab=document.createElement('label');lab.className='v367-entry-label';lab.textContent=niceName(el);
-    if(el.id){lab.htmlFor=el.id;}
-    node.parentNode.insertBefore(wrap,node);wrap.appendChild(lab);wrap.appendChild(node);
-  }
-  function process(root){
-    const base=(root&&root.querySelectorAll)?root:document;
-    // In grid forms, wrap each direct field unit (including autocomplete wrappers) so suggestions stay attached.
-    base.querySelectorAll('.grid').forEach(grid=>{
-      Array.from(grid.children).forEach(child=>{
-        if(child.classList.contains('v367-entry-field')||child.closest('.dispatch-field')) return;
-        const fields=Array.from(child.matches('input,select,textarea')?[child]:child.querySelectorAll('input,select,textarea')).filter(eligible);
-        if(fields.length!==1) return;
-        const el=fields[0];
-        if(child.matches('input,select,textarea')) wrapNode(child,el);
-        else if(!child.querySelector('.grid')&&!child.closest('table')) wrapNode(child,el);
-      });
-    });
-    // Cover remaining standalone search/report fields outside .grid layouts.
-    base.querySelectorAll('input,select,textarea').forEach(el=>{
-      if(!eligible(el)) return;
-      const node=el.closest('.autowrap')||el;
-      if(node.closest('.grid,.dispatch-field,.v367-entry-field,table')) return;
-      wrapNode(node,el);
-    });
-  }
-  function start(){process(document);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
-  const observer=new MutationObserver(records=>{for(const r of records){for(const n of r.addedNodes){if(n.nodeType===1)process(n);}}});
-  observer.observe(document.documentElement,{childList:true,subtree:true});
-})();
-</script>
+
 </body></html>`);w.document.close();
 }
 function saveRawSaleInvoice(){
@@ -8101,4 +8040,67 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
 })();
 </script>
 
+
+<script id="v367AllEntryFieldsLabelScript">
+(function(){
+  const skipTypes=new Set(['hidden','checkbox','radio','file','button','submit','reset','image']);
+  const labelOverrides={
+    rmUnit:'Unit',rmPurchaseDate:'Inward Date',itemCat:'Category',itemUnit:'Unit',purchaseDate:'Purchase Date',purchaseUnit:'Unit',
+    purchaseInlineFrom:'From Date',purchaseInlineTo:'To Date',dispatchReportFrom:'From Date',dispatchReportTo:'To Date',
+    productionDate:'Production Date',jwIssueDate:'Issue Date',jwReceiveDate:'Receive Date',lmDate:'Date',
+    accPaymentDate:'Payment Date',accPaymentMode:'Payment Mode',accPaySupplierDate:'Payment Date',accPaySupplierMode:'Payment Mode',
+    reportMonth:'Month',reportVendor:'Vendor',v260StockCategory:'Category',loginEmail:'User ID / Email',loginPassword:'Password'
+  };
+  function niceName(el){
+    if(labelOverrides[el.id]) return labelOverrides[el.id];
+    let t=(el.getAttribute('aria-label')||el.getAttribute('title')||el.getAttribute('placeholder')||'').trim();
+    if(t){t=t.replace(/^(type|enter|select|search)\s+/i,'').replace(/\s*\.{2,}\s*$/,'').trim();if(!/^auto generated$/i.test(t)&&!/^auto calculated$/i.test(t))return t;}
+    let id=(el.id||'').replace(/([a-z0-9])([A-Z])/g,'$1 $2').replace(/[_-]+/g,' ').trim();
+    id=id.replace(/^(rm|dbm|jw|lm|acc|pm|fg|raw|prod|purchase|dispatch|item|customer|supplier|vendor|rate|due|merged|report|v\d+)\s+/i,'').trim();
+    return id ? id.charAt(0).toUpperCase()+id.slice(1) : (el.tagName==='SELECT'?'Select Option':'Value');
+  }
+  function eligible(el){
+    if(!el || !/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return false;
+    if(el.tagName==='INPUT' && skipTypes.has((el.type||'text').toLowerCase())) return false;
+    if(el.disabled && el.type==='hidden') return false;
+    if(el.closest('table,.suggestbox,[role="listbox"],.dispatch-field,.production-product-field,.production-ok-field,.production-rejection-field')) return false;
+    if(el.closest('label')) return false;
+    if(el.id && document.querySelector('label[for="'+CSS.escape(el.id)+'"]')) return false;
+    if(el.closest('.v367-entry-field')) return false;
+    return true;
+  }
+  function wrapNode(node, el){
+    if(!node || !node.parentNode || node.classList?.contains('v367-entry-field')) return;
+    const wrap=document.createElement('div');wrap.className='v367-entry-field';
+    const lab=document.createElement('label');lab.className='v367-entry-label';lab.textContent=niceName(el);
+    if(el.id){lab.htmlFor=el.id;}
+    node.parentNode.insertBefore(wrap,node);wrap.appendChild(lab);wrap.appendChild(node);
+  }
+  function process(root){
+    const base=(root&&root.querySelectorAll)?root:document;
+    // In grid forms, wrap each direct field unit (including autocomplete wrappers) so suggestions stay attached.
+    base.querySelectorAll('.grid').forEach(grid=>{
+      Array.from(grid.children).forEach(child=>{
+        if(child.classList.contains('v367-entry-field')||child.closest('.dispatch-field')) return;
+        const fields=Array.from(child.matches('input,select,textarea')?[child]:child.querySelectorAll('input,select,textarea')).filter(eligible);
+        if(fields.length!==1) return;
+        const el=fields[0];
+        if(child.matches('input,select,textarea')) wrapNode(child,el);
+        else if(!child.querySelector('.grid')&&!child.closest('table')) wrapNode(child,el);
+      });
+    });
+    // Cover remaining standalone search/report fields outside .grid layouts.
+    base.querySelectorAll('input,select,textarea').forEach(el=>{
+      if(!eligible(el)) return;
+      const node=el.closest('.autowrap')||el;
+      if(node.closest('.grid,.dispatch-field,.v367-entry-field,table')) return;
+      wrapNode(node,el);
+    });
+  }
+  function start(){process(document);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+  const observer=new MutationObserver(records=>{for(const r of records){for(const n of r.addedNodes){if(n.nodeType===1)process(n);}}});
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
 </body></html>
