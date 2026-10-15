@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V364 - Production OK Green Rejection Red</title>
+<title>Sentidos ERP V367 - All Entry Fields Name Beside Box</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -259,6 +259,21 @@ tr.low-stock-row td * {
 @media(max-width:800px){.v315Charts{grid-template-columns:1fr}.v315Bars{height:220px}}
 </style>
 <!-- V361: Dispatch Grand Total red highlight -->
+
+<style id="v367AllEntryFieldsBesideBox">
+/* V367: Show field name and entry box side-by-side throughout the ERP. */
+.v367-entry-field{display:flex!important;flex-direction:row!important;align-items:center!important;gap:8px!important;min-width:0!important;width:100%;box-sizing:border-box;margin:3px 0;}
+.v367-entry-field>.v367-entry-label{display:block!important;flex:0 0 40%!important;max-width:48%;min-width:0;white-space:normal;overflow-wrap:anywhere;font-size:13px;font-weight:600;line-height:1.25;color:#26364a;}
+.v367-entry-field>input:not([type="checkbox"]):not([type="radio"]),.v367-entry-field>select,.v367-entry-field>textarea,.v367-entry-field>.v367-entry-control{flex:1 1 0!important;width:0!important;min-width:0!important;max-width:100%;box-sizing:border-box;}
+.v367-entry-field>.autowrap,.v367-entry-field>div{flex:1 1 0!important;min-width:0!important;width:auto!important;box-sizing:border-box;}
+.v367-entry-field>.autowrap input,.v367-entry-field>div input,.v367-entry-field>div select{width:100%;min-width:0;box-sizing:border-box;}
+/* Existing Dispatch fields already have visible labels; place those labels beside their boxes too. */
+#dispatch .dispatch-field{flex-direction:row!important;align-items:center!important;gap:8px!important;}
+#dispatch .dispatch-field>label{display:block!important;flex:0 0 38%!important;max-width:48%;min-width:0;overflow-wrap:anywhere;}
+#dispatch .dispatch-field>input,#dispatch .dispatch-field>select,#dispatch .dispatch-field>div{flex:1 1 0!important;width:0!important;min-width:0!important;}
+#dispatch .dispatch-field>div input{width:100%!important;min-width:0!important;}
+@media(max-width:700px){.v367-entry-field>.v367-entry-label{flex-basis:38%!important;font-size:12px;}#dispatch .dispatch-field>label{flex-basis:36%!important;font-size:12px;}#dispatch .dispatch-form-row.row-3{grid-template-columns:minmax(0,1fr)!important;}}
+</style>
 </head>
 <body>
 <button id="globalRefreshBtn" type="button" title="Refresh Page" aria-label="Refresh Page" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
@@ -1378,6 +1393,69 @@ bind('lmVendor','lmVendorSuggest',readVendors,function(v){return String(v.name||
 setTimeout(init,100);setTimeout(init,500);setTimeout(init,1500);setTimeout(init,3000);
 })();<\/script>
 
+
+<script id="v367AllEntryFieldsLabelScript">
+(function(){
+  const skipTypes=new Set(['hidden','checkbox','radio','file','button','submit','reset','image']);
+  const labelOverrides={
+    rmUnit:'Unit',rmPurchaseDate:'Inward Date',itemCat:'Category',itemUnit:'Unit',purchaseDate:'Purchase Date',purchaseUnit:'Unit',
+    purchaseInlineFrom:'From Date',purchaseInlineTo:'To Date',dispatchReportFrom:'From Date',dispatchReportTo:'To Date',
+    productionDate:'Production Date',jwIssueDate:'Issue Date',jwReceiveDate:'Receive Date',lmDate:'Date',
+    accPaymentDate:'Payment Date',accPaymentMode:'Payment Mode',accPaySupplierDate:'Payment Date',accPaySupplierMode:'Payment Mode',
+    reportMonth:'Month',reportVendor:'Vendor',v260StockCategory:'Category',loginEmail:'User ID / Email',loginPassword:'Password'
+  };
+  function niceName(el){
+    if(labelOverrides[el.id]) return labelOverrides[el.id];
+    let t=(el.getAttribute('aria-label')||el.getAttribute('title')||el.getAttribute('placeholder')||'').trim();
+    if(t){t=t.replace(/^(type|enter|select|search)\s+/i,'').replace(/\s*\.{2,}\s*$/,'').trim();if(!/^auto generated$/i.test(t)&&!/^auto calculated$/i.test(t))return t;}
+    let id=(el.id||'').replace(/([a-z0-9])([A-Z])/g,'$1 $2').replace(/[_-]+/g,' ').trim();
+    id=id.replace(/^(rm|dbm|jw|lm|acc|pm|fg|raw|prod|purchase|dispatch|item|customer|supplier|vendor|rate|due|merged|report|v\d+)\s+/i,'').trim();
+    return id ? id.charAt(0).toUpperCase()+id.slice(1) : (el.tagName==='SELECT'?'Select Option':'Value');
+  }
+  function eligible(el){
+    if(!el || !/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return false;
+    if(el.tagName==='INPUT' && skipTypes.has((el.type||'text').toLowerCase())) return false;
+    if(el.disabled && el.type==='hidden') return false;
+    if(el.closest('table,.suggestbox,[role="listbox"],.dispatch-field,.production-product-field,.production-ok-field,.production-rejection-field')) return false;
+    if(el.closest('label')) return false;
+    if(el.id && document.querySelector('label[for="'+CSS.escape(el.id)+'"]')) return false;
+    if(el.closest('.v367-entry-field')) return false;
+    return true;
+  }
+  function wrapNode(node, el){
+    if(!node || !node.parentNode || node.classList?.contains('v367-entry-field')) return;
+    const wrap=document.createElement('div');wrap.className='v367-entry-field';
+    const lab=document.createElement('label');lab.className='v367-entry-label';lab.textContent=niceName(el);
+    if(el.id){lab.htmlFor=el.id;}
+    node.parentNode.insertBefore(wrap,node);wrap.appendChild(lab);wrap.appendChild(node);
+  }
+  function process(root){
+    const base=(root&&root.querySelectorAll)?root:document;
+    // In grid forms, wrap each direct field unit (including autocomplete wrappers) so suggestions stay attached.
+    base.querySelectorAll('.grid').forEach(grid=>{
+      Array.from(grid.children).forEach(child=>{
+        if(child.classList.contains('v367-entry-field')||child.closest('.dispatch-field')) return;
+        const fields=Array.from(child.matches('input,select,textarea')?[child]:child.querySelectorAll('input,select,textarea')).filter(eligible);
+        if(fields.length!==1) return;
+        const el=fields[0];
+        if(child.matches('input,select,textarea')) wrapNode(child,el);
+        else if(!child.querySelector('.grid')&&!child.closest('table')) wrapNode(child,el);
+      });
+    });
+    // Cover remaining standalone search/report fields outside .grid layouts.
+    base.querySelectorAll('input,select,textarea').forEach(el=>{
+      if(!eligible(el)) return;
+      const node=el.closest('.autowrap')||el;
+      if(node.closest('.grid,.dispatch-field,.v367-entry-field,table')) return;
+      wrapNode(node,el);
+    });
+  }
+  function start(){process(document);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+  const observer=new MutationObserver(records=>{for(const r of records){for(const n of r.addedNodes){if(n.nodeType===1)process(n);}}});
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
 </body></html>`);w.document.close();
 }
 function saveRawSaleInvoice(){
