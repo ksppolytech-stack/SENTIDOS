@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="gu"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentidos ERP V363 - Production OK and Rejection</title>
+<title>Sentidos ERP V364 - Production OK Green Rejection Red</title>
 <style>
 body{margin:0;font-family:Arial,sans-serif;background:#f3f5f7;color:#18222c}header{background:#17324d;color:#fff;padding:15px;display:flex;justify-content:space-between}
 main{padding:14px;max-width:1200px;margin:auto}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;padding:10px;border-radius:7px;background:#fff}.tabs .active{background:#17324d;color:#fff}
@@ -540,7 +540,7 @@ tr.low-stock-row td * {
 </div>
 </section>
 <section id="production" class="page"><div class="panel"><h2>Production</h2><p>Finish Productનું નામ type કરો. નીચે <b>BOM Masterમાં બનાવેલા Product names</b>માંથી suggestion આવશે.</p>
-<div class="grid"><input id="productionDate" type="date" title="Production Date"><div class="autowrap"><div class="autowrap" style="position:relative"><input id="productionCode" placeholder="Type Finish Product Name"><div id="productionProductSuggestions" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><label style="display:flex;flex-direction:column;gap:5px;font-weight:600">OK Qty<input id="productionQty" type="number" min="0" step="0.001" placeholder="OK Quantity"></label><label style="display:flex;flex-direction:column;gap:5px;font-weight:600">Rejection Qty<input id="productionRejectionQty" type="number" min="0" step="0.001" value="0" placeholder="Rejection Quantity"></label></div>
+<div class="grid"><input id="productionDate" type="date" title="Production Date"><div class="autowrap"><div class="autowrap" style="position:relative"><input id="productionCode" placeholder="Type Finish Product Name"><div id="productionProductSuggestions" class="suggestbox" style="position:absolute;left:0;right:0;top:100%;z-index:999;background:#fff;border:1px solid #aaa;border-radius:6px;display:none;max-height:220px;overflow:auto"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><div class="suggestbox" id="productSuggestProduction"></div></div><label class="production-ok-field" style="display:flex;flex-direction:column;gap:5px;font-weight:700;color:#16803c">OK Qty<input style="color:#16803c;border:2px solid #22a447;background:#f0fff4;font-weight:700" id="productionQty" type="number" min="0" step="0.001" placeholder="OK Quantity"></label><label class="production-rejection-field" style="display:flex;flex-direction:column;gap:5px;font-weight:700;color:#c62828">Rejection Qty<input style="color:#c62828;border:2px solid #dc2626;background:#fff1f2;font-weight:700" id="productionRejectionQty" type="number" min="0" step="0.001" value="0" placeholder="Rejection Quantity"></label></div>
 <p>OK Qty Finished Goods stockમાં ઉમેરાશે. BOM Components નો stock OK Qty + Rejection Qty ના કુલ મુજબ deduct થશે.</p><button class="primary" id="productionBtn">Save Production</button> <button id="openProductionReport">📄 Production Report</button><div class="msg" id="productionMsg"></div></div></section>
 
 
