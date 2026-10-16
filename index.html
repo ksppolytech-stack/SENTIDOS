@@ -287,6 +287,13 @@ tr.low-stock-row td * {
 <style id="v392CombinedSalesPurchaseCustomerCharts">
 .v392Legend{display:flex;gap:18px;align-items:center;font-size:12px;margin:8px 0 2px;color:#344054}.v392Legend span{display:flex;align-items:center;gap:6px}.v392Legend i{display:inline-block;width:12px;height:12px;border-radius:3px}.v392Sale{background:#1687e8!important}.v392Purchase{background:#f28c28!important}.v392GroupedBars{gap:10px;align-items:stretch;overflow-x:auto;padding-bottom:36px}.v392MonthGroup{min-width:68px;display:flex;flex-direction:column;align-items:center;position:relative;height:100%}.v392PairBars{display:flex;align-items:flex-end;justify-content:center;gap:5px;height:100%;width:100%}.v392PairCol{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-width:25px}.v392PairBar{width:22px;border-radius:5px 5px 1px 1px;min-height:2px}.v392GroupedBars .v315BarLabel{bottom:-29px;left:50%;transform:translateX(-50%) rotate(-25deg);transform-origin:top center}.v392Filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}.v392Filters label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#344054}.v392Filters select{width:100%;min-width:0;padding:9px;border:1px solid #cbd5e1;border-radius:8px;background:#fff}.v392CustomerBars{display:flex;align-items:flex-end;gap:12px;min-height:200px;padding:14px 6px 50px;border-bottom:1px solid #d9dee8;overflow-x:auto}.v392CustomerCol{min-width:90px;max-width:150px;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:200px;position:relative}.v392CustomerBar{width:42px;max-width:80%;border-radius:6px 6px 1px 1px;background:linear-gradient(180deg,#34d399,#059669);min-height:2px}.v392CustomerLabel{position:absolute;bottom:-48px;font-size:10px;color:#475467;text-align:center;overflow-wrap:anywhere;width:100%;max-height:42px;overflow:hidden}.v392CustomerPanel .v392CustomerBars .v315Empty{min-width:100%}@media(max-width:800px){.v392Filters{grid-template-columns:1fr}.v392CustomerBars{min-height:180px}.v392CustomerCol{height:180px;min-width:84px}}
 </style>
+
+<style id="v397DashboardDetailsSpacing">
+#dashboard .cards{margin-top: -6px !important; margin-bottom: 10px !important;}
+#dashboard #dashboardDetails{margin-top: -4px !important; scroll-margin-top: 12px;}
+#dashboard #dashboardVendorRawHistoryV369{margin-top: 8px !important;}
+</style>
+
 </head>
 <body>
 <button id="globalRefreshBtn" type="button" title="Refresh Page" aria-label="Refresh Page" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
@@ -2166,7 +2173,7 @@ window.showDashboardFilter=function showDashboardFilter(type){
    list=items.map(i=>({code:i.code,name:i.name,cat:i.cat,unit:i.unit,weight:i.weight,stock:i.stock,min:i.min}));label='All Items';
  }
  title.textContent=label;table.innerHTML=list.length?list.map(i=>`<tr><td>${i.code}</td><td>${i.name}</td><td>${i.cat}</td><td>${i.unit}</td><td>${i.weight}</td><td>${i.stock}</td><td>${i.min}</td></tr>`).join(''):'<tr><td colspan="7">No data</td></tr>';
- box.style.display='block';
+ box.style.display='block';box.style.marginTop='-4px';try{box.scrollIntoView({behavior:'smooth',block:'nearest'});}catch(e){}
 }
 function setupDashboardCards(){
  document.querySelectorAll('.dashCard').forEach(c=>c.onclick=()=>showDashboardFilter(c.dataset.filter));
