@@ -294,6 +294,14 @@ tr.low-stock-row td * {
 #dashboard #dashboardVendorRawHistoryV369{margin-top: 8px !important;}
 </style>
 
+
+<style id="v402-transaction-stock-report-button-colors">
+/* V402: report dashboard button colors */
+.v235-report-card button[data-v378-report="transaction"]{background:#7c3aed !important;color:#fff !important;}
+.v235-report-card button[data-v378-report="transaction"]:hover{background:#5b21b6 !important;}
+.v235-report-card button[data-v378-report="stock"]{background:#0f766e !important;color:#fff !important;}
+.v235-report-card button[data-v378-report="stock"]:hover{background:#115e59 !important;}
+</style>
 </head>
 <body>
 <button id="globalRefreshBtn" type="button" title="Refresh Page" aria-label="Refresh Page" style="position:fixed;top:10px;right:10px;z-index:99990;padding:8px 12px;border:0;border-radius:7px;background:#fff;color:#17324d;box-shadow:0 2px 8px rgba(0,0,0,.18);font-size:14px;font-weight:700;cursor:pointer;">🔄 Refresh</button>
@@ -7978,15 +7986,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     clone.querySelectorAll('button,input,select,textarea,[data-no-export]').forEach(el=>el.remove());
     const rows=[...clone.querySelectorAll('tr')];
     if(!rows.length){alert('Export કરવા માટે data નથી.');return;}
-    const html='<!DOCTYPE html><html><head><meta charset="UTF-8">
-<style id="v400-transaction-stock-report-button-colors">
-/* V400: distinct colors only for Transaction Report and Stock Report buttons */
-.v235-report-card button[data-v378-report="transaction"]{background:#7c3aed;color:#fff;}
-.v235-report-card button[data-v378-report="transaction"]:hover{background:#5b21b6;}
-.v235-report-card button[data-v378-report="stock"]{background:#0f766e;color:#fff;}
-.v235-report-card button[data-v378-report="stock"]:hover{background:#115e59;}
-</style>
-</head><body>'+
+    const html='<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>'+ 
       '<h3>'+esc(panel?.querySelector('h2,h3')?.innerText||'Report')+'</h3>'+clone.outerHTML+'</body></html>';
     const blob=new Blob(['\ufeff',html],{type:'application/vnd.ms-excel;charset=utf-8;'});
     const url=URL.createObjectURL(blob);
