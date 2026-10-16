@@ -1022,6 +1022,15 @@ tr.low-stock-row td * {
 <table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Unit</th><th>Stock</th><th>Action</th></tr></thead><tbody id="stockTable"></tbody></table>
 </div>
 <div id="v266StockTransactionPanel" style="display:none;margin-top:14px">
+<div id="v374TransactionFilters" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;margin:0 0 12px;padding:12px;background:#f7f9fc;border:1px solid #dfe5ee;border-radius:10px">
+  <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#374151">From Date<input id="v374TxFromDate" type="date" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid #cfd7e3;border-radius:7px;background:#fff"></label>
+  <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#374151">To Date<input id="v374TxToDate" type="date" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid #cfd7e3;border-radius:7px;background:#fff"></label>
+  <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#374151">Transaction Type<select id="v374TxType" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid #cfd7e3;border-radius:7px;background:#fff"><option value="">All Types</option></select></label>
+  <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#374151">Reference No.<input id="v374TxRef" type="search" placeholder="Search reference..." style="width:100%;box-sizing:border-box;padding:9px;border:1px solid #cfd7e3;border-radius:7px;background:#fff"></label>
+  <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#374151">Item Name / Code<input id="v374TxItem" type="search" placeholder="Search item..." style="width:100%;box-sizing:border-box;padding:9px;border:1px solid #cfd7e3;border-radius:7px;background:#fff"></label>
+  <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;color:#374151">Quantity contains<input id="v374TxQty" type="search" placeholder="Enter quantity..." style="width:100%;box-sizing:border-box;padding:9px;border:1px solid #cfd7e3;border-radius:7px;background:#fff"></label>
+  <div style="display:flex;align-items:end"><button type="button" id="v374TxClearFilters" style="padding:10px 14px;border:0;border-radius:7px;background:#455a64;color:#fff;font-weight:700;cursor:pointer">✖ Clear Filters</button></div>
+</div>
 <table><thead><tr><th>Date</th><th>Type</th><th>Ref</th><th>Item</th><th>Qty</th><th>Action</th></tr></thead><tbody id="transactionTable"></tbody></table>
 </div>
 </div></section>
@@ -8148,19 +8157,52 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
   }
   function filterTransactions(){
     var input=el('v260StockSearch'), body=el('transactionTable');
-    if(!input||!body||!transactionViewActive())return;
-    var q=String(input.value||'').trim().toLowerCase();
+    if(!body||!transactionViewActive())return;
+    var q=String(input&&input.value||'').trim().toLowerCase();
+    var from=String(el('v374TxFromDate')&&el('v374TxFromDate').value||'');
+    var to=String(el('v374TxToDate')&&el('v374TxToDate').value||'');
+    var type=String(el('v374TxType')&&el('v374TxType').value||'').toLowerCase();
+    var ref=String(el('v374TxRef')&&el('v374TxRef').value||'').trim().toLowerCase();
+    var item=String(el('v374TxItem')&&el('v374TxItem').value||'').trim().toLowerCase();
+    var qty=String(el('v374TxQty')&&el('v374TxQty').value||'').trim().toLowerCase();
     Array.prototype.forEach.call(body.querySelectorAll('tr'),function(row){
-      row.style.display=!q||String(row.textContent||'').toLowerCase().includes(q)?'':'none';
+      var cells=row.cells||[];
+      var stamp=cells[0]?Date.parse(String(cells[0].textContent||'').trim()):NaN;
+      var rowDay=Number.isFinite(stamp)?new Date(stamp.getTime?stamp:stamp):null;
+      var dayKey=rowDay?rowDay.getFullYear()+'-'+String(rowDay.getMonth()+1).padStart(2,'0')+'-'+String(rowDay.getDate()).padStart(2,'0'):'';
+      var rowType=String(cells[1]&&cells[1].textContent||'').toLowerCase();
+      var rowRef=String(cells[2]&&cells[2].textContent||'').toLowerCase();
+      var rowItem=String(cells[3]&&cells[3].textContent||'').toLowerCase();
+      var rowQty=String(cells[4]&&cells[4].textContent||'').toLowerCase();
+      var visible=(!q||String(row.textContent||'').toLowerCase().includes(q))&&(!from||(dayKey&&dayKey>=from))&&(!to||(dayKey&&dayKey<=to))&&(!type||rowType===type)&&(!ref||rowRef.includes(ref))&&(!item||rowItem.includes(item))&&(!qty||rowQty.includes(qty));
+      row.style.display=visible?'':'none';
     });
   }
+  function initTransactionFilters(){
+    var body=el('transactionTable'), typeSelect=el('v374TxType');
+    if(!body||!typeSelect)return;
+    var existing=typeSelect.value;
+    var types=Array.from(new Set(Array.from(body.querySelectorAll('tr')).map(function(r){return String(r.cells[1]&&r.cells[1].textContent||'').trim();}).filter(Boolean))).sort();
+    typeSelect.innerHTML='<option value="">All Types</option>'+types.map(function(t){return '<option value="'+t.replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'">'+t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</option>';}).join('');
+    if(types.indexOf(existing)>=0)typeSelect.value=existing;
+    filterTransactions();
+  }
+  document.addEventListener('input',function(e){if(e.target&&/^v374Tx(FromDate|ToDate|Type|Ref|Item|Qty)$/.test(e.target.id||''))filterTransactions();},true);
+  document.addEventListener('change',function(e){if(e.target&&/^v374Tx(FromDate|ToDate|Type|Ref|Item|Qty)$/.test(e.target.id||''))filterTransactions();},true);
+  document.addEventListener('click',function(e){
+    if(e.target&&e.target.closest&&e.target.closest('#v374TxClearFilters')){
+      ['v374TxFromDate','v374TxToDate','v374TxType','v374TxRef','v374TxItem','v374TxQty'].forEach(function(id){var n=el(id);if(n)n.value='';});
+      if(el('v260StockSearch'))el('v260StockSearch').value='';
+      initTransactionFilters();
+    }
+  },true);
   function setSearchMode(){
     var input=el('v260StockSearch');
     if(!input)return;
     var tx=transactionViewActive();
     input.placeholder=tx?'Search Transaction / Date / Type / Ref / Item...':'Search Item / Code...';
     input.setAttribute('aria-label',tx?'Search Transaction / Date / Type / Ref / Item':'Search Item / Code');
-    if(tx)filterTransactions();
+    if(tx)initTransactionFilters();
     else if(typeof window.renderStockTableV260==='function')window.renderStockTableV260();
   }
   // Capture input before the legacy stock-only handler; filtering transaction rows is independent.
@@ -8179,7 +8221,7 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
   else setSearchMode();
   // Also restore the correct placeholder/filter after the legacy renderer rebuilds transaction rows.
   document.addEventListener('click',function(e){
-    if(e.target && e.target.closest && e.target.closest('#v266StockTransactionBtn'))setTimeout(filterTransactions,30);
+    if(e.target && e.target.closest && e.target.closest('#v266StockTransactionBtn'))setTimeout(initTransactionFilters,30);
   });
 })();
 </script>
