@@ -1460,6 +1460,26 @@ setTimeout(init,100);setTimeout(init,500);setTimeout(init,1500);setTimeout(init,
 
 
 
+
+<!-- V385: Ensure Transaction and Stock reports hide whenever another report is selected. -->
+<script id="v385ReportPanelSwitchFix">
+(function(){
+  function hideTxStock(){
+    ['v378TransactionReportPanel','v378StockReportPanel'].forEach(function(id){
+      var panel=document.getElementById(id); if(panel) panel.style.display='none';
+    });
+  }
+  document.addEventListener('click',function(e){
+    var target=e.target; if(!target || !target.closest) return;
+    // Keep the selected V378 report open; its own handler will show the chosen panel.
+    if(target.closest('[data-v378-report]')) { hideTxStock(); return; }
+    // Switching to any other report must close both V378 report panels.
+    var otherReport=target.closest('[data-v235-report], [data-v371-report], #v231DispatchReportBtn, #v231PurchaseReportBtn, #v231ProductionReportBtn, #v231JWReportBtn, #v231GSTReportBtn, #v168OpenGST, [data-page="reports"]');
+    if(otherReport) hideTxStock();
+  },true);
+})();
+</script>
+
 </body></html>`);w.document.close();
 }
 function saveRawSaleInvoice(){
