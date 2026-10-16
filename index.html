@@ -1028,10 +1028,6 @@ tr.low-stock-row td * {
     <input id="v374TxItem" type="search" placeholder="Search item name or code..." style="flex:1;min-width:220px;box-sizing:border-box;padding:9px 11px;border:1px solid #cfd7e3;border-radius:7px;background:#fff">
     <button type="button" id="v374TxClearFilters" style="padding:10px 14px;border:0;border-radius:7px;background:#455a64;color:#fff;font-weight:700;cursor:pointer">✖ Clear Filters</button>
   </div>
-  <div>
-    <div style="font-size:12px;font-weight:800;color:#374151;margin:0 0 7px">Transaction Type</div>
-    <div id="v375TxTypeSlicer" role="group" aria-label="Transaction Type slicer" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-  </div>
 </div>
 <table><thead><tr><th>Date</th><th>Type</th><th>Ref</th><th>Item</th><th>Qty</th><th>Action</th></tr></thead><tbody id="transactionTable"></tbody></table>
 </div>
@@ -8149,54 +8145,44 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
 })();
 </script>
 
-<!-- V375: Transaction filters simplified: Item Name first; Transaction Type slicer; removed date, reference and quantity filters. -->
+<!-- V375 baseline: simplified transaction filters. V376: use only Item Name / Code filter in Transaction view; hide shared stock search/category and focus item search when Transaction is clicked. -->
 <!-- V372: The shared Stock search searches stock items on Stock view and transaction rows on Transaction view. -->
-<script id="v372StockTransactionDynamicSearch">
+<script id="v376StockTransactionItemSearch">
 (function(){
   function el(id){return document.getElementById(id);}
-  function transactionViewActive(){var p=el('v266StockTransactionPanel');return !!(p&&p.style.display!=='none');}
-  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-  function selectedType(){var box=el('v375TxTypeSlicer');return String(box&&box.dataset.selectedType||'');}
+  function txActive(){var p=el('v266StockTransactionPanel');return !!(p&&p.style.display!=='none');}
   function filterTransactions(){
-    var input=el('v260StockSearch'),body=el('transactionTable'),itemInput=el('v374TxItem');
-    if(!body||!transactionViewActive())return;
+    var body=el('transactionTable'),input=el('v374TxItem');
+    if(!body||!txActive())return;
     var q=String(input&&input.value||'').trim().toLowerCase();
-    var item=String(itemInput&&itemInput.value||'').trim().toLowerCase();
-    var type=selectedType().toLowerCase();
     Array.prototype.forEach.call(body.querySelectorAll('tr'),function(row){
       var cells=row.cells||[];
-      var rowType=String(cells[1]&&cells[1].textContent||'').trim().toLowerCase();
-      var rowItem=String(cells[3]&&cells[3].textContent||'').toLowerCase();
-      var visible=(!q||String(row.textContent||'').toLowerCase().includes(q))&&(!item||rowItem.includes(item))&&(!type||rowType===type);
-      row.style.display=visible?'':'none';
+      var item=String(cells[3]&&cells[3].textContent||'').toLowerCase();
+      row.style.display=(!q||item.includes(q))?'':'none';
     });
   }
-  function initTransactionFilters(){
-    var body=el('transactionTable'),box=el('v375TxTypeSlicer');
-    if(!body||!box)return;
-    var previous=selectedType();
-    var types=Array.from(new Set(Array.from(body.querySelectorAll('tr')).map(function(r){return String(r.cells[1]&&r.cells[1].textContent||'').trim();}).filter(Boolean))).sort();
-    if(previous&&types.indexOf(previous)<0)previous='';
-    box.dataset.selectedType=previous;
-    var all=[{value:'',label:'All Types'}].concat(types.map(function(t){return {value:t,label:t};}));
-    box.innerHTML=all.map(function(t){var active=t.value===previous;return '<button type="button" class="v375-type-chip" data-type="'+esc(t.value)+'" aria-pressed="'+(active?'true':'false')+'" style="padding:8px 12px;border:1px solid '+(active?'#2563eb':'#cbd5e1')+';border-radius:8px;background:'+(active?'#2563eb':'#fff')+';color:'+(active?'#fff':'#334155')+';font-weight:700;cursor:pointer">'+esc(t.label)+'</button>';}).join('');
-    filterTransactions();
-  }
-  document.addEventListener('input',function(e){if(e.target&&(e.target.id==='v374TxItem'||e.target.id==='v260StockSearch'))filterTransactions();},true);
-  document.addEventListener('click',function(e){
-    var chip=e.target&&e.target.closest?e.target.closest('#v375TxTypeSlicer [data-type]'):null;
-    if(chip){var box=el('v375TxTypeSlicer');if(box)box.dataset.selectedType=chip.getAttribute('data-type')||'';initTransactionFilters();return;}
-    if(e.target&&e.target.closest&&e.target.closest('#v374TxClearFilters')){
-      var item=el('v374TxItem');if(item)item.value='';
-      var search=el('v260StockSearch');if(search)search.value='';
-      var box=el('v375TxTypeSlicer');if(box)box.dataset.selectedType='';
-      initTransactionFilters();
+  function setMode(focusItem){
+    var tx=txActive(),bar=el('v260StockFilterBar'),cats=el('v260StockCategoryMenu'),stockSearch=el('v260StockSearch'),item=el('v374TxItem');
+    if(bar)bar.style.display=tx?'none':'flex';
+    if(cats)cats.style.display=tx?'none':'flex';
+    if(tx){
+      filterTransactions();
+      if(focusItem&&item){setTimeout(function(){item.focus();item.select();},60);}
+    }else if(typeof window.renderStockTableV260==='function'){
+      window.renderStockTableV260();
     }
+  }
+  document.addEventListener('input',function(e){if(e.target&&e.target.id==='v374TxItem')filterTransactions();},true);
+  document.addEventListener('click',function(e){
+    var txBtn=e.target&&e.target.closest?e.target.closest('#v266StockTransactionBtn'):null;
+    if(txBtn){setTimeout(function(){setMode(true);},30);return;}
+    var stockBtn=e.target&&e.target.closest?e.target.closest('#v266StockBtn'):null;
+    if(stockBtn){setTimeout(function(){setMode(false);},30);return;}
+    var clear=e.target&&e.target.closest?e.target.closest('#v374TxClearFilters'):null;
+    if(clear){var item=el('v374TxItem');if(item)item.value='';setTimeout(function(){filterTransactions();if(item)item.focus();},0);}
   },true);
-  function setSearchMode(){var input=el('v260StockSearch');if(!input)return;var tx=transactionViewActive();input.placeholder=tx?'Search Transaction / Type / Item...':'Search Item / Code...';input.setAttribute('aria-label',tx?'Search Transaction / Type / Item':'Search Item / Code');if(tx)initTransactionFilters();else if(typeof window.renderStockTableV260==='function')window.renderStockTableV260();}
-  document.addEventListener('click',function(e){var t=e.target&&e.target.closest?e.target.closest('#v266StockTransactionBtn,#v266StockBtn,#v260StockClear'):null;if(!t)return;setTimeout(function(){if(t.id==='v260StockClear'&&transactionViewActive())filterTransactions();else setSearchMode();},0);},true);
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setSearchMode);else setSearchMode();
-  document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('#v266StockTransactionBtn'))setTimeout(initTransactionFilters,30);});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setMode(false);});
+  else setMode(false);
 })();
 </script>
 
