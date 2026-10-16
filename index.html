@@ -8253,6 +8253,33 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
 #v383DashboardItemFilterBar .v383-filter-result-count{font-size:14px}
 @media(max-width:600px){#v383DashboardItemFilterBar .v383-item-search input{height:56px;min-height:56px;font-size:17px}#v383DashboardItemFilterBar .v383-category-slicer button{flex:1 1 100%;width:100%;min-width:0}}
 </style>
+
+<!-- V399: Keep the clicked dashboard card near the top of the viewport. -->
+<style id="v399DashboardCardScrollUp">
+#dashboard .dashCard { scroll-margin-top: 16px; }
+</style>
+<script id="v399DashboardCardScrollUpScript">
+(function(){
+  function bind(){
+    var dashboard=document.getElementById('dashboard');
+    if(!dashboard || dashboard.dataset.v399ScrollBound==='1') return;
+    dashboard.dataset.v399ScrollBound='1';
+    dashboard.addEventListener('click',function(e){
+      var card=e.target && e.target.closest ? e.target.closest('#dashboard .dashCard') : null;
+      if(!card) return;
+      function moveCardUp(){
+        if(!document.body.contains(card)) return;
+        try { card.scrollIntoView({behavior:'smooth',block:'start',inline:'nearest'}); } catch(err) { card.scrollIntoView(true); }
+      }
+      setTimeout(moveCardUp,80);
+      setTimeout(moveCardUp,260);
+      setTimeout(moveCardUp,520);
+    },false);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind); else bind();
+  setTimeout(bind,500);
+})();
+</script>
 </body></html>
 
 
