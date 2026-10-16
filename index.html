@@ -8440,3 +8440,30 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
 })();
 </script>
 
+
+<!-- V389: Slightly narrower dashboard item search and autofocus for All Items / Finished Goods cards. -->
+<style id="v389DashboardSearchWidth">
+#v383DashboardItemFilterBar .v383-item-search{width:100%;max-width:620px}
+#v383DashboardItemFilterBar .v383-item-search input{width:100%;max-width:620px;box-sizing:border-box}
+</style>
+<script id="v389DashboardSearchFocus">
+(function(){
+  function focusItemSearch(){
+    var input=document.getElementById('v383ItemNameSearch');
+    if(!input)return;
+    input.focus({preventScroll:true});
+    try{var n=input.value.length;input.setSelectionRange(n,n);}catch(e){}
+  }
+  function bind(){
+    var dash=document.getElementById('dashboard');if(!dash)return;
+    dash.addEventListener('click',function(e){
+      var card=e.target&&e.target.closest?e.target.closest('.dashCard[data-filter]'):null;
+      if(!card)return;
+      var type=card.getAttribute('data-filter');
+      if(type!=='all'&&type!=='fg')return;
+      [100,300,650,900].forEach(function(ms){setTimeout(focusItemSearch,ms);});
+    },true);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+})();
+</script>
