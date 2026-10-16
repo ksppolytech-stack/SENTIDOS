@@ -8420,3 +8420,23 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
 })();
 </script>
+
+<!-- V388: Hide Vendor Raw Material Issue Report when another report is opened. -->
+<script id="v388VendorRawReportAutoHide">
+(function(){
+  function hideVendorIssueReport(){
+    var panel=document.getElementById('vendorRawIssueReportPanelV371');
+    if(panel){panel.style.setProperty('display','none','important');}
+  }
+  document.addEventListener('click',function(event){
+    var target=event.target;
+    if(!target || !target.closest) return;
+    var otherReport=target.closest('[data-v235-report], [data-v378-report]');
+    var vendorReport=target.closest('[data-v371-report="vendor-raw-issue"]');
+    if(otherReport || (target.closest('[data-v371-report]') && !vendorReport)){
+      hideVendorIssueReport();
+    }
+  },true);
+})();
+</script>
+
