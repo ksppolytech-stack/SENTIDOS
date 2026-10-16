@@ -1457,6 +1457,77 @@ setTimeout(init,100);setTimeout(init,500);setTimeout(init,1500);setTimeout(init,
 
 
 
+
+<style id="v381DashboardCardSpecificFilters">
+.v381-filterbar{display:flex;flex-wrap:wrap;gap:8px;align-items:end;padding:12px;margin:0 0 12px;border:1px solid #d8e2ed;border-radius:10px;background:#f7faff}
+.v381-filterfield{display:flex;flex-direction:column;gap:4px;min-width:145px;flex:1}
+.v381-filterfield label{font-size:12px;font-weight:700;color:#334155}
+.v381-filterfield input,.v381-filterfield select{width:100%;min-width:0;padding:8px;border:1px solid #cbd5e1;border-radius:7px;background:white;color:#172033;box-sizing:border-box}
+.v381-filter-actions{display:flex;gap:6px;align-items:end}
+.v381-filter-actions button{padding:8px 12px;border-radius:7px;border:0;background:#334155;color:#fff;font-weight:700;cursor:pointer}
+</style>
+<script id="v381DashboardCardSpecificFiltersScript">
+(function(){
+  var knownHeaders=['date','transaction type','type','reference','ref','item','item name','name','code','category','unit','party','vendor','supplier','customer','quantity','qty','stock','minimum','month','material','raw material','weight'];
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function visible(el){return !!el && el.style.display!=='none' && getComputedStyle(el).display!=='none';}
+  function getHeaderCells(table){
+    var tr=table.querySelector('thead tr');
+    if(!tr){var rows=Array.from(table.querySelectorAll('tr'));tr=rows.find(function(r){return r.querySelectorAll('th').length>0;})||null;}
+    if(!tr){var first=table.querySelector('tr');if(first && first.querySelectorAll('td').length && /month|date|type|name|item|code|vendor|party|stock|quantity|qty/i.test(first.textContent||''))tr=first;}
+    return tr?Array.from(tr.children).map(function(c){return String(c.textContent||'').trim();}):[];
+  }
+  function colIndex(headers,regex){return headers.findIndex(function(h){return regex.test(h);});}
+  function getRows(table,headerRow){return Array.from(table.querySelectorAll('tr')).filter(function(r){return r!==headerRow && (r.querySelectorAll('td').length>0);});}
+  function normalize(v){return String(v||'').trim().toLowerCase();}
+  function makeField(label,type,placeholder){var wrap=document.createElement('div');wrap.className='v381-filterfield';var l=document.createElement('label');l.textContent=label;var input=document.createElement(type==='select'?'select':'input');if(type!=='select'){input.type=type||'text';input.placeholder=placeholder||label;}wrap.appendChild(l);wrap.appendChild(input);return {wrap:wrap,input:input};}
+  function addTableFilters(table,owner,kind){
+    if(!table || table.dataset.v381Filters==='1')return;
+    var headers=getHeaderCells(table);if(!headers.length)return;
+    var headerRow=table.querySelector('thead tr')||Array.from(table.querySelectorAll('tr')).find(function(r){return r.querySelectorAll('th').length>0;})||null;
+    var rows=getRows(table,headerRow);if(!rows.length && headers.length<2)return;
+    var bar=document.createElement('div');bar.className='v381-filterbar';bar.dataset.filterKind=kind;
+    var controls=[];
+    var all=makeField('Search all','text','Search in this card...');bar.appendChild(all.wrap);controls.push({input:all.input,idx:-1,mode:'all'});
+    var dateIdx=colIndex(headers,/date/i);
+    if(dateIdx>=0){var from=makeField('From Date','date');var to=makeField('To Date','date');bar.appendChild(from.wrap);bar.appendChild(to.wrap);controls.push({input:from.input,idx:dateIdx,mode:'from'});controls.push({input:to.input,idx:dateIdx,mode:'to'});}
+    var typeIdx=colIndex(headers,/transaction\s*type|^type$/i);
+    if(typeIdx>=0){var typ=makeField('Transaction Type','select');typ.input.appendChild(new Option('All Types',''));Array.from(new Set(rows.map(function(r){return normalize((r.children[typeIdx]||{}).textContent)}).filter(Boolean))).sort().forEach(function(v){typ.input.appendChild(new Option(v,v));});bar.appendChild(typ.wrap);controls.push({input:typ.input,idx:typeIdx,mode:'exact'});}
+    var itemIdx=colIndex(headers,/item|raw material|material|product|\bname\b|code/i);
+    if(itemIdx>=0 && itemIdx!==dateIdx && itemIdx!==typeIdx){var item=makeField('Item / Name','text','Enter item or code');bar.appendChild(item.wrap);controls.push({input:item.input,idx:itemIdx,mode:'contains'});}
+    var partyIdx=colIndex(headers,/party|vendor|supplier|customer/i);
+    if(partyIdx>=0 && partyIdx!==itemIdx){var party=makeField('Party / Vendor','text','Enter party or vendor');bar.appendChild(party.wrap);controls.push({input:party.input,idx:partyIdx,mode:'contains'});}
+    var catIdx=colIndex(headers,/category/i);
+    if(catIdx>=0){var cat=makeField('Category','select');cat.input.appendChild(new Option('All Categories',''));Array.from(new Set(rows.map(function(r){return normalize((r.children[catIdx]||{}).textContent)}).filter(Boolean))).sort().forEach(function(v){cat.input.appendChild(new Option(v,v));});bar.appendChild(cat.wrap);controls.push({input:cat.input,idx:catIdx,mode:'exact'});}
+    var actions=document.createElement('div');actions.className='v381-filter-actions';var clear=document.createElement('button');clear.type='button';clear.textContent='Clear Filters';actions.appendChild(clear);bar.appendChild(actions);
+    function apply(){
+      var vals=controls.map(function(c){return {c:c,v:normalize(c.input.value)};});
+      rows.forEach(function(row){var cells=Array.from(row.children);var ok=vals.every(function(x){if(!x.v)return true;var c=x.c,cell=c.idx>=0?normalize(cells[c.idx]&&cells[c.idx].textContent):'';if(c.mode==='all')return normalize(row.textContent).indexOf(x.v)>=0;if(c.mode==='contains')return cell.indexOf(x.v)>=0;if(c.mode==='exact')return cell===x.v;if(c.mode==='from'||c.mode==='to'){var raw=String(cells[c.idx]&&cells[c.idx].textContent||'').trim();var m=raw.match(/(\d{4}-\d{2}-\d{2})/);if(!m){var d=raw.match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);if(d)m=[null,d[3]+'-'+String(d[2]).padStart(2,'0')+'-'+String(d[1]).padStart(2,'0')];}if(!m)return true;return c.mode==='from'?m[1]>=x.v:m[1]<=x.v;}return true;});row.style.display=ok?'':'none';});
+    }
+    controls.forEach(function(c){c.input.addEventListener('input',apply);c.input.addEventListener('change',apply);});
+    clear.addEventListener('click',function(){controls.forEach(function(c){c.input.value='';});apply();});
+    table.parentNode.insertBefore(bar,table);table.dataset.v381Filters='1';table.dataset.v381FilterBar='1';
+  }
+  function scan(){
+    var dash=document.getElementById('dashboard');if(!dash)return;
+    var card=(dash.querySelector('.dashCard[data-filter].v381-selected'));
+    var areas=[];
+    var details=document.getElementById('dashboardDetails');if(visible(details))areas.push({el:details,kind:details.dataset.dashboardFilter||'dashboard'});
+    var sales=document.getElementById('v152SalesBox');if(visible(sales))areas.push({el:sales,kind:'sales'});
+    var purchase=document.getElementById('v153PurchaseBox');if(visible(purchase))areas.push({el:purchase,kind:'purchase'});
+    var vendor=document.getElementById('dashboardVendorRawHistoryV369');if(visible(vendor))areas.push({el:vendor,kind:'vendor'});
+    areas.forEach(function(a){Array.from(a.el.querySelectorAll('table')).forEach(function(t){addTableFilters(t,a.el,a.kind);});});
+  }
+  function bind(){
+    var dash=document.getElementById('dashboard');if(!dash)return;
+    dash.addEventListener('click',function(e){var c=e.target&&e.target.closest?e.target.closest('.dashCard'):null;if(!c)return;dash.querySelectorAll('.dashCard').forEach(function(x){x.classList.remove('v381-selected');});c.classList.add('v381-selected');[80,250,600,1100].forEach(function(ms){setTimeout(scan,ms);});},true);
+    var obs=new MutationObserver(function(){scan();});obs.observe(dash,{childList:true,subtree:true});
+    [300,800,1500,3000].forEach(function(ms){setTimeout(scan,ms);});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+})();
+</script>
+
 </body></html>`);w.document.close();
 }
 function saveRawSaleInvoice(){
