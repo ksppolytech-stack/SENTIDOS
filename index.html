@@ -914,8 +914,25 @@ tr.low-stock-row td * {
     <div class="v235-report-card"><div class="ico">🏭</div><h3>Production Report</h3><p>View production details</p><button type="button" data-v235-report="production">Open Report</button></div>
     <div class="v235-report-card"><div class="ico">👥</div><h3>Job Work Report</h3><p>View job work transactions</p><button type="button" data-v235-report="jobwork">Open Report</button></div>
     <div class="v235-report-card"><div class="ico">📦</div><h3>Vendor Raw Material Issue Report</h3><p>View raw material issued to vendors with date, vendor and quantity filters</p><button type="button" data-v371-report="vendor-raw-issue">Open Report</button></div>
+    <div class="v235-report-card"><div class="ico">📋</div><h3>Transaction Report</h3><p>View transaction history by type, item, date and reference</p><button type="button" data-v378-report="transaction">Open Report</button></div>
+    <div class="v235-report-card"><div class="ico">📊</div><h3>Stock Report</h3><p>View current finished goods and raw material stock</p><button type="button" data-v378-report="stock">Open Report</button></div>
   </div>
 </div>
+
+<section id="v378TransactionReportPanel" class="panel" style="display:none">
+<h2>📋 Transaction Report</h2>
+<div class="grid noPrint" style="margin-bottom:12px">
+<input id="v378TxSearch" type="search" placeholder="Search item / code / type / reference / party...">
+<select id="v378TxType"><option value="">All Transaction Types</option></select>
+<button type="button" id="v378TxClear">Clear Filters</button><button type="button" id="v378TxPrint">🖨 Print / PDF</button>
+</div>
+<div style="overflow:auto"><table id="v378TxReportTable"><thead><tr><th>Date</th><th>Transaction Type</th><th>Reference</th><th>Item / Code</th><th>Party</th><th>Quantity</th><th>Unit</th></tr></thead><tbody><tr><td colspan="7">No transactions loaded</td></tr></tbody></table></div>
+</section>
+<section id="v378StockReportPanel" class="panel" style="display:none">
+<h2>📊 Stock Report</h2>
+<div class="grid noPrint" style="margin-bottom:12px"><input id="v378StockSearch" type="search" placeholder="Search item name / code / category..."><select id="v378StockKind"><option value="">All Stock</option><option value="Finished Goods / Components">Finished Goods / Components</option><option value="Raw Material">Raw Material</option></select><button type="button" id="v378StockClear">Clear Filters</button><button type="button" id="v378StockPrint">🖨 Print / PDF</button></div>
+<div style="overflow:auto"><table id="v378StockReportTable"><thead><tr><th>Code</th><th>Item Name</th><th>Category</th><th>Unit</th><th>Current Stock</th></tr></thead><tbody><tr><td colspan="5">No stock loaded</td></tr></tbody></table></div>
+</section>
 
 <section id="dispatchReportPanel" class="panel">
 <h2>🚚 Dispatch Report</h2>
@@ -8203,6 +8220,42 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
 })();
 </script>
 
+<script id="v378TransactionAndStockReports">
+(function(){
+ const $=id=>document.getElementById(id);
+ const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+ const arr=k=>{try{const x=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}};
+ function txItem(t){return t.itemName||t.fromItemName||t.newItemName||t.item||t.code||''}
+ function txParty(t){return t.vendor||t.supplier||t.customer||t.party||t.jobworker||''}
+ function txRows(){return arr('adr_tx_v2').slice().reverse()}
+ function renderTx(){
+   const all=txRows(),q=($('v378TxSearch')?.value||'').trim().toLowerCase(),type=$('v378TxType')?.value||'';
+   const typeSel=$('v378TxType'); if(typeSel){const cur=typeSel.value;const types=[...new Set(all.map(t=>String(t.type||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));typeSel.innerHTML='<option value="">All Transaction Types</option>'+types.map(t=>'<option value="'+esc(t)+'">'+esc(t)+'</option>').join('');typeSel.value=types.includes(cur)?cur:'';}
+   const filtered=all.filter(t=>{const text=[t.date,t.type,t.ref,t.challanNo,t.billNo,t.invoiceNo,txItem(t),t.item,t.itemName,txParty(t),t.qty,t.unit].join(' ').toLowerCase();return (!q||text.includes(q))&&(!type||String(t.type||'')===type)});
+   const body=$('v378TxReportTable')?.querySelector('tbody');if(!body)return;
+   body.innerHTML=filtered.map(t=>'<tr><td>'+esc(t.date||'')+'</td><td>'+esc(t.type||'')+'</td><td>'+esc(t.ref||t.challanNo||t.billNo||t.invoiceNo||'')+'</td><td>'+esc(txItem(t))+'</td><td>'+esc(txParty(t))+'</td><td>'+esc(t.qty??'')+'</td><td>'+esc(t.unit||'')+'</td></tr>').join('')||'<tr><td colspan="7">No matching transactions found</td></tr>';
+ }
+ function stockRows(){
+   const out=[];arr('adr_items_v2').forEach(x=>out.push({code:x.code||'',name:x.name||x.itemName||'',category:x.category||x.type||'Finished Goods / Components',unit:x.unit||'PCS',stock:Number(x.stock)||0,kind:'Finished Goods / Components'}));
+   arr('adr_rawmaterials_v2').forEach(x=>out.push({code:x.code||'',name:x.name||x.rawMaterialName||'',category:'Raw Material',unit:x.unit||'KG',stock:Number(x.stock??x.closingStock??x.balance)||0,kind:'Raw Material'}));
+   return out;
+ }
+ function renderStock(){const q=($('v378StockSearch')?.value||'').trim().toLowerCase(),kind=$('v378StockKind')?.value||'';const rows=stockRows().filter(x=>(!q||[x.code,x.name,x.category,x.unit].join(' ').toLowerCase().includes(q))&&(!kind||x.kind===kind));const body=$('v378StockReportTable')?.querySelector('tbody');if(!body)return;body.innerHTML=rows.map(x=>'<tr><td>'+esc(x.code)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.category)+'</td><td>'+esc(x.unit)+'</td><td>'+Number(x.stock).toFixed(3)+'</td></tr>').join('')||'<tr><td colspan="5">No matching stock items found</td></tr>';}
+ function open(kind){
+   const page=$('reports');if(page){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));page.classList.add('active');}
+   document.querySelectorAll('.tabs>button').forEach(b=>b.classList.remove('active'));$('v231ReportBtn')?.classList.add('active');
+   const menu=$('v231ReportSubMenu');if(menu){menu.hidden=false;menu.style.display='flex';}$('v231ReportBtn')?.setAttribute('aria-expanded','true');
+   document.querySelectorAll('#reports > .panel, #reports > section.panel').forEach(p=>p.style.display='none');
+   const dash=$('v235ReportDashboard');if(dash)dash.style.display='none';
+   const panel=$(kind==='transaction'?'v378TransactionReportPanel':'v378StockReportPanel');if(panel)panel.style.display='block';
+   if(kind==='transaction')renderTx();else renderStock();
+ }
+ document.querySelectorAll('[data-v378-report]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();open(b.getAttribute('data-v378-report'));},true));
+ ['v378TxSearch','v378TxType'].forEach(id=>$(id)?.addEventListener('input',renderTx));$('v378TxClear')?.addEventListener('click',()=>{if($('v378TxSearch'))$('v378TxSearch').value='';if($('v378TxType'))$('v378TxType').value='';renderTx();});
+ ['v378StockSearch','v378StockKind'].forEach(id=>$(id)?.addEventListener('input',renderStock));$('v378StockClear')?.addEventListener('click',()=>{if($('v378StockSearch'))$('v378StockSearch').value='';if($('v378StockKind'))$('v378StockKind').value='';renderStock();});
+ $('v378TxPrint')?.addEventListener('click',()=>window.print());$('v378StockPrint')?.addEventListener('click',()=>window.print());
+})();
+</script>
 </body></html>
 
 
