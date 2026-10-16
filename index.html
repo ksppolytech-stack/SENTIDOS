@@ -1028,6 +1028,10 @@ tr.low-stock-row td * {
     <input id="v374TxItem" type="search" placeholder="Search item name or code..." style="flex:1;min-width:220px;box-sizing:border-box;padding:9px 11px;border:1px solid #cfd7e3;border-radius:7px;background:#fff">
     <button type="button" id="v374TxClearFilters" style="padding:10px 14px;border:0;border-radius:7px;background:#455a64;color:#fff;font-weight:700;cursor:pointer">✖ Clear Filters</button>
   </div>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="font-size:12px;font-weight:800;color:#374151">Transaction Type Filter</div>
+    <div id="v377TxTypeSlicer" style="display:flex;gap:7px;flex-wrap:wrap;align-items:center"></div>
+  </div>
 </div>
 <table><thead><tr><th>Date</th><th>Type</th><th>Ref</th><th>Item</th><th>Qty</th><th>Action</th></tr></thead><tbody id="transactionTable"></tbody></table>
 </div>
@@ -8145,44 +8149,57 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
 })();
 </script>
 
-<!-- V375 baseline: simplified transaction filters. V376: use only Item Name / Code filter in Transaction view; hide shared stock search/category and focus item search when Transaction is clicked. -->
+<!-- V375 baseline: simplified transaction filters. V377: use only Item Name / Code filter in Transaction view; hide shared stock search/category and focus item search when Transaction is clicked. -->
 <!-- V372: The shared Stock search searches stock items on Stock view and transaction rows on Transaction view. -->
-<script id="v376StockTransactionItemSearch">
+<script id="v377StockTransactionTypeFilters">
 (function(){
   function el(id){return document.getElementById(id);}
+  var selectedType='';
   function txActive(){var p=el('v266StockTransactionPanel');return !!(p&&p.style.display!=='none');}
-  function filterTransactions(){
-    var body=el('transactionTable'),input=el('v374TxItem');
-    if(!body||!txActive())return;
-    var q=String(input&&input.value||'').trim().toLowerCase();
-    Array.prototype.forEach.call(body.querySelectorAll('tr'),function(row){
-      var cells=row.cells||[];
-      var item=String(cells[3]&&cells[3].textContent||'').toLowerCase();
-      row.style.display=(!q||item.includes(q))?'':'none';
+  function rows(){var b=el('transactionTable');return b?Array.prototype.slice.call(b.querySelectorAll('tr')):[];}
+  function typeOf(row){return String(row&&row.cells&&row.cells[1]?row.cells[1].textContent:'').trim();}
+  function buttonStyle(active){return 'padding:6px 11px;border:1px solid '+(active?'#2457a7':'#cbd5e1')+';border-radius:18px;background:'+(active?'#2457a7':'#fff')+';color:'+(active?'#fff':'#334155')+';font-size:12px;font-weight:700;cursor:pointer;';}
+  function applyFilter(){
+    var input=el('v374TxItem'),q=String(input&&input.value||'').trim().toLowerCase();
+    rows().forEach(function(row){
+      var cells=row.cells||[],item=String(cells[3]&&cells[3].textContent||'').toLowerCase(),type=typeOf(row);
+      var typeMatch=!selectedType||type.toLowerCase()===selectedType.toLowerCase();
+      var itemMatch=!q||item.includes(q);
+      row.style.display=(typeMatch&&itemMatch)?'':'none';
     });
+    renderSlicer();
+  }
+  function renderSlicer(){
+    var wrap=el('v377TxTypeSlicer');if(!wrap)return;
+    var found={},types=[];
+    rows().forEach(function(row){var t=typeOf(row);if(t&&!found[t.toLowerCase()]){found[t.toLowerCase()]=true;types.push(t);}});
+    types.sort(function(a,b){return a.localeCompare(b);});
+    if(selectedType&&!found[selectedType.toLowerCase()])selectedType='';
+    var html='<button type="button" data-v377-txtype="" style="'+buttonStyle(!selectedType)+'">All Types</button>';
+    types.forEach(function(t){html+='<button type="button" data-v377-txtype="'+t.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'" style="'+buttonStyle(selectedType.toLowerCase()===t.toLowerCase())+'">'+t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</button>';});
+    wrap.innerHTML=html;
   }
   function setMode(focusItem){
-    var tx=txActive(),bar=el('v260StockFilterBar'),cats=el('v260StockCategoryMenu'),stockSearch=el('v260StockSearch'),item=el('v374TxItem');
+    var tx=txActive(),bar=el('v260StockFilterBar'),cats=el('v260StockCategoryMenu'),item=el('v374TxItem');
     if(bar)bar.style.display=tx?'none':'flex';
     if(cats)cats.style.display=tx?'none':'flex';
-    if(tx){
-      filterTransactions();
-      if(focusItem&&item){setTimeout(function(){item.focus();item.select();},60);}
-    }else if(typeof window.renderStockTableV260==='function'){
-      window.renderStockTableV260();
-    }
+    if(tx){renderSlicer();applyFilter();if(focusItem&&item){setTimeout(function(){item.focus();item.select();},60);}}
+    else if(typeof window.renderStockTableV260==='function')window.renderStockTableV260();
   }
-  document.addEventListener('input',function(e){if(e.target&&e.target.id==='v374TxItem')filterTransactions();},true);
+  document.addEventListener('input',function(e){if(e.target&&e.target.id==='v374TxItem'&&txActive())applyFilter();},true);
   document.addEventListener('click',function(e){
     var txBtn=e.target&&e.target.closest?e.target.closest('#v266StockTransactionBtn'):null;
-    if(txBtn){setTimeout(function(){setMode(true);},30);return;}
+    if(txBtn){selectedType='';setTimeout(function(){setMode(true);},30);return;}
     var stockBtn=e.target&&e.target.closest?e.target.closest('#v266StockBtn'):null;
     if(stockBtn){setTimeout(function(){setMode(false);},30);return;}
+    var typeBtn=e.target&&e.target.closest?e.target.closest('[data-v377-txtype]'):null;
+    if(typeBtn&&txActive()){selectedType=typeBtn.getAttribute('data-v377-txtype')||'';applyFilter();return;}
     var clear=e.target&&e.target.closest?e.target.closest('#v374TxClearFilters'):null;
-    if(clear){var item=el('v374TxItem');if(item)item.value='';setTimeout(function(){filterTransactions();if(item)item.focus();},0);}
+    if(clear){selectedType='';var item=el('v374TxItem');if(item)item.value='';applyFilter();if(item)item.focus();}
   },true);
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setMode(false);});
-  else setMode(false);
+  var body=el('transactionTable');
+  if(body&&window.MutationObserver){new MutationObserver(function(){if(txActive())applyFilter();else renderSlicer();}).observe(body,{childList:true,subtree:true,characterData:true});}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setMode(false);});else setMode(false);
 })();
 </script>
 
