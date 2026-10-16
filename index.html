@@ -8340,20 +8340,20 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
 </script>
 
 
-<!-- V379: Vendor Raw Material history is shown only when its dashboard card is clicked. -->
+<!-- V380: Vendor Raw Material card toggles history open and closed on repeated clicks. -->
 <style id="v379VendorHistoryVisibilityStyle">
 #dashboardVendorRawHistoryV369.v379-vendor-history-hidden{display:none!important;}
 #dashboardVendorRawHistoryV369.v379-vendor-history-visible{display:block!important;}
 </style>
-<script id="v379VendorHistoryVisibility">
+<script id="v380VendorHistoryToggle">
 (function(){
   function historyBox(){return document.getElementById('dashboardVendorRawHistoryV369');}
   function detailsBox(){return document.getElementById('dashboardDetails');}
   function hideHistory(){var b=historyBox();if(b){b.classList.remove('v379-vendor-history-visible');b.classList.add('v379-vendor-history-hidden');b.style.setProperty('display','none','important');}}
   function showHistory(){var b=historyBox();if(b){b.classList.remove('v379-vendor-history-hidden');b.classList.add('v379-vendor-history-visible');b.style.setProperty('display','block','important');if(typeof window.renderDashboardVendorRawHistoryV369==='function')window.renderDashboardVendorRawHistoryV369();}}
-  function apply(type){
+  function apply(type,shouldShow){
     if(type==='vendor'){
-      showHistory();
+      if(shouldShow) showHistory(); else hideHistory();
       var d=detailsBox();if(d){d.style.setProperty('display','none','important');d.removeAttribute('data-dashboard-filter');}
     }else hideHistory();
   }
@@ -8363,20 +8363,11 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
       var card=e.target&&e.target.closest?e.target.closest('#dashboard .dashCard'):null;
       if(!card)return;
       var type=card.getAttribute('data-filter')||'';
-      [0,80,250,500].forEach(function(ms){setTimeout(function(){apply(type);},ms);});
+      var b=historyBox();
+      // Vendor card toggles its own details: first click opens, second click closes.
+      var shouldShow = type==='vendor' ? !(b && b.classList.contains('v379-vendor-history-visible')) : false;
+      [0,80,250,500].forEach(function(ms){setTimeout(function(){apply(type,shouldShow);},ms);});
     },true);
-    document.addEventListener('click',function(e){
-      var card=e.target&&e.target.closest?e.target.closest('#dashboard .dashCard'):null;
-      if(!card)return;
-      var type=card.getAttribute('data-filter')||'';
-      if(type==='vendor'){
-        var b=historyBox();
-        if(b&&b.classList.contains('v379-vendor-history-visible')){
-          // Let the dashboard controller toggle the card off; mirror that state after it runs.
-          setTimeout(function(){var d=detailsBox();if(d&&d.style.display!=='none')hideHistory();},100);
-        }
-      }
-    },false);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
 })();
