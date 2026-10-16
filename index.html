@@ -8467,3 +8467,28 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
 })();
 </script>
+
+
+<!-- V390: Ensure only the selected report detail panel remains visible. -->
+<script id="v390ExclusiveReportPanels">
+(function(){
+  function hide(id){var el=document.getElementById(id);if(el)el.style.setProperty('display','none','important');}
+  function hideAll(){
+    hide('v378TransactionReportPanel');
+    hide('v378StockReportPanel');
+    hide('vendorRawIssueReportPanelV371');
+  }
+  document.addEventListener('click',function(event){
+    var target=event.target;
+    if(!target||!target.closest)return;
+    var vendor=target.closest('[data-v371-report="vendor-raw-issue"]');
+    var tx=target.closest('[data-v378-report="transaction"]');
+    var stock=target.closest('[data-v378-report="stock"]');
+    var other=target.closest('[data-v235-report], #v231DispatchReportBtn, #v231PurchaseReportBtn, #v231ProductionReportBtn, #v231JWReportBtn, #v231GSTReportBtn');
+    if(vendor){hide('v378TransactionReportPanel');hide('v378StockReportPanel');}
+    else if(tx){hide('vendorRawIssueReportPanelV371');hide('v378StockReportPanel');}
+    else if(stock){hide('vendorRawIssueReportPanelV371');hide('v378TransactionReportPanel');}
+    else if(other){hideAll();}
+  },true);
+})();
+</script>
