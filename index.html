@@ -8539,3 +8539,41 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
   min-height:38px!important;padding:8px 16px!important;margin:0!important;white-space:nowrap!important;
 }
 </style>
+
+
+<!-- V396: Reliably focus the item search after All Items / Finished Goods dashboard details render. -->
+<script id="v396DashboardItemSearchAutofocus">
+(function(){
+  var timers=[];
+  function focusSearch(){
+    var details=document.getElementById('dashboardDetails');
+    var input=document.getElementById('v383ItemNameSearch');
+    if(!details||!input)return false;
+    var type=details.dataset.dashboardFilter||'';
+    if(type!=='all'&&type!=='fg')return false;
+    if(details.style.display==='none'||getComputedStyle(details).display==='none')return false;
+    try{input.focus({preventScroll:true});}catch(e){input.focus();}
+    try{var end=input.value.length;input.setSelectionRange(end,end);}catch(e){}
+    return document.activeElement===input;
+  }
+  function scheduleFocus(){
+    [0,80,180,350,650,1000].forEach(function(ms){setTimeout(focusSearch,ms);});
+  }
+  function bind(){
+    document.addEventListener('click',function(e){
+      var card=e.target&&e.target.closest?e.target.closest('.dashCard[data-filter]'):null;
+      if(!card)return;
+      var type=card.getAttribute('data-filter');
+      if(type==='all'||type==='fg')scheduleFocus();
+    },true);
+    var details=document.getElementById('dashboardDetails');
+    if(details&&window.MutationObserver){
+      new MutationObserver(function(){
+        var type=details.dataset.dashboardFilter||'';
+        if(type==='all'||type==='fg')scheduleFocus();
+      }).observe(details,{attributes:true,attributeFilter:['style','data-dashboard-filter']});
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+})();
+</script>
