@@ -400,7 +400,7 @@ tr.low-stock-row td * {
 <table><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Unit</th><th>Weight g</th><th>Stock</th><th>Minimum</th></tr></thead>
 <tbody id="dashboardDetailsTable"></tbody></table>
 </div>
-<div class="panel" id="dashboardVendorRawHistoryV369" style="margin-top:16px">
+<div class="panel" id="dashboardVendorRawHistoryV369" style="display:none;margin-top:16px">
   <h3>📋 Vendor Raw Material — Transaction History</h3>
   <p class="small">Raw Material Issue to Vendor ની છેલ્લી 10 એન્ટ્રી.</p>
   <div id="dashboardVendorRawHistoryTableV369">No transactions yet.</div>
@@ -8336,5 +8336,48 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
   ['v371IssueReportFrom','v371IssueReportTo','v371IssueReportVendor','v371IssueReportMaterial'].forEach(id=>$(id)?.addEventListener('input',generate));
   $('v371PrintIssueReport')?.addEventListener('click',()=>{generate();if(typeof window.printOnlyReport==='function')window.printOnlyReport('vendorRawIssueReportPanelV371',generate);else window.print()});
   window.renderV371VendorRawIssueReport=generate;
+})();
+</script>
+
+
+<!-- V379: Vendor Raw Material history is shown only when its dashboard card is clicked. -->
+<style id="v379VendorHistoryVisibilityStyle">
+#dashboardVendorRawHistoryV369.v379-vendor-history-hidden{display:none!important;}
+#dashboardVendorRawHistoryV369.v379-vendor-history-visible{display:block!important;}
+</style>
+<script id="v379VendorHistoryVisibility">
+(function(){
+  function historyBox(){return document.getElementById('dashboardVendorRawHistoryV369');}
+  function detailsBox(){return document.getElementById('dashboardDetails');}
+  function hideHistory(){var b=historyBox();if(b){b.classList.remove('v379-vendor-history-visible');b.classList.add('v379-vendor-history-hidden');b.style.setProperty('display','none','important');}}
+  function showHistory(){var b=historyBox();if(b){b.classList.remove('v379-vendor-history-hidden');b.classList.add('v379-vendor-history-visible');b.style.setProperty('display','block','important');if(typeof window.renderDashboardVendorRawHistoryV369==='function')window.renderDashboardVendorRawHistoryV369();}}
+  function apply(type){
+    if(type==='vendor'){
+      showHistory();
+      var d=detailsBox();if(d){d.style.setProperty('display','none','important');d.removeAttribute('data-dashboard-filter');}
+    }else hideHistory();
+  }
+  function bind(){
+    hideHistory();
+    window.addEventListener('click',function(e){
+      var card=e.target&&e.target.closest?e.target.closest('#dashboard .dashCard'):null;
+      if(!card)return;
+      var type=card.getAttribute('data-filter')||'';
+      [0,80,250,500].forEach(function(ms){setTimeout(function(){apply(type);},ms);});
+    },true);
+    document.addEventListener('click',function(e){
+      var card=e.target&&e.target.closest?e.target.closest('#dashboard .dashCard'):null;
+      if(!card)return;
+      var type=card.getAttribute('data-filter')||'';
+      if(type==='vendor'){
+        var b=historyBox();
+        if(b&&b.classList.contains('v379-vendor-history-visible')){
+          // Let the dashboard controller toggle the card off; mirror that state after it runs.
+          setTimeout(function(){var d=detailsBox();if(d&&d.style.display!=='none')hideHistory();},100);
+        }
+      }
+    },false);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
 })();
 </script>
