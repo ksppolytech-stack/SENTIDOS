@@ -737,9 +737,9 @@ tr.low-stock-row td * {
 
 <hr><div id="vendorRawMaterialBalanceV230"><h3 style="font-size:22px;font-weight:800">Vendor Raw Material Balance</h3>
 <table><thead><tr><th>Vendor</th><th>Raw Material</th><th>Qty at Vendor</th><th>Unit</th></tr></thead><tbody id="jwTable"></tbody></table></div>
-<hr><div id="jwEntryHistoryV406"><h3>📋 Job Work Entry History — View / Edit</h3>
-<p class="small">Job Work Issue અને Component Receive ની એન્ટ્રીઓ અહીં દેખાશે. Edit કરતાં Stock અને Vendor Raw Material Balance પણ એ પ્રમાણે અપડેટ થશે.</p>
-<div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Type</th><th>Challan No.</th><th>Vendor</th><th>Raw Material</th><th>Component</th><th>Qty</th><th>Action</th></tr></thead><tbody id="jwEntryHistoryTableV406"><tr><td colspan="8">No job work entries yet.</td></tr></tbody></table></div>
+<hr><div id="jwEntryHistoryV406"><h3>📋 Job Work Entry History — View / Edit / Delete</h3>
+<p class="small">Job Work Issue અને Component Receive ની સંપૂર્ણ એન્ટ્રીઓ અહીં દેખાશે. Rate, Taxable Amount, GST % અને Total Amount પણ દેખાશે. Edit/Delete કરતાં શક્ય હોય ત્યાં Stock અને Vendor Raw Material Balance પણ અપડેટ થશે.</p>
+<div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Type</th><th>Challan No.</th><th>Vendor</th><th>Raw Material</th><th>Component</th><th>Qty</th><th>Rate</th><th>Taxable Amount</th><th>GST %</th><th>GST Amount</th><th>Total Amount</th><th>Action</th></tr></thead><tbody id="jwEntryHistoryTableV406"><tr><td colspan="13">No job work entries yet.</td></tr></tbody></table></div>
 </div>
 </div></section>
 
@@ -2101,7 +2101,7 @@ function issueToVendor(){
  _issueTxn.vendor=vendor;
  _issueTxn.issueRate=Number(raw.rate||0);
  _issueTxn.issueQty=qty;
- save();msg('jwIssueMsg','Raw Material vendorને issue થયું. Challan No: '+ref);
+ save();renderJobWorkEntries();msg('jwIssueMsg','Raw Material vendorને issue થયું. Challan No: '+ref);
  $('jwIssueVendor').value='';$('jwRaw').value='';$('jwIssueQty').value='';
 }
 function setupRateSuggestions(){
@@ -2213,7 +2213,7 @@ function receiveFromVendor(){
  tr.taxRate=Math.max(0,Number($('jwTaxRate').value||18));
  tr.tax=amount*tr.taxRate/100;
  tr.grandTotal=amount+tr.tax;
- save();
+ save();renderJobWorkEntries();
  msg('jwReceiveMsg','Component received. Challan No: '+ref+' | Raw Material: '+raw.name+' | Consumed: '+consumptionKG.toFixed(3)+' KG | Rate ₹'+rate.toFixed(2)+' | Job Work ₹'+amount.toFixed(2)+' | Material Cost ₹'+rawCost.toFixed(2)+'. Only selected material deducted from vendor balance.');
  $('jwReceiveDate').value=new Date().toISOString().slice(0,10);$('jwTaxRate').value='18';$('jwReceiveVendor').value='';$('jwReceiveRawMaterial').value='';$('jwReceiveRawMaterial').dataset.selectedCode='';$('jwComponent').value='';$('jwComponentWeight').value='';$('jwReceiveQty').value='';$('jwJobRate').value='';$('jwConsumption').textContent='';$('jwJobAmount').textContent='';
 }
@@ -2222,18 +2222,54 @@ function jwEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g
 function renderJobWorkEntries(){
  const body=$('jwEntryHistoryTableV406');if(!body)return;
  const rows=transactions.filter(t=>t&&(['JOB WORK ISSUE','JOB WORK RECEIVE'].includes(String(t.type||'').toUpperCase()))).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
- if(!rows.length){body.innerHTML='<tr><td colspan="8">No job work entries yet.</td></tr>';return;}
+ if(!rows.length){body.innerHTML='<tr><td colspan="13">No job work entries yet.</td></tr>';return;}
  body.innerHTML=rows.map(t=>{
    const issue=String(t.type).toUpperCase()==='JOB WORK ISSUE';
-   const code=issue?String(t.item||'').replace(/^RM:/i,''):String(t.item||'');
-   const raw=rawMaterials.find(r=>String(r.code)===String(t.rawMaterialCode||code));
+   const code=issue?String(t.item||'').replace(/^RM:/i,''):String(t.rawMaterialCode||'');
+   const raw=rawMaterials.find(r=>String(r.code)===String(code));
    const comp=items.find(i=>String(i.code)===String(t.item));
    const qty=issue?Math.abs(Number(t.issueQty!=null?t.issueQty:t.qty)||0):Math.abs(Number(t.qty)||0);
    const unit=issue?(t.unit||(raw&&raw.unit)||'KG'):(t.unit||(comp&&comp.unit)||'PCS');
-   return `<tr><td>${jwEsc(String(t.date||'').slice(0,10))}</td><td>${issue?'Raw Material Issue':'Component Receive'}</td><td>${jwEsc(t.ref||'')}</td><td>${jwEsc(t.vendor||'')}</td><td>${jwEsc(raw?raw.name:(t.rawMaterialName||code))}</td><td>${jwEsc(comp?comp.name:(issue?'—':code))}</td><td>${qty.toFixed(3)} ${jwEsc(unit)}</td><td><button type="button" class="primary" data-jw-entry-edit="${jwEsc(t.ref||'')}">✏️ Edit</button></td></tr>`;
+   const rate=issue?Number(t.issueRate??(raw&&raw.rate)??t.rate??0):Number(t.jobRate??t.rate??0);
+   const taxable=issue?0:Number(t.jobAmount??(qty*rate));
+   const taxRate=issue?0:Number(t.taxRate)||0;
+   const tax=issue?0:Number(t.tax??(taxable*taxRate/100));
+   const total=issue?0:Number(t.grandTotal??(taxable+tax));
+   return `<tr><td>${jwEsc(String(t.date||'').slice(0,10))}</td><td>${issue?'Raw Material Issue':'Component Receive'}</td><td>${jwEsc(t.ref||'')}</td><td>${jwEsc(t.vendor||'')}</td><td>${jwEsc(raw?raw.name:(t.rawMaterialName||code||'—'))}</td><td>${jwEsc(comp?comp.name:(issue?'—':String(t.item||'—')))}</td><td>${qty.toFixed(3)} ${jwEsc(unit)}</td><td>₹${rate.toFixed(2)}</td><td>₹${taxable.toFixed(2)}</td><td>${taxRate.toFixed(2)}%</td><td>₹${tax.toFixed(2)}</td><td>₹${total.toFixed(2)}</td><td><button type="button" class="primary" data-jw-entry-edit="${jwEsc(t.ref||'')}">✏️ Edit</button> <button type="button" data-jw-entry-delete="${jwEsc(t.ref||'')}" style="background:#b91c1c;color:#fff;border:0;border-radius:6px;padding:7px 10px;cursor:pointer">🗑 Delete</button></td></tr>`;
  }).join('');
  body.querySelectorAll('[data-jw-entry-edit]').forEach(btn=>btn.onclick=()=>editJobWorkEntry(btn.getAttribute('data-jw-entry-edit')));
+ body.querySelectorAll('[data-jw-entry-delete]').forEach(btn=>btn.onclick=()=>deleteJobWorkEntry(btn.getAttribute('data-jw-entry-delete')));
 }
+function deleteJobWorkEntry(ref){
+ const t=transactions.find(x=>String(x.ref||'')===String(ref)&&['JOB WORK ISSUE','JOB WORK RECEIVE'].includes(String(x.type||'').toUpperCase()));
+ if(!t)return alert('Job Work entry not found.');
+ const issue=String(t.type).toUpperCase()==='JOB WORK ISSUE';
+ const qty=issue?Math.abs(Number(t.issueQty!=null?t.issueQty:t.qty)||0):Math.abs(Number(t.qty)||0);
+ const vendor=String(t.vendor||'');
+ if(!confirm('Delete Job Work entry '+ref+'? Stock ane Vendor Balance pan reverse thashe.'))return;
+ try{
+   if(issue){
+     const rawCode=String(t.item||'').replace(/^RM:/i,'');
+     const raw=rawMaterials.find(r=>String(r.code)===rawCode);if(!raw)throw new Error('Raw Material not found.');
+     const unit=String(t.unit||raw.unit||'KG');
+     const norm=v=>String(v||'').trim().toLowerCase();
+     const bal=jobwork.filter(b=>norm(b.vendor)===norm(vendor)&&String(b.raw)===rawCode).reduce((sum,b)=>{let q=Number(b.qty)||0;const u=String(b.unit||unit).toUpperCase(),target=unit.toUpperCase(),grams=['G','GM','GRAM','GRAMS'];if(grams.includes(u)&&!grams.includes(target))q/=1000;else if(!grams.includes(u)&&grams.includes(target))q*=1000;return sum+q;},0);
+     if(bal+0.000001<qty)throw new Error('આ Issue માંથી અમુક Raw Material પહેલેથી consume થઈ ગયું છે. પહેલાં સંબંધિત Component Receive entries delete કરો.');
+     jwAdjustVendorBalance(vendor,rawCode,-qty,unit);
+     raw.stock=Number(raw.stock||0)+qty;
+   }else{
+     const comp=items.find(i=>String(i.code)===String(t.item));if(!comp)throw new Error('Component not found.');
+     const rawCode=String(t.rawMaterialCode||'');const raw=rawMaterials.find(r=>String(r.code)===rawCode);if(!raw)throw new Error('Linked Raw Material not found.');
+     const consumption=Number(t.rmConsumed)||((Number(comp.weight)||0)*qty/1000);
+     if(Number(comp.stock||0)+0.000001<qty)throw new Error('આ Component નો હાલનો stock ઓછો છે; stock negative થાય એટલે delete અટકાવ્યું.');
+     comp.stock=Number(comp.stock||0)-qty;
+     jwAdjustVendorBalance(vendor,rawCode,consumption,'KG');
+   }
+   const idx=transactions.indexOf(t);if(idx>=0)transactions.splice(idx,1);
+   save();render();renderJobWorkEntries();alert('Job Work entry delete થઈ ગઈ અને સંબંધિત stock/balance reverse થયું.');
+ }catch(err){alert('Delete થઈ શક્યું નથી: '+err.message);}
+}
+
 function jwAdjustVendorBalance(vendor,rawCode,delta,deltaUnit){
  const raw=rawMaterials.find(r=>String(r.code)===String(rawCode));if(!raw)throw new Error('Raw Material not found.');
  const norm=v=>String(v||'').trim().toLowerCase();
