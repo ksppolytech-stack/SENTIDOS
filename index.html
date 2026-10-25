@@ -2244,33 +2244,52 @@ function renderJobWorkEntries(){
  body.querySelectorAll('[data-jw-entry-edit]').forEach(btn=>btn.onclick=()=>editJobWorkEntry(btn.getAttribute('data-jw-entry-edit')));
  body.querySelectorAll('[data-jw-entry-delete]').forEach(btn=>btn.onclick=()=>deleteJobWorkEntry(btn.getAttribute('data-jw-entry-delete')));
 }
+function resolveJobWorkRawCode(t){
+ const candidates=[];
+ if(t){if(t.rawMaterialCode)candidates.push(String(t.rawMaterialCode));if(String(t.item||'').toUpperCase().startsWith('RM:'))candidates.push(String(t.item).replace(/^RM:/i,''));
+   (Array.isArray(t.rmConsumptionDetails)?t.rmConsumptionDetails:[]).forEach(d=>{if(d&&d.raw)candidates.push(String(d.raw));});
+   if(t.rawMaterialName)candidates.push(String(t.rawMaterialName));}
+ for(const c of candidates){const r=rawMaterials.find(x=>String(x.code)===c)||rawMaterials.find(x=>String(x.name||'').trim().toLowerCase()===c.trim().toLowerCase());if(r)return String(r.code);}
+ // Historical records may store only a raw code in the vendor balance.
+ for(const c of candidates){const b=jobwork.find(x=>String(x.raw)===c);if(b)return String(b.raw);}
+ return '';
+}
 function deleteJobWorkEntry(ref){
  const t=transactions.find(x=>String(x.ref||'')===String(ref)&&['JOB WORK ISSUE','JOB WORK RECEIVE'].includes(String(x.type||'').toUpperCase()));
  if(!t)return alert('Job Work entry not found.');
  const issue=String(t.type).toUpperCase()==='JOB WORK ISSUE';
  const qty=issue?Math.abs(Number(t.issueQty!=null?t.issueQty:t.qty)||0):Math.abs(Number(t.qty)||0);
  const vendor=String(t.vendor||'');
- if(!confirm('Delete Job Work entry '+ref+'? Stock ane Vendor Balance pan reverse thashe.'))return;
+ const rawCode=resolveJobWorkRawCode(t);
+ const raw=rawMaterials.find(r=>String(r.code)===rawCode)||null;
+ const comp=issue?null:items.find(i=>String(i.code)===String(t.item));
+ if(!issue&&!comp)return alert('Component item not found. Entry delete કરી શકાતી નથી કારણ કે component stock reverse કરી શકાતો નથી.');
+ if(!confirm('Delete Job Work entry '+ref+'? ઉપલબ્ધ linked Stock અને Vendor Balance reverse થશે.'))return;
+ let partialWarning='';
  try{
    if(issue){
-     const rawCode=String(t.item||'').replace(/^RM:/i,'');
-     const raw=rawMaterials.find(r=>String(r.code)===rawCode);if(!raw)throw new Error('Raw Material not found.');
-     const unit=String(t.unit||raw.unit||'KG');
-     const norm=v=>String(v||'').trim().toLowerCase();
-     const bal=jobwork.filter(b=>norm(b.vendor)===norm(vendor)&&String(b.raw)===rawCode).reduce((sum,b)=>{let q=Number(b.qty)||0;const u=String(b.unit||unit).toUpperCase(),target=unit.toUpperCase(),grams=['G','GM','GRAM','GRAMS'];if(grams.includes(u)&&!grams.includes(target))q/=1000;else if(!grams.includes(u)&&grams.includes(target))q*=1000;return sum+q;},0);
-     if(bal+0.000001<qty)throw new Error('આ Issue માંથી અમુક Raw Material પહેલેથી consume થઈ ગયું છે. પહેલાં સંબંધિત Component Receive entries delete કરો.');
-     jwAdjustVendorBalance(vendor,rawCode,-qty,unit);
-     raw.stock=Number(raw.stock||0)+qty;
+     const unit=String(t.unit||(raw&&raw.unit)||'KG');
+     if(raw){
+       const norm=v=>String(v||'').trim().toLowerCase();
+       const bal=jobwork.filter(b=>norm(b.vendor)===norm(vendor)&&String(b.raw)===rawCode).reduce((sum,b)=>{let q=Number(b.qty)||0;const u=String(b.unit||unit).toUpperCase(),target=unit.toUpperCase(),grams=['G','GM','GRAM','GRAMS'];if(grams.includes(u)&&!grams.includes(target))q/=1000;else if(!grams.includes(u)&&grams.includes(target))q*=1000;return sum+q;},0);
+       if(bal+0.000001<qty)throw new Error('આ Issue માંથી અમુક Raw Material પહેલેથી consume થઈ ગયું છે. પહેલાં સંબંધિત Component Receive entries delete કરો.');
+       jwAdjustVendorBalance(vendor,rawCode,-qty,unit);
+       raw.stock=Number(raw.stock||0)+qty;
+     }else{
+       // Allow deletion of legacy/broken-link history instead of trapping the user.
+       partialWarning='Raw Material link મળ્યો નથી, તેથી આ જૂની એન્ટ્રી માટે Company Stock/Vendor Balance reverse કરી શક્યા નથી.';
+       if(rawCode){const balRow=jobwork.find(b=>String(b.vendor||'').trim().toLowerCase()===vendor.trim().toLowerCase()&&String(b.raw)===rawCode);if(balRow){balRow.qty=Number(balRow.qty||0)-qty;if(balRow.qty<=0.000001)jobwork=jobwork.filter(b=>b!==balRow);}}
+     }
    }else{
-     const comp=items.find(i=>String(i.code)===String(t.item));if(!comp)throw new Error('Component not found.');
-     const rawCode=String(t.rawMaterialCode||'');const raw=rawMaterials.find(r=>String(r.code)===rawCode);if(!raw)throw new Error('Linked Raw Material not found.');
      const consumption=Number(t.rmConsumed)||((Number(comp.weight)||0)*qty/1000);
      if(Number(comp.stock||0)+0.000001<qty)throw new Error('આ Component નો હાલનો stock ઓછો છે; stock negative થાય એટલે delete અટકાવ્યું.');
      comp.stock=Number(comp.stock||0)-qty;
-     jwAdjustVendorBalance(vendor,rawCode,consumption,'KG');
+     if(rawCode){jwAdjustVendorBalance(vendor,rawCode,consumption,'KG');}
+     else partialWarning='Raw Material link મળ્યો નથી, તેથી Vendor Raw Material Balance પાછું ઉમેરાઈ શક્યું નથી.';
    }
    const idx=transactions.indexOf(t);if(idx>=0)transactions.splice(idx,1);
-   save();render();renderJobWorkEntries();alert('Job Work entry delete થઈ ગઈ અને સંબંધિત stock/balance reverse થયું.');
+   save();render();renderJobWorkEntries();
+   alert('Job Work entry delete થઈ ગઈ.'+(partialWarning?'\n\nચેતવણી: '+partialWarning:' Stock અને Vendor Balance ઉપલબ્ધ link મુજબ reverse થયા.'));
  }catch(err){alert('Delete થઈ શક્યું નથી: '+err.message);}
 }
 
@@ -2314,7 +2333,7 @@ function editJobWorkEntry(ref){
      t.vendor=newVendor;t.date=date.trim();t.issueQty=newQty;t.qty=-newQty;t.unit=unit;
    }else{
      const comp=items.find(i=>String(i.code)===String(t.item));if(!comp)throw new Error('Component not found.');
-     const rawCode=String(t.rawMaterialCode||'');const raw=rawMaterials.find(r=>String(r.code)===rawCode);if(!raw)throw new Error('Raw Material link not found.');
+     const rawCode=resolveJobWorkRawCode(t);const raw=rawMaterials.find(r=>String(r.code)===rawCode)||null;if(!raw)throw new Error('Raw Material link not found in Master. Delete option can still remove this legacy entry, but editing needs a valid Raw Material link.');
      const oldConsumption=Number(t.rmConsumed)||((Number(comp.weight)||0)*oldQty/1000);
      const newConsumption=(Number(comp.weight)||0)*newQty/1000;
      if(!(Number(comp.weight)>0))throw new Error('Component weight Item Masterમાં જરૂરી છે.');
