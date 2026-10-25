@@ -1507,60 +1507,7 @@ function printRawSaleInvoice(rows,invoiceNo,customer,date){
  const totals=rows.reduce((a,x)=>{a.taxable+=x.amount;a.tax+=x.tax;a.grand+=x.grandTotal;return a},{taxable:0,tax:0,grand:0});
  const w=window.open('','_blank','width=900,height=700');if(!w)return alert('Popup blocked. Browserમાં popup allow કરો.');
  w.document.write(`<!doctype html><html><head><title>Raw Material Invoice ${invoiceNo}</title><style>body{font-family:Arial;padding:30px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #333;padding:8px;text-align:left}td.num,th.num{text-align:right}.tot{margin-top:20px;text-align:right;font-size:18px}</style></head><body><h1>RAW MATERIAL SALES INVOICE</h1><p><b>Invoice No:</b> ${invoiceNo}<br><b>Date:</b> ${date}<br><b>Customer:</b> ${customer}</p><table><thead><tr><th>Raw Material</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate</th><th class="num">Taxable</th><th class="num">GST</th><th class="num">Total</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${x.name}</td><td class="num">${x.qty.toFixed(3)}</td><td>${x.unit}</td><td class="num">₹${x.rate.toFixed(2)}</td><td class="num">₹${x.amount.toFixed(2)}</td><td class="num">₹${x.tax.toFixed(2)}</td><td class="num">₹${x.grandTotal.toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="tot">Taxable: ₹${totals.taxable.toFixed(2)}<br>GST: ₹${totals.tax.toFixed(2)}<br><b>Grand Total: ₹${totals.grand.toFixed(2)}</b></div><script>window.onload=()=>window.print()<\/script><!-- V404: Job Work Component Receive deducts only the explicitly selected raw material from the same vendor balance. -->
-<script id="v403CostingModule">
-(function(){
- 'use strict';
- const $=id=>document.getElementById(id);
- const read=(key,fallback)=>{try{const v=JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));return v==null?fallback:v}catch(e){return fallback}};
- const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
- const money=v=>'₹'+(Number(v)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
- const num=id=>Number($(id)?.value)||0;
- function catalog(){
-   const items=read('adr_items_v2',[]).map(x=>({code:String(x.code||''),name:String(x.name||x.itemName||x.code||''),unit:String(x.unit||'PCS'),stock:Number(x.stock)||0,kind:'Finished Goods / Components',cat:String(x.cat||x.category||'')}));
-   const rms=read('adr_rawmaterials_v2',[]).map(x=>({code:String(x.code||''),name:String(x.name||x.rawMaterialName||x.code||''),unit:String(x.unit||'KG'),stock:Number(x.stock??x.closingStock??x.balance)||0,kind:'Raw Material',cat:'Raw Material'}));
-   return items.concat(rms).filter(x=>x.code);
- }
- function costs(){return read('adr_costing_v1',{});}
- function transactions(){return read('adr_tx_v2',[]);}
- function boms(){return read('adr_boms_v2',[]);}
- function rawAverage(code){
-   const lots=read('adr_rawmaterial_lots_v1',{}),ls=Array.isArray(lots[code])?lots[code]:[];
-   const qty=ls.reduce((a,x)=>a+(Number(x.qty)||0),0),val=ls.reduce((a,x)=>a+(Number(x.qty)||0)*(Number(x.rate)||0),0);
-   if(qty>0)return val/qty;
-   const tx=transactions().filter(t=>String(t.item||'').replace(/^RM:/,'')===code && ['RAW MATERIAL PURCHASE','RAW MATERIAL COMPANY INWARD'].includes(String(t.type||'').toUpperCase()));
-   let q=0,v=0;tx.forEach(t=>{const n=Number(t.qty)||0,r=Number(t.purchaseRate??t.inwardRate??t.rate)||0;if(n>0){q+=n;v+=n*r}});return q?v/q:0;
- }
- function purchasedItemRate(code){
-   const tx=transactions().filter(t=>String(t.item||t.itemCode||'')===code && Number(t.qty)>0);
-   for(let i=tx.length-1;i>=0;i--){const t=tx[i],r=Number(t.purchaseRate??t.inwardRate??t.rate);if(r>0)return r;const amount=Number(t.amount)||0;if(amount>0)return amount/Number(t.qty)}return 0;
- }
- function baseUnitCost(code,seen){
-   seen=seen||new Set(); if(seen.has(code))return 0;seen.add(code);
-   const item=catalog().find(x=>x.code===code);if(!item)return 0;
-   if(item.kind==='Raw Material')return rawAverage(code);
-   const saved=costs()[code];if(saved){const total=['material','labour','machine','packing','other'].reduce((a,k)=>a+(Number(saved[k])||0),0);if(total>0)return total;}
-   const bom=boms().filter(b=>String(b.product)===code);if(bom.length){let total=0;bom.forEach(b=>{const comp=String(b.component||'');let qty=Number(b.qty)||0;const c=catalog().find(x=>x.code===comp);if(c&&String(b.unit||'').toUpperCase()==='G'&&String(c.unit).toUpperCase()==='KG')qty/=1000;else if(c&&String(b.unit||'').toUpperCase()==='KG'&&String(c.unit).toUpperCase()==='G')qty*=1000;total+=qty*baseUnitCost(comp,new Set(seen));});if(total>0)return total;}
-   return purchasedItemRate(code);
- }
- function bomMaterialCost(code){
-   const rows=boms().filter(b=>String(b.product)===code);if(!rows.length)return 0;
-   return rows.reduce((sum,b)=>{const comp=String(b.component||'');let qty=Number(b.qty)||0;const c=catalog().find(x=>x.code===comp);if(c&&String(b.unit||'').toUpperCase()==='G'&&String(c.unit).toUpperCase()==='KG')qty/=1000;else if(c&&String(b.unit||'').toUpperCase()==='KG'&&String(c.unit).toUpperCase()==='G')qty*=1000;return sum+qty*baseUnitCost(comp,new Set([code]));},0);
- }
- function selected(){const code=$('v403CostItem')?.value||'';return catalog().find(x=>x.code===code);}
- function totalFields(){return ['v403MaterialCost','v403LabourCost','v403MachineCost','v403PackingCost','v403OtherCost'].reduce((a,id)=>a+num(id),0)}
- function showSummary(){const item=selected();if(!item){$('v403CostSummary').textContent='Select an item to calculate cost.';return;}const total=totalFields(),stockValue=total*item.stock;$('v403CostSummary').innerHTML='<div style="display:flex;gap:18px;flex-wrap:wrap"><span>Item: <b>'+esc(item.name)+'</b></span><span>Unit Cost: <b>'+money(total)+'</b></span><span>Current Stock: <b>'+Number(item.stock).toFixed(3)+' '+esc(item.unit)+'</b></span><span>Stock Value: <b>'+money(stockValue)+'</b></span></div>';}
- function loadItem(){const item=selected();const saved=costs()[item?.code||'']||{};if(!item){['v403MaterialCost','v403LabourCost','v403MachineCost','v403PackingCost','v403OtherCost'].forEach(id=>$(id).value='');showSummary();return;}
-   const material=saved.material!=null?saved.material:bomMaterialCost(item.code);
-   $('v403MaterialCost').value=Number(material||0).toFixed(4);$('v403LabourCost').value=Number(saved.labour||0).toFixed(4);$('v403MachineCost').value=Number(saved.machine||0).toFixed(4);$('v403PackingCost').value=Number(saved.packing||0).toFixed(4);$('v403OtherCost').value=Number(saved.other||0).toFixed(4);showSummary();
- }
- function populate(){const sel=$('v403CostItem'),old=sel.value,all=catalog().sort((a,b)=>a.name.localeCompare(b.name));sel.innerHTML='<option value="">Select Item / Raw Material</option>'+all.map(x=>'<option value="'+esc(x.code)+'">'+esc(x.name)+' ('+esc(x.code)+') — '+esc(x.kind)+'</option>').join('');if(all.some(x=>x.code===old))sel.value=old;loadItem();renderReport();}
- function saveCost(){const item=selected();if(!item){$('v403CostMsg').textContent='પહેલા Item પસંદ કરો.';return;}const vals={material:num('v403MaterialCost'),labour:num('v403LabourCost'),machine:num('v403MachineCost'),packing:num('v403PackingCost'),other:num('v403OtherCost'),updatedAt:new Date().toISOString()};if(Object.values(vals).some(v=>typeof v==='number'&&v<0)){$('v403CostMsg').textContent='Cost નેગેટિવ ન હોઈ શકે.';return;}const all=costs();all[item.code]=vals;localStorage.setItem('adr_costing_v1',JSON.stringify(all));$('v403CostMsg').textContent='Costing saved: '+item.name;showSummary();renderReport();}
- function renderReport(){const all=catalog(),saved=costs(),q=($('v403CostSearch')?.value||'').trim().toLowerCase(),kind=$('v403CostKind')?.value||'';let grand=0;const rows=all.filter(x=>(!q||[x.code,x.name,x.cat].join(' ').toLowerCase().includes(q))&&(!kind||x.kind===kind)).map(x=>{const c=saved[x.code]||{};const material=c.material!=null?Number(c.material)||0:(x.kind==='Raw Material'?rawAverage(x.code):bomMaterialCost(x.code));const labour=Number(c.labour)||0,machine=Number(c.machine)||0,packing=Number(c.packing)||0,other=Number(c.other)||0;let unit=material+labour+machine+packing+other;if(!unit&&x.kind==='Raw Material')unit=rawAverage(x.code);if(!unit)unit=purchasedItemRate(x.code);const value=unit*x.stock;grand+=value;return {x,material,labour,machine,packing,other,unit,value};});const body=$('v403CostReportTable').querySelector('tbody');body.innerHTML=rows.map(r=>'<tr><td>'+esc(r.x.code)+'</td><td>'+esc(r.x.name)+'</td><td>'+esc(r.x.kind)+'</td><td>'+r.x.stock.toFixed(3)+' '+esc(r.x.unit)+'</td><td>'+money(r.material)+'</td><td>'+money(r.labour)+'</td><td>'+money(r.machine)+'</td><td>'+money(r.packing)+'</td><td>'+money(r.other)+'</td><td><b>'+money(r.unit)+'</b></td><td><b>'+money(r.value)+'</b></td><td><button type="button" data-v403-edit="'+esc(r.x.code)+'">Edit Cost</button></td></tr>').join('')||'<tr><td colspan="12">No matching items found</td></tr>';$('v403CostGrandTotal').textContent=money(grand);body.querySelectorAll('[data-v403-edit]').forEach(btn=>btn.addEventListener('click',()=>{$('v403CostItem').value=btn.dataset.v403Edit;loadItem();$('v403CostItem').focus();$('v403CostItem').scrollIntoView({behavior:'smooth',block:'center'});}));}
- $('v403CostItem')?.addEventListener('change',loadItem);['v403MaterialCost','v403LabourCost','v403MachineCost','v403PackingCost','v403OtherCost'].forEach(id=>$(id)?.addEventListener('input',showSummary));$('v403UseBomCost')?.addEventListener('click',()=>{const x=selected();if(!x)return alert('પહેલા Item પસંદ કરો.');$('v403MaterialCost').value=bomMaterialCost(x.code).toFixed(4);showSummary();});$('v403SaveCost')?.addEventListener('click',saveCost);$('v403ClearCost')?.addEventListener('click',()=>{['v403MaterialCost','v403LabourCost','v403MachineCost','v403PackingCost','v403OtherCost'].forEach(id=>$(id).value='0');$('v403CostMsg').textContent='Fields cleared. Save Costing દબાવીને સેવ કરો.';showSummary();});$('v403CostSearch')?.addEventListener('input',renderReport);$('v403CostKind')?.addEventListener('change',renderReport);$('v403CostRefresh')?.addEventListener('click',populate);$('v403CostPrint')?.addEventListener('click',()=>window.print());
- const nav=document.querySelector('[data-page="costing"]');if(nav)nav.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const page=$('costing');if(page)page.classList.add('active');document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));nav.classList.add('active');populate();window.scrollTo({top:0,behavior:'smooth'});},true);
- populate();
-})();
-</script>
+
 
 </body></html>`);w.document.close();
 }
@@ -8777,3 +8724,58 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
 })();
 </script>
 
+<!-- V405: Costing module script moved out of invoice HTML template to prevent visible script text. -->
+<script id="v403CostingModule">
+(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ const read=(key,fallback)=>{try{const v=JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));return v==null?fallback:v}catch(e){return fallback}};
+ const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+ const money=v=>'₹'+(Number(v)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const num=id=>Number($(id)?.value)||0;
+ function catalog(){
+   const items=read('adr_items_v2',[]).map(x=>({code:String(x.code||''),name:String(x.name||x.itemName||x.code||''),unit:String(x.unit||'PCS'),stock:Number(x.stock)||0,kind:'Finished Goods / Components',cat:String(x.cat||x.category||'')}));
+   const rms=read('adr_rawmaterials_v2',[]).map(x=>({code:String(x.code||''),name:String(x.name||x.rawMaterialName||x.code||''),unit:String(x.unit||'KG'),stock:Number(x.stock??x.closingStock??x.balance)||0,kind:'Raw Material',cat:'Raw Material'}));
+   return items.concat(rms).filter(x=>x.code);
+ }
+ function costs(){return read('adr_costing_v1',{});}
+ function transactions(){return read('adr_tx_v2',[]);}
+ function boms(){return read('adr_boms_v2',[]);}
+ function rawAverage(code){
+   const lots=read('adr_rawmaterial_lots_v1',{}),ls=Array.isArray(lots[code])?lots[code]:[];
+   const qty=ls.reduce((a,x)=>a+(Number(x.qty)||0),0),val=ls.reduce((a,x)=>a+(Number(x.qty)||0)*(Number(x.rate)||0),0);
+   if(qty>0)return val/qty;
+   const tx=transactions().filter(t=>String(t.item||'').replace(/^RM:/,'')===code && ['RAW MATERIAL PURCHASE','RAW MATERIAL COMPANY INWARD'].includes(String(t.type||'').toUpperCase()));
+   let q=0,v=0;tx.forEach(t=>{const n=Number(t.qty)||0,r=Number(t.purchaseRate??t.inwardRate??t.rate)||0;if(n>0){q+=n;v+=n*r}});return q?v/q:0;
+ }
+ function purchasedItemRate(code){
+   const tx=transactions().filter(t=>String(t.item||t.itemCode||'')===code && Number(t.qty)>0);
+   for(let i=tx.length-1;i>=0;i--){const t=tx[i],r=Number(t.purchaseRate??t.inwardRate??t.rate);if(r>0)return r;const amount=Number(t.amount)||0;if(amount>0)return amount/Number(t.qty)}return 0;
+ }
+ function baseUnitCost(code,seen){
+   seen=seen||new Set(); if(seen.has(code))return 0;seen.add(code);
+   const item=catalog().find(x=>x.code===code);if(!item)return 0;
+   if(item.kind==='Raw Material')return rawAverage(code);
+   const saved=costs()[code];if(saved){const total=['material','labour','machine','packing','other'].reduce((a,k)=>a+(Number(saved[k])||0),0);if(total>0)return total;}
+   const bom=boms().filter(b=>String(b.product)===code);if(bom.length){let total=0;bom.forEach(b=>{const comp=String(b.component||'');let qty=Number(b.qty)||0;const c=catalog().find(x=>x.code===comp);if(c&&String(b.unit||'').toUpperCase()==='G'&&String(c.unit).toUpperCase()==='KG')qty/=1000;else if(c&&String(b.unit||'').toUpperCase()==='KG'&&String(c.unit).toUpperCase()==='G')qty*=1000;total+=qty*baseUnitCost(comp,new Set(seen));});if(total>0)return total;}
+   return purchasedItemRate(code);
+ }
+ function bomMaterialCost(code){
+   const rows=boms().filter(b=>String(b.product)===code);if(!rows.length)return 0;
+   return rows.reduce((sum,b)=>{const comp=String(b.component||'');let qty=Number(b.qty)||0;const c=catalog().find(x=>x.code===comp);if(c&&String(b.unit||'').toUpperCase()==='G'&&String(c.unit).toUpperCase()==='KG')qty/=1000;else if(c&&String(b.unit||'').toUpperCase()==='KG'&&String(c.unit).toUpperCase()==='G')qty*=1000;return sum+qty*baseUnitCost(comp,new Set([code]));},0);
+ }
+ function selected(){const code=$('v403CostItem')?.value||'';return catalog().find(x=>x.code===code);}
+ function totalFields(){return ['v403MaterialCost','v403LabourCost','v403MachineCost','v403PackingCost','v403OtherCost'].reduce((a,id)=>a+num(id),0)}
+ function showSummary(){const item=selected();if(!item){$('v403CostSummary').textContent='Select an item to calculate cost.';return;}const total=totalFields(),stockValue=total*item.stock;$('v403CostSummary').innerHTML='<div style="display:flex;gap:18px;flex-wrap:wrap"><span>Item: <b>'+esc(item.name)+'</b></span><span>Unit Cost: <b>'+money(total)+'</b></span><span>Current Stock: <b>'+Number(item.stock).toFixed(3)+' '+esc(item.unit)+'</b></span><span>Stock Value: <b>'+money(stockValue)+'</b></span></div>';}
+ function loadItem(){const item=selected();const saved=costs()[item?.code||'']||{};if(!item){['v403MaterialCost','v403LabourCost','v403MachineCost','v403PackingCost','v403OtherCost'].forEach(id=>$(id).value='');showSummary();return;}
+   const material=saved.material!=null?saved.material:bomMaterialCost(item.code);
+   $('v403MaterialCost').value=Number(material||0).toFixed(4);$('v403LabourCost').value=Number(saved.labour||0).toFixed(4);$('v403MachineCost').value=Number(saved.machine||0).toFixed(4);$('v403PackingCost').value=Number(saved.packing||0).toFixed(4);$('v403OtherCost').value=Number(saved.other||0).toFixed(4);showSummary();
+ }
+ function populate(){const sel=$('v403CostItem'),old=sel.value,all=catalog().sort((a,b)=>a.name.localeCompare(b.name));sel.innerHTML='<option value="">Select Item / Raw Material</option>'+all.map(x=>'<option value="'+esc(x.code)+'">'+esc(x.name)+' ('+esc(x.code)+') — '+esc(x.kind)+'</option>').join('');if(all.some(x=>x.code===old))sel.value=old;loadItem();renderReport();}
+ function saveCost(){const item=selected();if(!item){$('v403CostMsg').textContent='પહેલા Item પસંદ કરો.';return;}const vals={material:num('v403MaterialCost'),labour:num('v403LabourCost'),machine:num('v403MachineCost'),packing:num('v403PackingCost'),other:num('v403OtherCost'),updatedAt:new Date().toISOString()};if(Object.values(vals).some(v=>typeof v==='number'&&v<0)){$('v403CostMsg').textContent='Cost નેગેટિવ ન હોઈ શકે.';return;}const all=costs();all[item.code]=vals;localStorage.setItem('adr_costing_v1',JSON.stringify(all));$('v403CostMsg').textContent='Costing saved: '+item.name;showSummary();renderReport();}
+ function renderReport(){const all=catalog(),saved=costs(),q=($('v403CostSearch')?.value||'').trim().toLowerCase(),kind=$('v403CostKind')?.value||'';let grand=0;const rows=all.filter(x=>(!q||[x.code,x.name,x.cat].join(' ').toLowerCase().includes(q))&&(!kind||x.kind===kind)).map(x=>{const c=saved[x.code]||{};const material=c.material!=null?Number(c.material)||0:(x.kind==='Raw Material'?rawAverage(x.code):bomMaterialCost(x.code));const labour=Number(c.labour)||0,machine=Number(c.machine)||0,packing=Number(c.packing)||0,other=Number(c.other)||0;let unit=material+labour+machine+packing+other;if(!unit&&x.kind==='Raw Material')unit=rawAverage(x.code);if(!unit)unit=purchasedItemRate(x.code);const value=unit*x.stock;grand+=value;return {x,material,labour,machine,packing,other,unit,value};});const body=$('v403CostReportTable').querySelector('tbody');body.innerHTML=rows.map(r=>'<tr><td>'+esc(r.x.code)+'</td><td>'+esc(r.x.name)+'</td><td>'+esc(r.x.kind)+'</td><td>'+r.x.stock.toFixed(3)+' '+esc(r.x.unit)+'</td><td>'+money(r.material)+'</td><td>'+money(r.labour)+'</td><td>'+money(r.machine)+'</td><td>'+money(r.packing)+'</td><td>'+money(r.other)+'</td><td><b>'+money(r.unit)+'</b></td><td><b>'+money(r.value)+'</b></td><td><button type="button" data-v403-edit="'+esc(r.x.code)+'">Edit Cost</button></td></tr>').join('')||'<tr><td colspan="12">No matching items found</td></tr>';$('v403CostGrandTotal').textContent=money(grand);body.querySelectorAll('[data-v403-edit]').forEach(btn=>btn.addEventListener('click',()=>{$('v403CostItem').value=btn.dataset.v403Edit;loadItem();$('v403CostItem').focus();$('v403CostItem').scrollIntoView({behavior:'smooth',block:'center'});}));}
+ $('v403CostItem')?.addEventListener('change',loadItem);['v403MaterialCost','v403LabourCost','v403MachineCost','v403PackingCost','v403OtherCost'].forEach(id=>$(id)?.addEventListener('input',showSummary));$('v403UseBomCost')?.addEventListener('click',()=>{const x=selected();if(!x)return alert('પહેલા Item પસંદ કરો.');$('v403MaterialCost').value=bomMaterialCost(x.code).toFixed(4);showSummary();});$('v403SaveCost')?.addEventListener('click',saveCost);$('v403ClearCost')?.addEventListener('click',()=>{['v403MaterialCost','v403LabourCost','v403MachineCost','v403PackingCost','v403OtherCost'].forEach(id=>$(id).value='0');$('v403CostMsg').textContent='Fields cleared. Save Costing દબાવીને સેવ કરો.';showSummary();});$('v403CostSearch')?.addEventListener('input',renderReport);$('v403CostKind')?.addEventListener('change',renderReport);$('v403CostRefresh')?.addEventListener('click',populate);$('v403CostPrint')?.addEventListener('click',()=>window.print());
+ const nav=document.querySelector('[data-page="costing"]');if(nav)nav.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));const page=$('costing');if(page)page.classList.add('active');document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));nav.classList.add('active');populate();window.scrollTo({top:0,behavior:'smooth'});},true);
+ populate();
+})();
+</script>
