@@ -8507,6 +8507,40 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
 })();
 </script>
 
+<!-- V415: Fix dashboard stock cards with final capture-phase click binding and live ERP storage. -->
+<script id="v415DashboardStockClickFix">
+(function(){
+ function read(k){try{var v=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(v)?v:[]}catch(e){return[]}}
+ function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+ function openStock(type){
+  var box=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');
+  if(!box||!title||!table)return;
+  var rms=read('adr_rawmaterials_v2'),jw=read('adr_jobwork_v2'),rows=[];
+  if(type==='raw'){
+   title.textContent='Raw Material Stock — Material Wise';
+   rows=rms.map(function(r){return {code:r.code||'',name:r.name||r.rawMaterialName||r.code||'',stock:Number(r.stock!=null?r.stock:(r.closingStock!=null?r.closingStock:r.balance))||0,unit:r.unit||'KG',min:r.min==null?'-':r.min}});
+   table.innerHTML='<tr><th>Material Code</th><th>Material Name</th><th>Available Stock</th><th>Unit</th><th>Minimum Stock</th></tr>'+(rows.map(function(r){return '<tr><td>'+esc(r.code)+'</td><td>'+esc(r.name)+'</td><td><b>'+r.stock.toFixed(3)+'</b></td><td>'+esc(r.unit)+'</td><td>'+esc(r.min)+'</td></tr>'}).join('')||'<tr><td colspan="5">No raw material found</td></tr>');
+  }else{
+   title.textContent='Vendor Raw Material Stock — Vendor Wise / Material Wise';
+   var by={};
+   jw.forEach(function(x){
+    var vendor=String(x.vendor||x.vendorName||'').trim(),code=String(x.raw||x.rawCode||x.materialCode||'').trim();
+    if(!vendor||!code)return;
+    var qty=Number(x.qty!=null?x.qty:(x.balance!=null?x.balance:x.stock))||0;
+    var unit=String(x.unit||'KG').toUpperCase();if(['G','GM','GRAM','GRAMS'].indexOf(unit)>=0)qty/=1000;
+    // Job-work rows represent current vendor balances in this ERP; combine duplicate vendor/material rows.
+    var key=vendor.toLowerCase()+'\u0000'+code;
+    if(!by[key])by[key]={vendor:vendor,code:code,stock:0};by[key].stock+=qty;
+   });
+   rows=Object.keys(by).map(function(k){var x=by[k],r=rms.find(function(m){return String(m.code)===x.code});return {vendor:x.vendor,code:x.code,name:r?(r.name||r.rawMaterialName||r.code):x.code,stock:x.stock}}).sort(function(a,b){return a.vendor.localeCompare(b.vendor)||a.name.localeCompare(b.name)});
+   table.innerHTML='<tr><th>Vendor</th><th>Material Code</th><th>Material Name</th><th>Balance Stock (KG)</th></tr>'+(rows.map(function(r){return '<tr><td>'+esc(r.vendor)+'</td><td>'+esc(r.code)+'</td><td>'+esc(r.name)+'</td><td><b>'+r.stock.toFixed(3)+'</b></td></tr>'}).join('')||'<tr><td colspan="4">No vendor raw material balance found</td></tr>');
+  }
+  var th=table.querySelector('thead');if(th)th.style.display='none';box.style.display='block';box.dataset.dashboardFilter=type;box.scrollIntoView({behavior:'smooth',block:'start'});
+ }
+ document.addEventListener('click',function(e){var card=e.target&&e.target.closest?e.target.closest('#dashboard .dashCard[data-filter="raw"], #dashboard .dashCard[data-filter="vendor"]'):null;if(!card)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();openStock(card.getAttribute('data-filter'));},true);
+})();
+</script>
+
 </body></html>
 
 
