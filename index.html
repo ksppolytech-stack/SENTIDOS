@@ -8541,6 +8541,44 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
 })();
 </script>
 
+
+<!-- V416: Reliable Raw Material Stock details with current stock and month-wise history. -->
+<script id="v416RawMaterialMonthHistoryFix">
+(function(){
+ function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+ function getRaw(){try{if(Array.isArray(window.rawMaterials))return window.rawMaterials;}catch(e){}try{return typeof rawMaterials!=='undefined'&&Array.isArray(rawMaterials)?rawMaterials:JSON.parse(localStorage.getItem('adr_rawmaterials_v2')||'[]');}catch(e){return[];}}
+ function getTx(){try{if(Array.isArray(window.transactions))return window.transactions;}catch(e){}try{return typeof transactions!=='undefined'&&Array.isArray(transactions)?transactions:JSON.parse(localStorage.getItem('adr_tx_v2')||'[]');}catch(e){return[];}}
+ function monthKey(v){var s=String(v||'').trim(),m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');var d=new Date(v);return !isNaN(d.getTime())?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'):'';}
+ function render(){
+  var box=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!box||!title||!table)return;
+  var rms=getRaw(),tx=getTx(),months={};
+  tx.forEach(function(t){
+   var type=String(t.type||t.transactionType||'').toUpperCase();
+   var isIn=['RAW MATERIAL COMPANY INWARD','RAW MATERIAL PURCHASE','PURCHASE'].indexOf(type)>=0;
+   var isIssue=type==='JOB WORK ISSUE',isProd=type==='PRODUCTION',isSale=type==='RAW MATERIAL SALE';
+   if(!isIn&&!isIssue&&!isProd&&!isSale)return;
+   var rawCode=String(t.item||t.itemCode||t.code||'').replace(/^RM:/i,'');
+   var raw=rms.find(function(r){return String(r.code)===rawCode;});
+   if(!raw && (isIssue||isProd||isSale||isIn)) { raw=rms.find(function(r){return String(r.name||'').toLowerCase()===rawCode.toLowerCase();}); }
+   if(!raw)return;
+   var k=monthKey(t.date||t.createdAt||t.timestamp);if(!k)return;
+   if(!months[k])months[k]={inward:0,issue:0,production:0,sale:0};
+   var q=Math.abs(Number(t.qty)||0);
+   if(isIn)months[k].inward+=q;else if(isIssue)months[k].issue+=q;else if(isProd)months[k].production+=q;else if(isSale)months[k].sale+=q;
+  });
+  var names=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var html='<tr><th colspan="7" style="text-align:left">CURRENT STOCK — MATERIAL WISE</th></tr><tr><th>Material Code</th><th>Material Name</th><th>Unit</th><th>Current Stock</th><th>Minimum Stock</th><th colspan="2">Status</th></tr>';
+  if(rms.length){rms.forEach(function(r){var st=Number(r.stock)||0,min=Number(r.min)||0;html+='<tr><td>'+esc(r.code||'')+'</td><td>'+esc(r.name||'')+'</td><td>'+esc(r.unit||'KG')+'</td><td><b>'+st.toFixed(3)+'</b></td><td>'+min.toFixed(3)+'</td><td colspan="2">'+(st<=min?'Low Stock':'Available')+'</td></tr>';});}else html+='<tr><td colspan="7">No raw material found in Master</td></tr>';
+  html+='<tr><th colspan="7" style="text-align:left;padding-top:18px">MONTH WISE TRANSACTION HISTORY</th></tr><tr><th>Month</th><th>Inward</th><th>Job Work Issue</th><th>Production Used</th><th>Raw Material Sale</th><th>Total Outward</th><th>Net Inward</th></tr>';
+  var keys=Object.keys(months).sort().reverse();
+  if(keys.length){keys.forEach(function(k){var m=months[k],out=m.issue+m.production+m.sale;html+='<tr><td><b>'+names[Number(k.slice(5))-1]+' '+k.slice(0,4)+'</b></td><td>'+m.inward.toFixed(3)+'</td><td>'+m.issue.toFixed(3)+'</td><td>'+m.production.toFixed(3)+'</td><td>'+m.sale.toFixed(3)+'</td><td>'+out.toFixed(3)+'</td><td>'+(m.inward-out).toFixed(3)+'</td></tr>';});}
+  else html+='<tr><td colspan="7">No raw material transaction history found. Check transaction dates and saved entries.</td></tr>';
+  title.textContent='RAW MATERIAL STOCK — Material Wise & Month Wise History';table.innerHTML=html;var th=table.parentElement&&table.parentElement.querySelector('thead');if(th)th.style.display='none';box.style.display='block';box.dataset.dashboardFilter='raw';try{box.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+ }
+ document.addEventListener('click',function(e){var card=e.target&&e.target.closest?e.target.closest('#dashboard .dashCard[data-filter="raw"]'):null;if(!card)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();var box=document.getElementById('dashboardDetails');if(box&&box.style.display!=='none'&&box.dataset.dashboardFilter==='raw'){box.style.display='none';box.removeAttribute('data-dashboard-filter');return false;}render();return false;},true);
+})();
+</script>
+
 </body></html>
 
 
