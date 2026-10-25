@@ -8508,36 +8508,32 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
 </script>
 
 <!-- V415: Fix dashboard stock cards with final capture-phase click binding and live ERP storage. -->
-<script id="v415DashboardStockClickFix">
+<script id="v417DashboardStockClickFix">
 (function(){
  function read(k){try{var v=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(v)?v:[]}catch(e){return[]}}
  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+ function monthKey(v){var s=String(v==null?'':v).trim(),m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');var d=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);if(d){var a=+d[1],b=+d[2],y=d[3];if(a>12)return y+'-'+String(b).padStart(2,'0');if(b>12)return y+'-'+String(a).padStart(2,'0');return y+'-'+String(b).padStart(2,'0');}var dt=new Date(s);return s&&!isNaN(dt.getTime())?dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'):'';}
  function openStock(type){
-  var box=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');
-  if(!box||!title||!table)return;
+  var box=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!box||!title||!table)return;
   var rms=read('adr_rawmaterials_v2'),jw=read('adr_jobwork_v2'),rows=[];
   if(type==='raw'){
-   title.textContent='Raw Material Stock — Material Wise';
-   rows=rms.map(function(r){return {code:r.code||'',name:r.name||r.rawMaterialName||r.code||'',stock:Number(r.stock!=null?r.stock:(r.closingStock!=null?r.closingStock:r.balance))||0,unit:r.unit||'KG',min:r.min==null?'-':r.min}});
-   table.innerHTML='<tr><th>Material Code</th><th>Material Name</th><th>Available Stock</th><th>Unit</th><th>Minimum Stock</th></tr>'+(rows.map(function(r){return '<tr><td>'+esc(r.code)+'</td><td>'+esc(r.name)+'</td><td><b>'+r.stock.toFixed(3)+'</b></td><td>'+esc(r.unit)+'</td><td>'+esc(r.min)+'</td></tr>'}).join('')||'<tr><td colspan="5">No raw material found</td></tr>');
+   title.textContent='Raw Material Stock — Material Wise & Month Wise History';
+   var html='<tr><th colspan="7" style="text-align:left">CURRENT STOCK — MATERIAL WISE</th></tr><tr><th>Material Code</th><th>Material Name</th><th>Unit</th><th>Current Stock</th><th>Minimum Stock</th><th colspan="2">Status</th></tr>';
+   html+=rms.map(function(r){var st=Number(r.stock!=null?r.stock:(r.closingStock!=null?r.closingStock:r.balance))||0,min=Number(r.min)||0;return '<tr><td>'+esc(r.code||'')+'</td><td>'+esc(r.name||r.rawMaterialName||r.code||'')+'</td><td>'+esc(r.unit||'KG')+'</td><td><b>'+st.toFixed(3)+'</b></td><td>'+min.toFixed(3)+'</td><td colspan="2">'+(st<=min?'Low Stock':'Available')+'</td></tr>';}).join('')||'<tr><td colspan="7">No raw material found</td></tr>';
+   var months={};var tx=read('adr_tx_v2');
+   tx.forEach(function(t){var typ=String(t.type||t.transactionType||'').trim().toUpperCase();var inw=['RAW MATERIAL COMPANY INWARD','RAW MATERIAL PURCHASE','RAW MATERIAL INWARD'].indexOf(typ)>=0;var issue=['JOB WORK ISSUE','JOBWORK ISSUE','JW ISSUE','RAW MATERIAL ISSUE TO VENDOR'].indexOf(typ)>=0;var prod=['PRODUCTION','PRODUCTION USED','RAW MATERIAL PRODUCTION'].indexOf(typ)>=0;var sale=['RAW MATERIAL SALE','RAW MATERIAL OUTWARD'].indexOf(typ)>=0;if(!inw&&!issue&&!prod&&!sale)return;var code=String(t.item||t.itemCode||t.rawCode||t.materialCode||t.code||'').replace(/^RM:/i,'');var raw=rms.find(function(r){return String(r.code||'')===code||String(r.name||'').toLowerCase()===code.toLowerCase();});if(!raw)return;var mk=monthKey(t.date||t.issueDate||t.jwIssueDate||t.createdAt||t.timestamp);if(!mk)return;if(!months[mk])months[mk]={inward:0,issue:0,production:0,sale:0};var q=Math.abs(Number(t.issueQty!=null?t.issueQty:(t.qty!=null?t.qty:t.quantity))||0);if(inw)months[mk].inward+=q;else if(issue)months[mk].issue+=q;else if(prod)months[mk].production+=q;else months[mk].sale+=q;});
+   var mn=['January','February','March','April','May','June','July','August','September','October','November','December'];html+='<tr><th colspan="7" style="text-align:left;padding-top:18px">MONTH WISE TRANSACTION HISTORY</th></tr><tr><th>Month</th><th>Inward</th><th>Job Work Issue</th><th>Production Used</th><th>Raw Material Sale</th><th>Total Outward</th><th>Net Inward</th></tr>';
+   var keys=Object.keys(months).sort().reverse();if(keys.length){keys.forEach(function(k){var m=months[k],out=m.issue+m.production+m.sale;html+='<tr><td><b>'+mn[Number(k.slice(5))-1]+' '+k.slice(0,4)+'</b></td><td>'+m.inward.toFixed(3)+'</td><td>'+m.issue.toFixed(3)+'</td><td>'+m.production.toFixed(3)+'</td><td>'+m.sale.toFixed(3)+'</td><td>'+out.toFixed(3)+'</td><td>'+(m.inward-out).toFixed(3)+'</td></tr>';});}else html+='<tr><td colspan="7">No raw material transaction history found. Check saved transaction dates and entries.</td></tr>';
+   table.innerHTML=html;
   }else{
-   title.textContent='Vendor Raw Material Stock — Vendor Wise / Material Wise';
-   var by={};
-   jw.forEach(function(x){
-    var vendor=String(x.vendor||x.vendorName||'').trim(),code=String(x.raw||x.rawCode||x.materialCode||'').trim();
-    if(!vendor||!code)return;
-    var qty=Number(x.qty!=null?x.qty:(x.balance!=null?x.balance:x.stock))||0;
-    var unit=String(x.unit||'KG').toUpperCase();if(['G','GM','GRAM','GRAMS'].indexOf(unit)>=0)qty/=1000;
-    // Job-work rows represent current vendor balances in this ERP; combine duplicate vendor/material rows.
-    var key=vendor.toLowerCase()+'\u0000'+code;
-    if(!by[key])by[key]={vendor:vendor,code:code,stock:0};by[key].stock+=qty;
-   });
+   title.textContent='Vendor Raw Material Stock — Vendor Wise / Material Wise';var by={};
+   jw.forEach(function(x){var vendor=String(x.vendor||x.vendorName||'').trim(),code=String(x.raw||x.rawCode||x.materialCode||'').trim();if(!vendor||!code)return;var qty=Number(x.qty!=null?x.qty:(x.balance!=null?x.balance:x.stock))||0;var unit=String(x.unit||'KG').toUpperCase();if(['G','GM','GRAM','GRAMS'].indexOf(unit)>=0)qty/=1000;var key=vendor.toLowerCase()+'\u0000'+code;if(!by[key])by[key]={vendor:vendor,code:code,stock:0};by[key].stock+=qty;});
    rows=Object.keys(by).map(function(k){var x=by[k],r=rms.find(function(m){return String(m.code)===x.code});return {vendor:x.vendor,code:x.code,name:r?(r.name||r.rawMaterialName||r.code):x.code,stock:x.stock}}).sort(function(a,b){return a.vendor.localeCompare(b.vendor)||a.name.localeCompare(b.name)});
    table.innerHTML='<tr><th>Vendor</th><th>Material Code</th><th>Material Name</th><th>Balance Stock (KG)</th></tr>'+(rows.map(function(r){return '<tr><td>'+esc(r.vendor)+'</td><td>'+esc(r.code)+'</td><td>'+esc(r.name)+'</td><td><b>'+r.stock.toFixed(3)+'</b></td></tr>'}).join('')||'<tr><td colspan="4">No vendor raw material balance found</td></tr>');
   }
-  var th=table.querySelector('thead');if(th)th.style.display='none';box.style.display='block';box.dataset.dashboardFilter=type;box.scrollIntoView({behavior:'smooth',block:'start'});
+  var th=table.parentElement&&table.parentElement.querySelector('thead');if(th)th.style.display='none';box.style.display='block';box.dataset.dashboardFilter=type;try{box.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
  }
- document.addEventListener('click',function(e){var card=e.target&&e.target.closest?e.target.closest('#dashboard .dashCard[data-filter="raw"], #dashboard .dashCard[data-filter="vendor"]'):null;if(!card)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();openStock(card.getAttribute('data-filter'));},true);
+ document.addEventListener('click',function(e){var card=e.target&&e.target.closest?e.target.closest('#dashboard .dashCard[data-filter="raw"], #dashboard .dashCard[data-filter="vendor"]'):null;if(!card)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();openStock(card.getAttribute('data-filter'));},true);
 })();
 </script>
 
