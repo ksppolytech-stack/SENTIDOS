@@ -8474,6 +8474,39 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
   setTimeout(bind,500);
 })();
 </script>
+
+<!-- V414: Dashboard raw stock lists each material; vendor stock lists vendor + material balances. -->
+<script id="v414DashboardMaterialStockDetails">
+(function(){
+  function read(key){try{var a=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function show(type){
+    var box=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');
+    if(!box||!title||!table)return;
+    var rms=read('adr_rawmaterials_v2'),rows=[];
+    if(type==='raw'){
+      title.textContent='Raw Material Stock — Material Wise';
+      rows=rms.map(function(r){return {material:r.name||r.code,code:r.code||'',stock:Number(r.stock)||0,unit:r.unit||'KG',min:r.min==null?'-':r.min}});
+      table.innerHTML='<tr><th>Material Code</th><th>Material Name</th><th>Available Stock</th><th>Unit</th><th>Minimum Stock</th></tr>'+(rows.map(function(r){return '<tr><td>'+esc(r.code)+'</td><td>'+esc(r.material)+'</td><td><b>'+r.stock.toFixed(3)+'</b></td><td>'+esc(r.unit)+'</td><td>'+esc(r.min)+'</td></tr>'}).join('')||'<tr><td colspan="5">No raw material found</td></tr>');
+    } else {
+      title.textContent='Vendor Raw Material Stock — Vendor Wise / Material Wise';
+      var jw=read('adr_jobwork_v2'),by={};
+      jw.forEach(function(x){var q=Number(x.qty)||0;if(q<=0.000001)return;var unit=String(x.unit||'KG').toUpperCase();var kg=['G','GM','GRAM','GRAMS'].indexOf(unit)>=0?q/1000:q;var vendor=String(x.vendor||'').trim();var code=String(x.raw||'');var key=vendor+'\u0000'+code;if(!by[key])by[key]={vendor:vendor,code:code,stock:0};by[key].stock+=kg;});
+      rows=Object.keys(by).map(function(k){var x=by[k],r=rms.find(function(m){return String(m.code)===x.code});return {vendor:x.vendor,code:x.code,material:r?(r.name||r.code):x.code,stock:x.stock}}).sort(function(a,b){return a.vendor.localeCompare(b.vendor)||a.material.localeCompare(b.material)});
+      table.innerHTML='<tr><th>Vendor</th><th>Material Code</th><th>Material Name</th><th>Balance Stock (KG)</th></tr>'+(rows.map(function(r){return '<tr><td>'+esc(r.vendor)+'</td><td>'+esc(r.code)+'</td><td>'+esc(r.material)+'</td><td><b>'+r.stock.toFixed(3)+'</b></td></tr>'}).join('')||'<tr><td colspan="4">No vendor raw material balance found</td></tr>');
+    }
+    var thead=table.querySelector('thead');if(thead)thead.style.display='none';
+    box.style.display='block';box.dataset.dashboardFilter=type;box.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  function bind(){
+    document.querySelectorAll('#dashboard .dashCard[data-filter="raw"]').forEach(function(c){c.onclick=function(e){if(e){e.preventDefault();e.stopImmediatePropagation();e.stopPropagation()}var b=document.getElementById('dashboardDetails');if(b&&b.style.display!=='none'&&b.dataset.dashboardFilter==='raw'){b.style.display='none';return false}show('raw');return false;}});
+    document.querySelectorAll('#dashboard .dashCard[data-filter="vendor"]').forEach(function(c){c.onclick=function(e){if(e){e.preventDefault();e.stopImmediatePropagation();e.stopPropagation()}var b=document.getElementById('dashboardDetails');if(b&&b.style.display!=='none'&&b.dataset.dashboardFilter==='vendor'){b.style.display='none';return false}show('vendor');return false;}});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+  [300,1000,2000,4000,6000].forEach(function(t){setTimeout(bind,t)});
+})();
+</script>
+
 </body></html>
 
 
