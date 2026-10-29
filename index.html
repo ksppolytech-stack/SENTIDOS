@@ -8577,6 +8577,26 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
 })();
 </script>
 
+<script id="v419RawMonthClickReliable">
+(function(){
+ function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+ function txs(){try{if(Array.isArray(window.transactions))return window.transactions}catch(e){}try{return JSON.parse(localStorage.getItem('adr_tx_v2')||'[]')}catch(e){return[]}}
+ function rms(){try{if(Array.isArray(window.rawMaterials))return window.rawMaterials}catch(e){}try{return JSON.parse(localStorage.getItem('adr_rawmaterials_v2')||'[]')}catch(e){return[]}}
+ function key(v){var s=String(v||'').trim(),m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);if(m)return m[3]+'-'+String(+m[1]>12?m[2]:m[1]).padStart(2,'0');var d=new Date(s);return s&&!isNaN(d.getTime())?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'):''}
+ function showMonth(k){var box=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!box||!title||!table)return;
+ var rs=rms(),all=txs(),allowed=['RAW MATERIAL COMPANY INWARD','RAW MATERIAL PURCHASE','PURCHASE','RAW MATERIAL INWARD','JOB WORK ISSUE','JOBWORK ISSUE','JW ISSUE','RAW MATERIAL ISSUE TO VENDOR','PRODUCTION','PRODUCTION USED','RAW MATERIAL PRODUCTION','RAW MATERIAL SALE','RAW MATERIAL OUTWARD','RAW MATERIAL CONSUMPTION','JOB WORK RAW MATERIAL ISSUE'];
+ var rows=all.filter(function(t){var typ=String(t.type||t.transactionType||t.txType||'').trim().toUpperCase();return allowed.indexOf(typ)>=0&&key(t.date||t.issueDate||t.jwIssueDate||t.transactionDate||t.createdAt||t.timestamp)===k;});
+ var mn=['January','February','March','April','May','June','July','August','September','October','November','December'];title.innerHTML='RAW MATERIAL STOCK — '+esc((mn[Number(k.slice(5))-1]||k.slice(5))+' '+k.slice(0,4)+' Details')+' <button type="button" id="v419BackMonth" style="float:right">← Month Wise</button>';
+ var html='<tr><th>Date</th><th>Transaction Type</th><th>Material</th><th>Qty</th><th>Unit</th><th>Vendor / Party</th><th>Reference</th></tr>';
+ rows.sort(function(a,b){return String(a.date||a.issueDate||a.createdAt||'').localeCompare(String(b.date||b.issueDate||b.createdAt||''))});
+ rows.forEach(function(t){var code=String(t.item||t.itemCode||t.rawCode||t.materialCode||t.code||'').replace(/^RM:/i,'');var raw=rs.find(function(r){return String(r.code||'')===code||String(r.name||'').toLowerCase()===code.toLowerCase()});var dt=t.date||t.issueDate||t.jwIssueDate||t.transactionDate||t.createdAt||t.timestamp||'';var q=t.issueQty!=null?t.issueQty:(t.qty!=null?t.qty:(t.quantity!=null?t.quantity:t.inwardQty));html+='<tr><td>'+esc(dt)+'</td><td>'+esc(t.type||t.transactionType||t.txType||'')+'</td><td>'+esc(raw?(raw.name||raw.code):(t.itemName||t.material||t.rawMaterial||code||'—'))+'</td><td>'+((Math.abs(Number(q)||0)).toFixed(3))+'</td><td>'+esc(t.unit||(raw&&raw.unit)||'KG')+'</td><td>'+esc(t.vendor||t.vendorName||t.supplier||t.customer||t.party||'')+'</td><td>'+esc(t.ref||t.inwardRef||t.billNo||t.invoiceNo||t.challanNo||t.reference||'')+'</td></tr>'});
+ if(!rows.length)html+='<tr><td colspan="7">આ મહિનાની matching raw-material transactions મળી નથી. Month summary માં entry હોય તો transaction નો type/date field અલગ format માં હોઈ શકે છે.</td></tr>';
+ table.innerHTML=html;var th=table.parentElement&&table.parentElement.querySelector('thead');if(th)th.style.display='none';box.style.display='block';box.dataset.dashboardFilter='raw-month-detail';box.dataset.rawMonth=k;
+ var b=document.getElementById('v419BackMonth');if(b)b.onclick=function(e){e.preventDefault();e.stopPropagation();if(typeof window.v416RenderRawMaterialMonthHistory==='function')window.v416RenderRawMaterialMonthHistory();else{box.dataset.dashboardFilter='raw';var c=document.querySelector('#dashboard .dashCard[data-filter="raw"]');if(c)c.click()}};
+ }
+ document.addEventListener('click',function(e){var row=e.target&&e.target.closest?e.target.closest('#dashboardDetailsTable tr[data-raw-month], #dashboardDetailsTable tr.v312MonthRow'):null;if(!row)return;var k=row.getAttribute('data-raw-month')||row.getAttribute('data-month');if(!k)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();showMonth(k);},true);
+})();
+</script>
 </body></html>
 
 
@@ -9031,25 +9051,4 @@ document.addEventListener('click',e=>{let b=$('lmRateVendorSuggest'),p=b?.parent
 </script>
 
 \n<!-- V418: Click a Raw Material Stock month row to view transaction-level details. -->
-<script id="v418RawMaterialMonthClickDetail">
-(function(){
- function read(k){try{var a=JSON.parse(localStorage.getItem(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
- function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
- function monthKey(v){var s=String(v||'').trim(),m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);if(m)return m[1]+'-'+String(m[2]).padStart(2,'0');var d=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);if(d){var a=+d[1],b=+d[2],y=d[3];return y+'-'+String((a>12?b:a)).padStart(2,'0')}var dt=new Date(s);return s&&!isNaN(dt.getTime())?dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'):''}
- function dateText(v){var s=String(v||'');var m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);return m?m[3].padStart(2,'0')+'-'+m[2].padStart(2,'0')+'-'+m[1]:s}
- function detail(k){
-  var box=document.getElementById('dashboardDetails'),title=document.getElementById('dashboardDetailsTitle'),table=document.getElementById('dashboardDetailsTable');if(!box||!title||!table)return;
-  var rms=read('adr_rawmaterials_v2'),tx=read('adr_tx_v2'),names=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  var allowed=['RAW MATERIAL COMPANY INWARD','RAW MATERIAL PURCHASE','PURCHASE','RAW MATERIAL INWARD','JOB WORK ISSUE','JOBWORK ISSUE','JW ISSUE','RAW MATERIAL ISSUE TO VENDOR','PRODUCTION','PRODUCTION USED','RAW MATERIAL PRODUCTION','RAW MATERIAL SALE','RAW MATERIAL OUTWARD'];
-  var rows=tx.filter(function(t){var typ=String(t.type||t.transactionType||'').trim().toUpperCase();if(allowed.indexOf(typ)<0)return false;return monthKey(t.date||t.issueDate||t.jwIssueDate||t.createdAt||t.timestamp)===k;});
-  title.innerHTML='RAW MATERIAL STOCK — '+esc(names[Number(k.slice(5))-1]+' '+k.slice(0,4)+' Details')+' <button type="button" id="v418BackMonth" style="float:right">← Month Wise</button>';
-  var html='<tr><th>Date</th><th>Transaction Type</th><th>Material</th><th>Qty</th><th>Unit</th><th>Vendor / Party</th><th>Reference</th></tr>';
-  rows.sort(function(a,b){return String(a.date||a.issueDate||a.createdAt||'').localeCompare(String(b.date||b.issueDate||b.createdAt||''))});
-  rows.forEach(function(t){var code=String(t.item||t.itemCode||t.rawCode||t.materialCode||t.code||'').replace(/^RM:/i,'');var raw=rms.find(function(r){return String(r.code||'')===code||String(r.name||'').toLowerCase()===code.toLowerCase()});var typ=String(t.type||t.transactionType||'');var qty=Math.abs(Number(t.issueQty!=null?t.issueQty:(t.qty!=null?t.qty:t.quantity))||0);html+='<tr><td>'+esc(dateText(t.date||t.issueDate||t.jwIssueDate||t.createdAt||t.timestamp))+'</td><td>'+esc(typ)+'</td><td>'+esc((raw&&(raw.name||raw.code))||t.itemName||t.material||t.rawMaterial||code)+'</td><td>'+qty.toFixed(3)+'</td><td>'+esc(t.unit||(raw&&raw.unit)||'KG')+'</td><td>'+esc(t.vendor||t.vendorName||t.supplier||t.customer||t.party||'')+'</td><td>'+esc(t.ref||t.inwardRef||t.billNo||t.invoiceNo||t.challanNo||t.reference||'')+'</td></tr>'});
-  if(!rows.length)html+='<tr><td colspan="7">આ મહિનાની transaction detail મળી નથી.</td></tr>';
-  table.innerHTML=html;var th=table.parentElement&&table.parentElement.querySelector('thead');if(th)th.style.display='none';box.style.display='block';box.dataset.dashboardFilter='raw-month-detail';box.dataset.rawMonth=k;
-  var b=document.getElementById('v418BackMonth');if(b)b.onclick=function(){if(typeof window.renderRawMaterialMonthHistoryV418==='function')window.renderRawMaterialMonthHistoryV418();else {var card=document.querySelector('#dashboard .dashCard[data-filter="raw"]');if(card)card.click()}};
- }
- document.addEventListener('click',function(e){var row=e.target&&e.target.closest?e.target.closest('#dashboardDetailsTable tr[data-raw-month]'):null;if(row){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();detail(row.getAttribute('data-raw-month'));return}if(e.target&&e.target.id==='v418BackMonth'){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();var card=document.querySelector('#dashboard .dashCard[data-filter="raw"]');if(card){var box=document.getElementById('dashboardDetails');if(box)box.style.display='none';card.click()}return}},true);
-})();
-</script>
+
